@@ -8,7 +8,8 @@ const formatNum = (val) => val ? parseNum(val).toLocaleString('vi-VN') : '';
 const Inventory = () => {
   const { state, dispatch } = useData();
   const [activeTab, setActiveTab] = useState('ingredients'); 
-  
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [filterSearch, setFilterSearch] = useState('');
   const [showItemForm, setShowItemForm] = useState(false);
   const [itemForm, setItemForm] = useState({ id: '', name: '', category: '', buyUnit: '', unit: '', conversionRate: '', cost: '', buyCost: '' });
   
@@ -168,11 +169,21 @@ const Inventory = () => {
 
       {activeTab === 'ingredients' && (
         <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
             <h3 style={{ margin: 0 }}>Từ Điển Nguyên Vật Liệu (Phân chia Giá Nhập - Giá Dùng)</h3>
-            <button className="btn btn-primary" onClick={() => { setItemForm({id:'', name:'', category:'', buyUnit:'', unit:'', conversionRate:'', cost:'', buyCost:''}); setShowItemForm(true); }}>
-              <Plus size={16} /> Định Nghĩa Vật Tư Mới
-            </button>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.2)', padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--surface-border)' }}>
+                  <Search size={16} color="var(--text-secondary)" />
+                  <input placeholder="Tìm tên vật tư..." value={filterSearch} onChange={e => setFilterSearch(e.target.value)} style={{ background:'transparent', border:'none', color:'white', outline:'none', fontSize:'0.9rem' }} />
+               </div>
+               <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} style={{ background:'rgba(0,0,0,0.3)', color:'white', border:'1px solid var(--surface-border)', padding:'8px', borderRadius:'6px', outline:'none' }}>
+                  <option value="all">-- Tất cả Danh Mục --</option>
+                  {state.categories.filter(c => c.type === 'inventory').map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+               </select>
+               <button className="btn btn-primary" onClick={() => { setItemForm({id:'', name:'', category:'', buyUnit:'', unit:'', conversionRate:'', cost:'', buyCost:''}); setShowItemForm(true); }}>
+                 <Plus size={16} /> Định Nghĩa Vật Tư Mới
+               </button>
+            </div>
           </div>
 
           {showItemForm && (
@@ -279,7 +290,13 @@ const Inventory = () => {
                 </tr>
               </thead>
               <tbody>
-                {state.ingredients.map(ing => {
+                {state.ingredients
+                  .filter(ing => {
+                    const matchSearch = ing.name.toLowerCase().includes(filterSearch.toLowerCase());
+                    const matchCat = filterCategory === 'all' || ing.category === filterCategory;
+                    return matchSearch && matchCat;
+                  })
+                  .map(ing => {
                   const buyStockEquivalent = (ing.stock / (ing.conversionRate || 1)).toFixed(1);
                   return (
                   <tr key={ing.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>

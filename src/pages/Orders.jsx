@@ -7,12 +7,25 @@ const Orders = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedOrderId, setExpandedOrderId] = useState(null);
 
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterChannel, setFilterChannel] = useState('all');
+
   const orders = [...(state.posOrders || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  const filteredOrders = orders.filter(o => 
-    o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    o.channelName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredOrders = orders.filter(o => {
+    const matchSearch = o.id.toLowerCase().includes(searchQuery.toLowerCase()) || o.channelName.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchStatus = filterStatus === 'all' || o.status === filterStatus;
+    const matchChannel = filterChannel === 'all' || o.channelName === filterChannel;
+    
+    const itemDate = new Date(o.date).setHours(0,0,0,0);
+    const start = startDate ? new Date(startDate).setHours(0,0,0,0) : null;
+    const end = endDate ? new Date(endDate).setHours(23,59,59,999) : null;
+    const matchDate = (!start || itemDate >= start) && (!end || itemDate <= end);
+
+    return matchSearch && matchStatus && matchChannel && matchDate;
+  });
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -55,14 +68,40 @@ const Orders = () => {
       </div>
 
       <div className="glass-panel" style={{ padding: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(0,0,0,0.2)', padding: '8px 16px', borderRadius: '8px', width: '350px', marginBottom: '24px', border: '1px solid var(--surface-border)' }}>
-          <Search size={18} color="var(--text-secondary)" />
-          <input 
-            placeholder="Tìm theo Mã đơn hoặc Kênh bán..." 
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            style={{ background: 'transparent', border: 'none', color: 'white', outline: 'none', width: '100%' }}
-          />
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '24px', alignItems: 'flex-end' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(0,0,0,0.2)', padding: '8px 16px', borderRadius: '8px', minWidth: '250px', border: '1px solid var(--surface-border)', height: '42px' }}>
+            <Search size={18} color="var(--text-secondary)" />
+            <input 
+              placeholder="Mã đơn / Kênh bán..." 
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              style={{ background: 'transparent', border: 'none', color: 'white', outline: 'none', width: '100%', fontSize: '0.9rem' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Từ:</span>
+            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ background:'rgba(0,0,0,0.3)', color:'white', border:'1px solid var(--surface-border)', padding:'8px', borderRadius:'6px', outline:'none' }} />
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Đến:</span>
+            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ background:'rgba(0,0,0,0.3)', color:'white', border:'1px solid var(--surface-border)', padding:'8px', borderRadius:'6px', outline:'none' }} />
+          </div>
+
+          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ background:'rgba(0,0,0,0.3)', color:'white', border:'1px solid var(--surface-border)', padding:'8px', borderRadius:'6px', outline:'none' }}>
+            <option value="all">-- Tất cả Trạng thái --</option>
+            <option value="Pending">Chờ Ship</option>
+            <option value="Success">Thành Công</option>
+            <option value="Cancelled">Đã Hủy</option>
+          </select>
+
+          <select value={filterChannel} onChange={e => setFilterChannel(e.target.value)} style={{ background:'rgba(0,0,0,0.3)', color:'white', border:'1px solid var(--surface-border)', padding:'8px', borderRadius:'6px', outline:'none' }}>
+            <option value="all">-- Tất cả Kênh --</option>
+            {state.salesChannels?.map(ch => <option key={ch.id} value={ch.name}>{ch.name}</option>)}
+          </select>
+
+          <button className="btn btn-ghost" onClick={() => { setStartDate(''); setEndDate(''); setFilterStatus('all'); setFilterChannel('all'); setSearchQuery(''); }} style={{ color: 'var(--danger)', fontSize: '0.85rem' }}>Xóa Lọc</button>
         </div>
 
         <div style={{ overflowX: 'auto' }}>

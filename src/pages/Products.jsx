@@ -13,6 +13,7 @@ const Products = () => {
   const [viewingProduct, setViewingProduct] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [filterCategory, setFilterCategory] = useState('all');
 
   // Recursive Helper for Cost
   const getRecipeItemCost = (r) => {
@@ -352,17 +353,29 @@ const Products = () => {
 
       {/* Main Screen: Grid Cards */}
       <div className="glass-panel" style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
-         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(0,0,0,0.2)', padding: '8px 16px', borderRadius: '8px', width: '300px', marginBottom: '24px' }}>
-            <Search size={18} color="var(--text-secondary)" />
-            <input 
-              placeholder="Bộ lọc Món Toàn Hệ Thống..." 
-              value={search} onChange={e => setSearch(e.target.value)}
-            />
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(0,0,0,0.2)', padding: '8px 16px', borderRadius: '8px', minWidth: '300px', border: '1px solid var(--surface-border)' }}>
+              <Search size={18} color="var(--text-secondary)" />
+              <input 
+                placeholder="Bộ lọc Món Toàn Hệ Thống..." 
+                value={search} onChange={e => setSearch(e.target.value)}
+                style={{ background: 'transparent', border: 'none', color: 'white', outline: 'none', width: '100%' }}
+              />
+            </div>
+            
+            <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} style={{ background:'rgba(0,0,0,0.3)', color:'white', border:'1px solid var(--surface-border)', padding:'9px 16px', borderRadius:'8px', outline:'none' }}>
+               <option value="all">-- Tất cả Danh Mục POS --</option>
+               {state.categories.filter(c => c.type === 'menu').map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+            </select>
           </div>
           
           {viewMode === 'grid' ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-              {state.products.filter(p => p.name.toLowerCase().includes(search.toLowerCase())).map(p => {
+              {state.products.filter(p => {
+                const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+                const matchCat = filterCategory === 'all' || p.category === filterCategory;
+                return matchSearch && matchCat;
+              }).map(p => {
                 const cost = calculateTotalCost(p.recipe);
                 const port = calculateMaxPortions(p.recipe);
                 return (
@@ -435,7 +448,11 @@ const Products = () => {
                      </tr>
                   </thead>
                   <tbody>
-                     {state.products.filter(p => p.name.toLowerCase().includes(search.toLowerCase())).map(p => {
+                     {state.products.filter(p => {
+                        const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+                        const matchCat = filterCategory === 'all' || p.category === filterCategory;
+                        return matchSearch && matchCat;
+                     }).map(p => {
                         const cost = calculateTotalCost(p.recipe);
                         return (
                            <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
