@@ -24,6 +24,8 @@ import Categories from './pages/Categories';
 import Channels from './pages/Channels';
 import Settings from './pages/Settings';
 
+import logoPoppy from './assets/logo_poppy.png';
+
 const SidebarMenu = () => {
   const location = useLocation();
   const menuItems = [
@@ -59,9 +61,9 @@ function App() {
     <Router basename={import.meta.env.BASE_URL}>
       <div className="app-container">
         <aside className="sidebar">
-          <div className="sidebar-header">
-            <Store size={26} />
-            <span style={{ fontSize: '1rem' }}>Xóm Gà POPPY</span>
+          <div className="sidebar-header" style={{ padding: '10px 16px', gap: '8px' }}>
+            <img src={logoPoppy} alt="Logo" style={{ width: '40px', height: '40px', borderRadius: '50%' }} />
+            <span style={{ fontSize: '0.95rem', whiteSpace: 'nowrap' }}>Xóm Gà POPPY</span>
           </div>
           <SidebarMenu />
         </aside>
