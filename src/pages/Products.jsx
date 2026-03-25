@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Coffee, Plus, Search, Edit, Trash2, ListPlus, X } from 'lucide-react';
+import { Coffee, Plus, Search, Edit, Trash2, ListPlus, X, Copy, Eye, PieChart } from 'lucide-react';
 import { useData } from '../context/DataContext';
 
 const Products = () => {
@@ -9,6 +9,9 @@ const Products = () => {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ id: '', name: '', unit: '', category: '', price: '', image: '', recipe: [] });
   const [recipeItem, setRecipeItem] = useState({ ingredientId: '', qty: '', unitMode: 'base' });
+
+  const [viewingProduct, setViewingProduct] = useState(null);
+  const [showDetail, setShowDetail] = useState(false);
 
   // Recursive Helper for Cost
   const getRecipeItemCost = (r) => {
@@ -71,6 +74,14 @@ const Products = () => {
 
   const deleteProduct = (id) => {
     dispatch({ type: 'DELETE_PRODUCT', payload: id });
+  };
+
+  const duplicateProduct = (p) => {
+    const clone = JSON.parse(JSON.stringify(p));
+    delete clone.id;
+    clone.name = `${clone.name} (Bản sao)`;
+    setForm(clone);
+    setShowForm(true);
   };
 
   const addRecipeItem = () => {
@@ -246,6 +257,92 @@ const Products = () => {
         </div>
       )}
 
+      {showDetail && viewingProduct && (() => {
+        const totalCost = calculateTotalCost(viewingProduct.recipe);
+        const categoryBreakdown = {};
+        
+        viewingProduct.recipe.forEach(r => {
+          const detail = getEntityDisplayDetails(r.ingredientId);
+          if (detail) {
+            const cost = getRecipeItemCost(r);
+            const cat = detail.type === 'ingredient' ? (detail.category || 'Khác') : 'Món Chế Biến';
+            categoryBreakdown[cat] = (categoryBreakdown[cat] || 0) + cost;
+          }
+        });
+
+        const sortedCats = Object.entries(categoryBreakdown).sort((a, b) => b[1] - a[1]);
+
+        return (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
+            <div className="glass-panel" style={{ width: '100%', maxWidth: '600px', background: 'var(--bg-color)', padding: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <h3 style={{ margin: 0, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <PieChart size={20} /> Phân Tích Cấu Thành: {viewingProduct.name}
+                </h3>
+                <button className="btn btn-ghost" onClick={() => setShowDetail(false)}><X size={20}/></button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {/* Biểu đồ % chi phí */}
+                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '12px', border: '1px solid var(--surface-border)' }}>
+                  <h4 style={{ margin: 0, marginBottom: '16px', fontSize: '1rem' }}>Tỷ lệ % Chi phí theo Nhóm</h4>
+                  <div style={{ display: 'flex', height: '24px', borderRadius: '12px', overflow: 'hidden', background: 'rgba(255,255,255,0.1)', marginBottom: '16px' }}>
+                    {sortedCats.map(([cat, val], idx) => {
+                      const perc = (val / totalCost) * 100;
+                      const colors = ['#f97316', '#3b82f6', '#2ea043', '#e3b341', '#da3633', '#8b949e'];
+                      return (
+                        <div key={cat} style={{ width: `${perc}%`, height: '100%', background: colors[idx % colors.length], transition: 'width 0.5s ease' }} title={`${cat}: ${perc.toFixed(1)}%`} />
+                      );
+                    })}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                    {sortedCats.map(([cat, val], idx) => {
+                      const perc = (val / totalCost) * 100;
+                      const colors = ['#f97316', '#3b82f6', '#2ea043', '#e3b341', '#da3633', '#8b949e'];
+                      return (
+                        <div key={cat} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}>
+                          <span style={{ width: '10px', height: '10px', borderRadius: '2px', background: colors[idx % colors.length] }} />
+                          <span style={{ color: 'var(--text-secondary)' }}>{cat}:</span>
+                          <span style={{ fontWeight: 600 }}>{perc.toFixed(1)}%</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Danh sách nguyên liệu */}
+                <div>
+                  <h4 style={{ margin: 0, marginBottom: '12px', fontSize: '1rem' }}>Danh sách Định mức (Recipe)</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto' }}>
+                    {viewingProduct.recipe.map((r, i) => {
+                      const node = getEntityDisplayDetails(r.ingredientId);
+                      const cost = getRecipeItemCost(r);
+                      return (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', border: '1px solid var(--surface-border)' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{node?.name}</span>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Lượng: {r.qty} {r.unitMode === 'divide' ? `1/${r.qty}` : (r.unitMode === 'buy' ? node?.buyUnit : node?.baseUnit)}</span>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontWeight: 600, color: 'var(--warning)' }}>{Math.round(cost).toLocaleString('vi-VN')} đ</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{((cost / totalCost) * 100).toFixed(1)}%</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div style={{ borderTop: '1px solid var(--surface-border)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Tổng giá vốn cấu thành:</span>
+                    <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--warning)' }}>{Math.round(totalCost).toLocaleString('vi-VN')} đ</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Main Screen: Grid Cards */}
       <div className="glass-panel" style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(0,0,0,0.2)', padding: '8px 16px', borderRadius: '8px', width: '300px', marginBottom: '24px' }}>
@@ -289,11 +386,17 @@ const Products = () => {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '20px' }}>
+                     <button className="btn btn-ghost" style={{ padding: '8px', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--secondary)' }} onClick={() => { setViewingProduct(p); setShowDetail(true); }} title="Xem chi tiết & Biểu đồ">
+                       <Eye size={18}/>
+                     </button>
+                     <button className="btn btn-ghost" style={{ padding: '8px', background: 'rgba(46, 160, 67, 0.1)', color: 'var(--success)' }} onClick={() => duplicateProduct(p)} title="Nhân bản">
+                       <Copy size={18}/>
+                     </button>
                      <button className="btn btn-ghost" style={{ padding: '8px', background: 'rgba(255,255,255,0.05)' }} onClick={() => { setForm(JSON.parse(JSON.stringify(p))); setShowForm(true); }} title="Sửa Recipe">
                        <Edit size={18}/>
                      </button>
-                     <button className="btn btn-ghost" style={{ padding: '8px', color: 'white', background: 'var(--danger)' }} onClick={() => deleteProduct(p.id)} title="Xóa Món">
+                     <button className="btn btn-ghost" style={{ padding: '8px', color: 'white', background: 'rgba(218, 54, 51, 0.2)', border: '1px solid rgba(218, 54, 51, 0.3)' }} onClick={() => deleteProduct(p.id)} title="Xóa Món">
                        <Trash2 size={18}/>
                      </button>
                   </div>
