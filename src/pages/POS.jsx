@@ -26,7 +26,8 @@ const POS = () => {
   const filteredProducts = state.products.filter(p => {
     const matchCat = activeCategory === 'Tất cả' || p.category === activeCategory;
     const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchCat && matchSearch;
+    const isNotDraft = p.status !== 'draft';
+    return matchCat && matchSearch && isNotDraft;
   });
 
   const getEntityMaxPortions = (entityId, requiredQty, unitMode = 'base') => {

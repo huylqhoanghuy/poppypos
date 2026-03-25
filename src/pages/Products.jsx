@@ -7,7 +7,7 @@ const Products = () => {
   const [search, setSearch] = useState('');
   
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ id: '', name: '', unit: '', category: '', price: '', image: '', recipe: [] });
+  const [form, setForm] = useState({ id: '', name: '', unit: '', category: '', price: '', image: '', recipe: [], status: 'active' });
   const [recipeItem, setRecipeItem] = useState({ ingredientId: '', qty: '', unitMode: 'base' });
 
   const [viewingProduct, setViewingProduct] = useState(null);
@@ -156,7 +156,7 @@ const Products = () => {
                   <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom:'6px', display:'block' }}>Tên hiển thị Kinh Doanh:</label>
                   <input required style={InputStyle} placeholder="VD: Combo Gà 1/2 Con" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
                   <div>
                     <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom:'6px', display:'block' }}>Nhóm danh mục:</label>
                     <select required style={InputStyle} value={form.category} onChange={e => setForm({...form, category: e.target.value})}>
@@ -165,8 +165,15 @@ const Products = () => {
                     </select>
                   </div>
                   <div>
-                    <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom:'6px', display:'block' }}>ĐVT Bán (Suất/Hộp/Khay):</label>
+                    <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom:'6px', display:'block' }}>ĐVT Bán (Suất/Hộp):</label>
                     <input required style={InputStyle} placeholder="Suất" value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom:'6px', display:'block' }}>Trạng thái:</label>
+                    <select style={{...InputStyle, borderColor: form.status === 'draft' ? 'var(--warning)' : 'var(--success)'}} value={form.status} onChange={e => setForm({...form, status: e.target.value})}>
+                       <option value="active">Đang bán (Hiện POS)</option>
+                       <option value="draft">Bản nháp (Ẩn POS)</option>
+                    </select>
                   </div>
                 </div>
                 
@@ -394,9 +401,14 @@ const Products = () => {
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
                           <h4 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: '4px' }}>{p.name}</h4>
-                          <span style={{ padding: '4px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                            {p.category} | Đo Năng Lực: ({p.unit || 'Suất'})
-                          </span>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <span style={{ padding: '4px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                              {p.category} | Đo Năng Lực: ({p.unit || 'Suất'})
+                            </span>
+                            {p.status === 'draft' && (
+                              <span style={{ padding: '4px 8px', background: 'rgba(249, 115, 22, 0.2)', color: 'var(--primary)', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', border: '1px solid var(--primary)' }}>NHÁP (ẨN POS)</span>
+                            )}
+                          </div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
                           <span style={{ background: port > 5 ? 'rgba(46, 160, 67, 0.2)' : 'rgba(218, 54, 51, 0.2)', color: port > 5 ? 'var(--success)' : 'var(--danger)', padding: '6px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 'bold' }}>
@@ -457,7 +469,10 @@ const Products = () => {
                         return (
                            <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                               <td style={{ padding: '12px' }}>
-                                 <strong style={{ fontSize: '1rem' }}>{p.name}</strong>
+                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <strong style={{ fontSize: '1rem' }}>{p.name}</strong>
+                                    {p.status === 'draft' && <span style={{ padding: '2px 6px', background: 'rgba(249, 115, 22, 0.2)', color: 'var(--primary)', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold' }}>NHÁP</span>}
+                                 </div>
                                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{p.category}</div>
                               </td>
                               <td style={{ padding: '12px' }}>
