@@ -109,9 +109,9 @@ const Orders = () => {
             <thead>
               <tr style={{ borderBottom: '1px solid var(--surface-border)', color: 'var(--text-secondary)' }}>
                 <th style={{ padding: '12px' }}>Thời Gian</th>
-                <th style={{ padding: '12px' }}>Mã Đơn</th>
+                <th style={{ padding: '12px' }}>Khách Hàng</th>
                 <th style={{ padding: '12px' }}>Kênh Bán</th>
-                <th style={{ padding: '12px' }}>Thực Thu (Net)</th>
+                <th style={{ padding: '12px' }}>Thực Thu (Ví)</th>
                 <th style={{ padding: '12px' }}>Trạng Thái</th>
                 <th style={{ padding: '12px', textAlign: 'right' }}>Thao Tác</th>
               </tr>
@@ -126,11 +126,16 @@ const Orders = () => {
                   <React.Fragment key={order.id}>
                     <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer' }} onClick={() => toggleExpand(order.id)}>
                       <td style={{ padding: '12px', fontSize: '0.9rem' }}>{new Date(order.date).toLocaleString('vi-VN')}</td>
-                      <td style={{ padding: '12px', fontWeight: 'bold' }}>{order.id}</td>
+                      <td style={{ padding: '12px' }}>
+                        <strong style={{ display: 'block' }}>{order.id}</strong>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{order.customerName || 'Khách vãng lai'} - {order.customerPhone || ''}</span>
+                      </td>
                       <td style={{ padding: '12px' }}>
                         <span style={{ padding: '4px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', fontSize: '0.85rem' }}>{order.channelName}</span>
                       </td>
-                      <td style={{ padding: '12px', color: 'var(--success)', fontWeight: 'bold' }}>{order.netAmount.toLocaleString('vi-VN')} đ</td>
+                      <td style={{ padding: '12px', color: 'var(--success)', fontWeight: 'bold' }}>
+                        {(order.netAmount + (Number(order.extraFee) || 0)).toLocaleString('vi-VN')} đ
+                      </td>
                       <td style={{ padding: '12px' }}>{getStatusBadge(order.status)}</td>
                       <td style={{ padding: '12px', textAlign: 'right' }}>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }} onClick={e => e.stopPropagation()}>
@@ -158,9 +163,16 @@ const Orders = () => {
                                 </div>
                               ))}
                             </div>
-                            <div style={{ marginTop: '16px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                              Tổng bill gốc: {order.totalAmount.toLocaleString('vi-VN')} đ | Chiết khấu/Phí sàn: -{order.discountAmount.toLocaleString('vi-VN')} đ
-                            </div>
+                            <div style={{ marginTop: '16px', fontSize: '0.9rem', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px' }}>
+                                <div>
+                                  Tổng bill gốc: {order.totalAmount.toLocaleString('vi-VN')} đ | Phí sàn: -{order.discountAmount.toLocaleString('vi-VN')} đ
+                                </div>
+                                {Number(order.extraFee) > 0 && (
+                                  <div style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
+                                    + Phí phát sinh: {Number(order.extraFee).toLocaleString('vi-VN')} đ ({order.extraFeeNote || 'Không có ghi chú'})
+                                  </div>
+                                )}
+                              </div>
                           </div>
                         </td>
                       </tr>

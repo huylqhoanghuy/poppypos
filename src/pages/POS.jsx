@@ -7,8 +7,14 @@ const POS = () => {
   const [activeCategory, setActiveCategory] = useState('Tất cả');
   const [searchQuery, setSearchQuery] = useState('');
   const [cart, setCart] = useState([]);
-  
   const [selectedChannelId, setSelectedChannelId] = useState('');
+  
+  // New POS fields
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [orderCode, setOrderCode] = useState('');
+  const [extraFee, setExtraFee] = useState(0);
+  const [extraFeeNote, setExtraFeeNote] = useState('');
   React.useEffect(() => {
      if (!selectedChannelId && state.salesChannels?.length > 0) {
         setSelectedChannelId(state.salesChannels[0].id);
@@ -99,13 +105,44 @@ const POS = () => {
   const handleCheckout = () => {
     if (cart.length === 0) return;
     const orderItems = cart.map(item => ({ product: item, quantity: item.qty }));
+    const finalOrderCode = orderCode || `DH-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+    
     dispatch({ type: 'ADD_POS_ORDER', payload: { 
+       orderCode: finalOrderCode,
+       customerName,
+       customerPhone,
+       extraFee: Number(extraFee) || 0,
+       extraFeeNote,
        totalAmount: total, discountAmount, netAmount,
        channelId: selectedChannel.id, channelName: selectedChannel.name,
        items: orderItems, type: 'Giao hàng - Kênh Bán' 
     } });
-    alert(`Thanh toán thành công! Nhận tiền net về ví: ${netAmount.toLocaleString('vi-VN')} đ`);
+    
+    const displayTotal = netAmount + (Number(extraFee) || 0);
+    alert(`Thanh toán thành công! Mã đơn: ${finalOrderCode}\nNhận tiền net về ví: ${displayTotal.toLocaleString('vi-VN')} đ`);
+    
+    // Reset form
     setCart([]);
+    setCustomerName('');
+    setCustomerPhone('');
+    setOrderCode('');
+    setExtraFee(0);
+    setExtraFeeNote('');
+  };
+
+  const generateOrderCode = () => {
+    setOrderCode(`POS-${Date.now().toString().slice(-6)}`);
+  };
+
+  const InputStyle = { 
+    background: 'rgba(0,0,0,0.3)', 
+    border: '1px solid var(--surface-border)', 
+    color: 'white', 
+    padding: '8px 12px', 
+    borderRadius: '8px', 
+    width: '100%', 
+    outline: 'none',
+    fontSize: '0.9rem'
   };
 
   return (
@@ -223,37 +260,80 @@ const POS = () => {
           )}
         </div>
 
-        <div style={{ padding: '20px', borderTop: '1px solid var(--surface-border)', background: 'rgba(0,0,0,0.2)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <span style={{ color: 'var(--text-secondary)' }}>Kênh chốt đơn:</span>
-            <select style={{ background:'rgba(0,0,0,0.5)', color:'white', border:'1px solid var(--surface-border)', padding:'6px', borderRadius:'4px', outline:'none', maxWidth: '200px' }} 
-                    value={selectedChannelId} onChange={e => setSelectedChannelId(e.target.value)}>
-               {state.salesChannels?.map(ch => <option key={ch.id} value={ch.id}>{ch.name} (-{ch.discountRate}%)</option>)}
-            </select>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <span style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>Tổng bill khách trả:</span>
-            <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>{total.toLocaleString('vi-VN')} đ</span>
-          </div>
-          {discountAmount > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: 'var(--warning)' }}>
-              <span style={{ fontSize: '0.9rem' }}>Phí Sàn Môi Giới (-{selectedChannel.discountRate}%):</span>
-              <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>-{discountAmount.toLocaleString('vi-VN')} đ</span>
-            </div>
-          )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', color: 'var(--success)' }}>
-            <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Thực Thu Vào Quỹ:</span>
-            <span style={{ fontSize: '1.4rem', fontWeight: 'bold', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{netAmount.toLocaleString('vi-VN')} đ</span>
-          </div>
+        <div style={{ padding: '20px', borderTop: '1px solid var(--surface-border)', background: 'rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           
-          <button 
-            className="btn btn-primary" 
-            style={{ width: '100%', padding: '16px', fontSize: '1.1rem', borderRadius: '12px', fontWeight: 'bold' }}
-            disabled={cart.length === 0}
-            onClick={handleCheckout}
-          >
-            <CreditCard size={20} /> Bán & Thu Tiền Net Bảng
-          </button>
+          {/* Customer Info Section */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            <div>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Tên Khách Hàng:</label>
+              <input style={InputStyle} placeholder="Anh Tuấn..." value={customerName} onChange={e => setCustomerName(e.target.value)} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Số Điện Thoại:</label>
+              <input style={InputStyle} placeholder="09xxx..." value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
+            </div>
+          </div>
+
+          {/* Order Code Section */}
+          <div>
+            <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Mã Đơn (Grab/Shopee/Tự tạo):</label>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input style={InputStyle} placeholder="KĐ-1234..." value={orderCode} onChange={e => setOrderCode(e.target.value)} />
+              <button className="btn btn-ghost" onClick={generateOrderCode} style={{ padding: '8px', fontSize: '0.7rem' }}>Auto</button>
+            </div>
+          </div>
+
+          {/* Extra Fee Section */}
+          <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '12px', border: '1px dashed var(--surface-border)' }}>
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Phí phát sinh (Vd: Ship, Lễ):</span>
+                <input type="number" style={{...InputStyle, width: '100px', padding: '4px 8px'}} value={extraFee} onChange={e => setExtraFee(e.target.value)} />
+             </div>
+             <input style={{...InputStyle, fontSize: '0.8rem', padding: '4px 8px'}} placeholder="Ghi chú phí (Làm nóng món...)" value={extraFeeNote} onChange={e => setExtraFeeNote(e.target.value)} />
+          </div>
+
+          <div style={{ borderTop: '1px solid var(--surface-border)', paddingTop: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Kênh chốt đơn:</span>
+              <select style={{ background:'rgba(0,0,0,0.5)', color:'white', border:'1px solid var(--surface-border)', padding:'6px', borderRadius:'4px', outline:'none', maxWidth: '200px' }} 
+                      value={selectedChannelId} onChange={e => setSelectedChannelId(e.target.value)}>
+                 {state.salesChannels?.map(ch => <option key={ch.id} value={ch.id}>{ch.name} (-{ch.discountRate}%)</option>)}
+              </select>
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Tổng bill sản phẩm:</span>
+              <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{total.toLocaleString('vi-VN')} đ</span>
+            </div>
+
+            {discountAmount > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', color: 'var(--warning)' }}>
+                <span style={{ fontSize: '0.8rem' }}>Phí Sàn ({selectedChannel.discountRate}%):</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>-{discountAmount.toLocaleString('vi-VN')} đ</span>
+              </div>
+            )}
+
+            {Number(extraFee) > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', color: 'var(--primary)' }}>
+                <span style={{ fontSize: '0.8rem' }}>Phí phát sinh cộng thêm:</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>+{Number(extraFee).toLocaleString('vi-VN')} đ</span>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', marginBottom: '16px', color: 'var(--success)' }}>
+              <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Thực Thu Vào Quỹ:</span>
+              <span style={{ fontSize: '1.4rem', fontWeight: 'bold', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{(netAmount + (Number(extraFee) || 0)).toLocaleString('vi-VN')} đ</span>
+            </div>
+            
+            <button 
+              className="btn btn-primary" 
+              style={{ width: '100%', padding: '16px', fontSize: '1.1rem', borderRadius: '12px', fontWeight: 'bold' }}
+              disabled={cart.length === 0}
+              onClick={handleCheckout}
+            >
+              <CreditCard size={20} /> Bán & Thu Tiền Net Bảng
+            </button>
+          </div>
         </div>
       </div>
     </div>
