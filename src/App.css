@@ -1,0 +1,141 @@
+.app-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-width);
+  height: 100%;
+  border-right: 1px solid var(--surface-border);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-color);
+  backdrop-filter: blur(20px);
+}
+
+.sidebar-header {
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--surface-border);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary);
+  gap: 12px;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.nav-item.active {
+  background: rgba(249, 115, 22, 0.1);
+  color: var(--primary);
+}
+
+/* Main Content Wrapper */
+.main-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header */
+.top-header {
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--surface-border);
+  background: rgba(13, 17, 23, 0.8);
+  backdrop-filter: blur(12px);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Content Area */
+.content-area {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  background: var(--bg-color);
+}
+
+/* MEDIA QUERIES FOR MOBILE REPONSIVE */
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--surface-border);
+  }
+  .sidebar-header {
+    justify-content: center;
+  }
+  .sidebar-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 8px;
+  }
+  .nav-item {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+  .main-wrapper {
+    flex: 1;
+    overflow-y: hidden;
+  }
+  .content-area {
+    padding: 12px;
+  }
+  .pos-container {
+    flex-direction: column !important;
+    overflow-y: auto !important;
+  }
+  .pos-cart {
+    width: 100% !important;
+    max-height: 50vh;
+    flex-shrink: 0;
+  }
+  .po-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .finance-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
