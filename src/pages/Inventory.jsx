@@ -18,6 +18,9 @@ const Inventory = () => {
   const [poForm, setPoForm] = useState({ supplierId: '', items: [], note: '', status: 'Paid' });
   const [poItem, setPoItem] = useState({ ingredientId: '', buyUnit: '', buyQty: '', itemTotalDisplay: '', baseQty: '' });
 
+  const [showAdjustModal, setShowAdjustModal] = useState(false);
+  const [adjustForm, setAdjustForm] = useState({ id: '', name: '', oldStock: 0, newStock: '', unit: '' });
+
   const handleIngredientChange = (e) => {
     const val = e.target.value;
     const ing = state.ingredients.find(i => i.id === val);
@@ -113,6 +116,14 @@ const Inventory = () => {
       dispatch({ type: 'UPDATE_PURCHASE_ORDER_STATUS', payload: { id: poId, status: 'Paid' } });
     }
   }
+
+  const handleAdjustStock = (e) => {
+    e.preventDefault();
+    const ns = Number(adjustForm.newStock);
+    if (isNaN(ns)) return alert('Vui lòng nhập số lượng hợp lệ');
+    dispatch({ type: 'ADJUST_STOCK', payload: { id: adjustForm.id, newStock: ns } });
+    setShowAdjustModal(false);
+  };
 
   const editPO = (po) => {
     dispatch({ type: 'DELETE_PURCHASE_ORDER', payload: po.id });
@@ -224,6 +235,38 @@ const Inventory = () => {
             </div>
           )}
 
+          {showAdjustModal && (
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
+              <div className="glass-panel" style={{ width: '450px', padding: '24px', background: 'var(--bg-color)', border: '1px solid var(--primary)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+                  <h3 style={{ margin: 0, color: 'var(--primary)' }}>Điều Chỉnh Tồn Kho Thủ Công</h3>
+                  <button className="btn btn-ghost" onClick={() => setShowAdjustModal(false)} style={{ padding: '4px' }}><X/></button>
+                </div>
+                <form onSubmit={handleAdjustStock} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <p style={{ margin: 0, fontSize: '0.95rem' }}>
+                    Vật tư: <strong style={{color: 'var(--primary)'}}>{adjustForm.name}</strong>
+                  </p>
+                  <div style={{ background: 'rgba(255,255,255,0.05)', padding: '16px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{color: 'var(--text-secondary)'}}>Tồn kho hiện tại:</span>
+                    <span style={{fontWeight: 'bold', fontSize: '1.1rem'}}>{adjustForm.oldStock} {adjustForm.unit}</span>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>Số lượng thực tế mới ({adjustForm.unit}):</label>
+                    <input autoFocus required type="number" step="0.01" style={{...InputStyle, fontSize: '1.2rem', textAlign: 'center'}} 
+                      value={adjustForm.newStock} 
+                      onChange={e => setAdjustForm({...adjustForm, newStock: e.target.value})} 
+                      placeholder="Nhập số chuẩn tại kho..."
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                    <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '12px' }}>Xác Nhận Cân Kho</button>
+                    <button type="button" className="btn btn-ghost" style={{ flex: 1 }} onClick={() => setShowAdjustModal(false)}>Hủy</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
           <div style={{overflowX: 'auto'}}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
               <thead>
@@ -261,6 +304,7 @@ const Inventory = () => {
                       <span style={{fontSize: '0.8rem', color: 'var(--text-secondary)'}}>~ {Math.round(ing.cost * ing.conversionRate).toLocaleString('vi-VN')}đ/{ing.buyUnit}</span>
                     </td>
                     <td style={{ padding: '12px', textAlign: 'right' }}>
+                      <button className="btn btn-ghost" title="Điều chỉnh tồn" style={{ color: 'var(--warning)' }} onClick={() => { setAdjustForm({ id: ing.id, name: ing.name, oldStock: ing.stock, newStock: ing.stock, unit: ing.unit }); setShowAdjustModal(true); }}><Package size={16}/></button>
                       <button className="btn btn-ghost" onClick={() => { setItemForm({...ing, buyCost: formatNum(ing.cost * ing.conversionRate)}); setShowItemForm(true); }}><Edit size={16}/></button>
                       <button className="btn btn-ghost" style={{color: 'var(--danger)'}} onClick={() => deleteIngredient(ing.id)}><Trash2 size={16}/></button>
                     </td>

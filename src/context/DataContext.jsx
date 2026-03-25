@@ -71,6 +71,10 @@ const reducer = (state, action) => {
     case 'ADD_INGREDIENT': return { ...state, ingredients: [...state.ingredients, { ...action.payload, id: generateId('NL-') }] };
     case 'UPDATE_INGREDIENT': return { ...state, ingredients: state.ingredients.map(i => i.id === action.payload.id ? action.payload : i) };
     case 'DELETE_INGREDIENT': return { ...state, ingredients: state.ingredients.filter(i => i.id !== action.payload) };
+    case 'ADJUST_STOCK': return { 
+      ...state, 
+      ingredients: state.ingredients.map(i => i.id === action.payload.id ? { ...i, stock: action.payload.newStock } : i) 
+    };
 
     case 'ADD_PRODUCT': return { ...state, products: [...state.products, { ...action.payload, id: generateId('SP-') }] };
     case 'UPDATE_PRODUCT': return { ...state, products: state.products.map(p => p.id === action.payload.id ? action.payload : p) };
