@@ -12,50 +12,26 @@
   --font-xl: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem);
   --font-2xl: clamp(1.5rem, 1.3rem + 1vw, 2rem);
   
-  /* Brand Identity Palette - Derived from Logo */
-  --poppy-orange: #f59e0b;  /* Warm Amber/Orange from Logo Circle */
-  --poppy-red: #ef4444;     /* Red from Chicken Comb */
-  --poppy-navy: #0f172a;    /* Navy/Black from Glasses & Outlines */
-  --poppy-cream: #fffaf0;   /* Creamy white from Feathers */
+  /* Brand Identity Palette - Premium Soft SaaS */
+  --poppy-navy: #0A0F25;
+  --poppy-orange: #FF6600;
+  --poppy-cream: #F8F9FA;
 
-  /* Dark Theme Tokens */
-  --bg-color: #0d1117;
-  --surface-color: rgba(22, 27, 34, 0.8);
-  --surface-variant: rgba(0, 0, 0, 0.2); /* Subtle dark for dark mode */
-  --surface-border: rgba(255, 255, 255, 0.08);
-  --primary: var(--poppy-orange);
-  --primary-hover: #d97706;
-  --success: #10b981;
-  --danger: var(--poppy-red);
-  --warning: #f59e0b;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-
-  /* Layout Constants */
-  --sidebar-width: 280px;
-  --header-height: 70px;
-  --mobile-nav-height: 60px;
-  --transition-fast: 0.2s ease;
-  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  /* Premium Effects */
-  --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
-  --shadow-lg: 0 12px 24px rgba(0,0,0,0.15);
-  --shadow-premium: 0 10px 40px -10px rgba(0,0,0,0.3);
-  --glass-blur: 24px;
+  /* Theme Tokens - CUSTOM BRAND PALETTE */
+  --bg-color: #F4F7FE; /* Nền xám nhạt tạo cảm giác sạch sẽ (Sáng & Ghi) */
+  --surface-color: #ffffff; /* Trắng chuẩn cho thẻ */
+  --surface-variant: #F9FAFB; /* Xám nhạt làm nền phụ */
+  --surface-border: #E2E8F0; /* Xám làm viền cứng cáp */
+  --brand-peach: #FFD0A3; /* Cảm hứng Đào (Peach) cho hover/highlight đặc biệt */
+  --text-primary: #1B4D3E; /* Xanh Rêu (Forest Green) làm chữ chính */
+  --text-secondary: #3b6b58; /* Xanh Rêu nhạt hơn làm chữ phụ */
+  --primary: #F75300; /* Cam rực rỡ Logo làm màu chủ đạo */
+  --success: #10B981;
+  --danger: #EE5D50;
+  --warning: #F59E0B;
 }
 
-:root[data-theme='light'] {
-  --bg-color: #fdfaf6; /* Soft cream background like the logo interior */
-  --surface-color: rgba(255, 255, 255, 0.95);
-  --surface-variant: rgba(15, 23, 42, 0.05); /* Soft gray/navy for light mode */
-  --surface-border: rgba(15, 23, 42, 0.1);
-  --text-primary: var(--poppy-navy); /* High contrast navy text */
-  --text-secondary: #64748b;
-  --primary: #ea580c; /* Deeper orange for readability */
-}
+/* Layout Constants */
 
 * {
   box-sizing: border-box;
@@ -68,67 +44,135 @@ body {
   background-color: var(--bg-color);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale; /* Làm nét chữ tuyệt đối trên màn Mac/Retina */
   min-height: 100vh;
   overflow: hidden;
 }
 
-/* Glassmorphism helpers */
+/* Custom Smooth Mac-like Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface-border);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Premium SaaS Cards */
 .glass-panel {
   background: var(--surface-color);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--surface-border);
-  border-radius: var(--radius-md);
+  border: none; /* Khử viền để nổi khối tinh tế */
+  border-radius: 12px;
   box-shadow: var(--shadow-md);
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .glass-panel:hover {
   box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
 }
 
-/* Table Styles */
+/* Table & Form Styles (Enterprise Data Grid) */
 .table-responsive {
-  border-radius: var(--radius-md);
-  overflow: hidden;
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--surface-border);
+  box-shadow: none; /* Lưới dữ liệu để phẳng sẽ dễ đọc hơn */
+  background: var(--surface-color);
+  width: 100%;
 }
 
 .table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse; /* Chuyển thành collapse để nối liền cột chia và dòng kẻ (Grid lines) */
 }
 
-.table th {
-  background: var(--surface-variant);
-  padding: 16px;
-  font-size: var(--font-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 700;
-  color: var(--text-secondary);
-  border-bottom: 1px solid var(--surface-border);
-}
-
-.table td {
-  padding: 16px;
-  border-bottom: 1px solid var(--surface-border);
-  font-size: var(--font-sm);
+table th, .table th, table td, .table td {
+  padding: 12px 16px; /* Thu gọn padding để nhìn tổng thể bảng chặt chẽ hơn */
+  border: 1px solid var(--surface-border); /* Thêm Cột chia và Dòng kẻ toàn diện */
   vertical-align: middle;
 }
 
-.table tr:last-child td {
-  border-bottom: none;
+table th, .table th {
+  background-color: #F8FAFC; /* Nền xám Slate 50 siêu tĩnh và sạch */
+  font-size: 14px;
+  font-weight: 700; /* Tăng độ đậm tiêu đề */
+  color: var(--text-primary); /* Xanh Lục Bảo */
+  text-transform: none; /* Khử in hoa để văn bản dài không bị rối mắt */
+  white-space: nowrap;
+  border-bottom: 2px solid var(--primary); /* Lót Cam làm điểm nhấn tiêu đề cực kỳ cá tính */
 }
 
-.table tr:nth-child(even) {
-  background: rgba(255, 255, 255, 0.01);
+table td, .table td {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary); /* Sắc nét */
+  font-variant-numeric: tabular-nums;
+  background-color: #ffffff;
 }
 
-.hover-row:hover {
-  background: var(--surface-variant) !important;
-  cursor: pointer;
+/* Nền xen kẽ (Zebra Striping) - Cứ 1 dòng trắng thì 1 dòng xám */
+table tbody tr:nth-child(even) td, .table tbody tr:nth-child(even) td {
+  background-color: #F8FAFC; /* Nền xám lạnh siêu nhạt */
+}
+
+/* Hover Effect - Làm hiệu ứng cực nhạt và giữ nguyên màu text, không làm lóa chữ */
+table tbody tr:hover td, .table tbody tr:hover td, .hover-row:hover td {
+  background-color: var(--surface-variant) !important; /* Xám siêu nhạt thay vì Peach sặc sỡ */
+  transition: background-color 0.2s;
+}
+
+@media (max-width: 768px) {
+  .table-responsive {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+  
+  .table {
+    min-width: 800px;
+  }
+  
+  table th, .table th, table td, .table td {
+    padding: 10px 12px;
+  }
+}
+
+/* Global Hardened Labels */
+label {
+  font-weight: 700;
+  color: var(--text-primary) !important;
+  font-size: 14px;
+  margin-bottom: 4px;
+  display: block;
+}
+
+/* Global Premium Inputs */
+input, select, textarea {
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600; /* Tăng độ đậm đen toàn cục */
+  color: var(--text-primary);
+  background: var(--surface-color);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast); 
+  outline: none;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.15); /* Tương thích RGB của #FF6600 */
 }
 
 /* Page Specific Layouts */
@@ -184,10 +228,24 @@ body {
   padding: 8px 16px;
   border-radius: var(--radius-sm);
   font-weight: 500;
+  font-size: var(--font-sm);
   cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
+  transition: all var(--transition-fast); /* Animation siêu mịn */
+  border: 1px solid transparent;
+  background: var(--surface-color);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
   font-family: inherit;
+}
+
+.btn:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
 }
 
 .divider-solid {
@@ -199,29 +257,129 @@ body {
 
 .divider-dashed {
   height: 0;
-  border-top: 1px dashed var(--surface-border);
+  border-top: var(--border-thin);
+  border-top-style: dashed;
   margin: 16px 0;
   width: 100%;
 }
 
 .brand-divider {
   height: 2px;
-  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  background: var(--primary);
   margin: 24px 0;
-  opacity: 0.5;
+  border-radius: 2px;
 }
 .btn-primary {
   background-color: var(--primary);
-  color: white;
+  color: #ffffff;
+  border: 1px solid var(--primary);
+  transition: all 0.2s ease;
 }
 .btn-primary:hover {
-  background-color: var(--primary-hover);
+  background-color: #ffffff !important;
+  color: var(--primary) !important;
+  border-color: var(--primary) !important;
 }
 .btn-ghost {
   background: transparent;
   color: var(--text-secondary);
+  border: 1px solid transparent;
+  box-shadow: none;
 }
 .btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-variant);
   color: var(--text-primary);
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --- Phân tách Form Thêm/Sửa/Xóa (SaaS Tooling) --- */
+/* 1. Backdrop làm tối mờ hệ thống */
+.modal-overlay {
+  background: rgba(10, 15, 37, 0.4) !important;
+  backdrop-filter: blur(4px) !important;
+  z-index: 2000 !important;
+}
+
+/* 2. Thân Form Modal: Tiêu chuẩn CRM/Kế toán (Nền trắng, chữ đen, viền xám nhẹ) */
+.modal-overlay > .glass-panel,
+.modal-overlay > form,
+.modal-overlay > div > form,
+.modal-overlay > div > div.glass-panel,
+.modal-overlay div[style*="background: #F9FAFB"],
+.modal-overlay > form.glass-panel {
+  background: #FFFFFF !important;
+  color: #111827 !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 12px !important;
+}
+
+/* Đồng nhất Typography Modal */
+.modal-overlay h3,
+.modal-overlay h4,
+.modal-overlay h5,
+.modal-overlay p {
+  color: #111827 !important;
+}
+
+.modal-overlay h3 {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+}
+
+.modal-overlay label {
+  color: #374151 !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
+/* 3. Ô nhập liệu (Inputs/Selects/Textareas): Tiêu chuẩn nhất quán */
+.form-input,
+.modal-overlay input,
+.modal-overlay select,
+.modal-overlay textarea {
+  background: #F9FAFB !important;
+  color: #111827 !important;
+  border: 1px solid #D1D5DB !important;
+  outline: none !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s !important;
+  border-radius: 6px !important;
+  padding: 10px 12px !important;
+  line-height: 1.5 !important;
+  box-sizing: border-box !important;
+  width: 100%; /* No !important here so inline styles can override */
+  max-width: 100%;
+}
+
+.form-input:focus,
+.modal-overlay input:focus,
+.modal-overlay select:focus,
+.modal-overlay textarea:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px rgba(247, 83, 0, 0.15) !important;
+  background: #FFFFFF !important;
+}
+
+/* Khối Alert/Note đặc biệt bên trong Modal */
+.modal-overlay div[style*="background: #FEF3C7"],
+.modal-overlay div[style*="rgba(245, 158, 11, 0.1)"] {
+  background: #FEF3C7 !important;
+  border: 1px solid #FDE68A !important;
+  color: #92400E !important;
+  font-size: 13px !important;
+  padding: 12px !important;
+  border-radius: 6px !important;
 }

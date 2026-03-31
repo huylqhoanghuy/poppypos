@@ -1,0 +1,308 @@
+export const ReportService = {
+  generateBusinessReport: (state, filterDate) => {
+    if (!state) return null;
+    try {
+      const start = filterDate.start ? new Date(filterDate.start).setHours(0,0,0,0) : 0;
+      const end = filterDate.end ? new Date(filterDate.end).setHours(23,59,59,999) : Infinity;
+
+      const posOrders = state.posOrders || [];
+      const transactions = state.transactions || [];
+      const salesChannels = state.salesChannels || [];
+      const products = state.products || [];
+      const ingredients = state.ingredients || [];
+
+      const dailyTrend = {}; 
+      const channelStats = {};
+      const productsByChannel = {}; 
+      const ingredientsByChannel = {}; 
+
+      let totalSuccessOrders = 0;
+      let totalCancelledOrders = 0;
+
+      salesChannels.forEach(c => { channelStats[c.name] = { name: c.name, revenue: 0, cogs: 0, fee: 0, opex: 0, orders: 0, dailyLogs: {} }; });
+
+      const getDateStr = (d) => {
+        const date = new Date(d);
+        return `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')}`;
+      };
+
+      const getProductCost = (recipe) => {
+        if (!recipe || !Array.isArray(recipe)) return 0;
+        return recipe.reduce((sum, item) => {
+          const sub = products.find(p => p.id === item.ingredientId);
+          if (sub) {
+            const subQty = item.unitMode === 'divide' ? (1/item.qty) : item.qty;
+            return sum + (getProductCost(sub.recipe) * subQty);
+          }
+          const ing = ingredients.find(i => i.id === item.ingredientId);
+          if (ing) {
+            let bQty = item.qty || 0;
+            if (item.unitMode === 'buy') bQty = (item.qty || 0) * (ing.conversionRate || 1);
+            if (item.unitMode === 'divide') bQty = 1 / (item.qty || 1);
+            return sum + (bQty * (ing.cost || 0));
+          }
+          return sum;
+        }, 0);
+      };
+
+      const explodeIngredients = (recipe, portionsNeeded = 1, productRevPerPortion = 0, totalRecipeCost = 0, ch = 'Tại Quầy', feeRate = 0, dateStr = 'unknown') => {
+        if (!recipe || !Array.isArray(recipe) || totalRecipeCost === 0) return;
+        recipe.forEach(item => {
+            const sub = products.find(p => p.id === item.ingredientId);
+            if (sub) {
+                const subQty = item.unitMode === 'divide' ? (1/item.qty) : item.qty;
+                explodeIngredients(sub.recipe, portionsNeeded * subQty, productRevPerPortion, totalRecipeCost, ch, feeRate, dateStr);
+                return;
+            }
+            const ing = ingredients.find(i => i.id === item.ingredientId);
+            if (ing) {
+                let bQty = item.qty || 0;
+                if (item.unitMode === 'buy') bQty = (item.qty || 0) * (ing.conversionRate || 1);
+                if (item.unitMode === 'divide') bQty = 1 / (item.qty || 1);
+                
+                const ingCostInRecipe = (bQty * (ing.cost || 0));
+                let revAttribution = (productRevPerPortion * (ingCostInRecipe / totalRecipeCost)) || 0;
+                const actualCost = ingCostInRecipe * portionsNeeded;
+                const actualBaseQty = bQty * portionsNeeded;
+                const itemAttributedRevenue = revAttribution * portionsNeeded;
+                const itemFee = itemAttributedRevenue * (feeRate / 100);
+
+                if (!ingredientsByChannel[ch]) ingredientsByChannel[ch] = {};
+                if (!ingredientsByChannel[ch][ing.id]) {
+                    ingredientsByChannel[ch][ing.id] = { id: ing.id, name: ing.name, attributedRevenue: 0, totalCost: 0, qty: 0, unit: ing.unit, fee: 0, dailyLogs: {} };
+                }
+                const ingObj = ingredientsByChannel[ch][ing.id];
+                ingObj.attributedRevenue += itemAttributedRevenue;
+                ingObj.totalCost += actualCost;
+                ingObj.qty += actualBaseQty;
+                ingObj.fee += itemFee;
+
+                if (!ingObj.dailyLogs[dateStr]) ingObj.dailyLogs[dateStr] = { date: dateStr, qty: 0, attributedRevenue: 0, totalCost: 0, fee: 0, opex: 0 };
+                ingObj.dailyLogs[dateStr].qty += actualBaseQty;
+                ingObj.dailyLogs[dateStr].attributedRevenue += itemAttributedRevenue;
+                ingObj.dailyLogs[dateStr].totalCost += actualCost;
+                ingObj.dailyLogs[dateStr].fee += itemFee;
+            }
+        });
+      };
+
+      posOrders.forEach(o => {
+        const tTime = new Date(o.date).getTime();
+        if (tTime >= start && tTime <= end) {
+            if (o.status === 'Cancelled') {
+                totalCancelledOrders += 1;
+            } else {
+                totalSuccessOrders += 1;
+                const ch = o.channelName;
+                const matchedChannelObj = salesChannels.find(c => c.name === ch);
+                if (!matchedChannelObj) return;
+
+                const dateStr = getDateStr(o.date);
+                const net = Number(o.netAmount) || 0;
+
+                const commissionRate = Number(matchedChannelObj.commission) || 0;
+                const orderCommissionCost = net * (commissionRate / 100);
+
+                channelStats[ch].revenue += net;
+                channelStats[ch].orders += 1;
+                channelStats[ch].fee += orderCommissionCost;
+
+                if (!channelStats[ch].dailyLogs[dateStr]) channelStats[ch].dailyLogs[dateStr] = { date: dateStr, revenue: 0, orders: 0, fee: 0, cogs: 0, opex: 0 };
+                channelStats[ch].dailyLogs[dateStr].revenue += net;
+                channelStats[ch].dailyLogs[dateStr].orders += 1;
+                channelStats[ch].dailyLogs[dateStr].fee += orderCommissionCost;
+
+                if (!dailyTrend[dateStr]) dailyTrend[dateStr] = { revenue: 0, profit: 0, orders: 0 };
+                dailyTrend[dateStr].revenue += net;
+                dailyTrend[dateStr].orders += 1;
+
+                if (!productsByChannel[ch]) productsByChannel[ch] = {};
+
+                let orderCOGS = 0;
+                const orderItems = o.items || (o.cart ? o.cart.map(c => ({ product: c, quantity: c.qty })) : []);
+                const discountRatio = (o.totalAmount > 0) ? (o.netAmount / o.totalAmount) : 1;
+
+                orderItems.forEach(cartItem => {
+                    if (!cartItem.product) return;
+                    const pid = cartItem.product.id;
+                    const qty = cartItem.quantity || 1;
+                    
+                    let latestProduct = products.find(p => p.id === pid);
+                    if (!latestProduct && cartItem.product.name) {
+                        latestProduct = products.find(p => p.name.trim().toLowerCase() === cartItem.product.name.trim().toLowerCase());
+                    }
+
+                    const recipeToUse = latestProduct ? latestProduct.recipe : (cartItem.product.recipe || []);
+                    
+                    const unitCost = getProductCost(recipeToUse);
+                    const itemCOGS = unitCost * qty;
+                    orderCOGS += itemCOGS;
+
+                    const finalItemRev = ((cartItem.product.price || 0) * qty) * discountRatio;
+                    const finalItemFee = finalItemRev * (commissionRate / 100);
+                    
+                    const finalPid = latestProduct ? latestProduct.id : (pid || cartItem.product.name);
+                    const finalName = latestProduct ? latestProduct.name : cartItem.product.name;
+
+                    const basePrice = cartItem.product.price || (latestProduct ? latestProduct.price : 0);
+
+                    if (!productsByChannel[ch][finalPid]) {
+                        productsByChannel[ch][finalPid] = { id: finalPid, name: finalName, qty: 0, revenue: 0, cogs: 0, fee: 0, unitCost, basePrice, dailyLogs: {} };
+                    }
+                    const pObj = productsByChannel[ch][finalPid];
+                    pObj.qty += qty;
+                    pObj.revenue += finalItemRev;
+                    pObj.cogs += itemCOGS;
+                    pObj.fee += finalItemFee;
+
+                    if (!pObj.dailyLogs[dateStr]) pObj.dailyLogs[dateStr] = { date: dateStr, qty: 0, revenue: 0, cogs: 0, fee: 0, opex: 0 };
+                    pObj.dailyLogs[dateStr].qty += qty;
+                    pObj.dailyLogs[dateStr].revenue += finalItemRev;
+                    pObj.dailyLogs[dateStr].cogs += itemCOGS;
+                    pObj.dailyLogs[dateStr].fee += finalItemFee;
+
+                    explodeIngredients(recipeToUse, qty, finalItemRev / qty, unitCost, ch, commissionRate, dateStr);
+                });
+
+                channelStats[ch].cogs += orderCOGS;
+                channelStats[ch].dailyLogs[dateStr].cogs += orderCOGS;
+                dailyTrend[dateStr].profit += (net - orderCOGS - orderCommissionCost); 
+            }
+        }
+      });
+
+      transactions.forEach(t => {
+        const tTime = new Date(t.date).getTime();
+        if (tTime >= start && tTime <= end && !t.note?.includes('[LUÂN CHUYỂN]')) {
+            let matchedChannel = null;
+            salesChannels.forEach(sc => {
+                if (t.note?.includes(sc.name) || t.relatedId?.includes(sc.name)) matchedChannel = sc.name;
+            });
+            
+            if (matchedChannel && channelStats[matchedChannel]) {
+                const amt = Number(t.amount) || 0;
+                const dateStr = getDateStr(t.date);
+                if (!channelStats[matchedChannel].dailyLogs[dateStr]) channelStats[matchedChannel].dailyLogs[dateStr] = { date: dateStr, revenue: 0, orders: 0, fee: 0, cogs: 0, opex: 0 };
+
+                if (t.type === 'Thu' && t.categoryId !== 'FC1') {
+                    channelStats[matchedChannel].revenue += amt;
+                    channelStats[matchedChannel].dailyLogs[dateStr].revenue += amt;
+                    if (!dailyTrend[dateStr]) dailyTrend[dateStr] = { revenue: 0, profit: 0, orders: 0 };
+                    dailyTrend[dateStr].revenue += amt;
+                    dailyTrend[dateStr].profit += amt;
+                } 
+                else if (t.type === 'Chi' && t.categoryId !== 'FC4') {
+                    channelStats[matchedChannel].opex += amt;
+                    channelStats[matchedChannel].dailyLogs[dateStr].opex += amt;
+                    if (!dailyTrend[dateStr]) dailyTrend[dateStr] = { revenue: 0, profit: 0, orders: 0 };
+                    dailyTrend[dateStr].profit -= amt;
+                }
+            }
+        }
+      });
+
+      let totalRevenue = 0, totalCOGS = 0, totalFee = 0, totalOPEX = 0;
+      const channelArray = [];
+      Object.values(channelStats).forEach(ch => {
+          if (ch.revenue > 0 || ch.cogs > 0 || ch.opex > 0 || ch.fee > 0 || ch.orders > 0) {
+              const profit = ch.revenue - ch.cogs - ch.fee - ch.opex;
+              ch.profit = profit;
+              ch.margin = ch.revenue > 0 ? (profit / ch.revenue) * 100 : 0;
+              channelArray.push(ch);
+              
+              totalRevenue += ch.revenue;
+              totalCOGS += ch.cogs;
+              totalFee += ch.fee;
+              totalOPEX += ch.opex;
+          }
+      });
+
+      const totalProfit = totalRevenue - totalCOGS - totalFee - totalOPEX;
+      
+      const sortedTrendLabels = Object.keys(dailyTrend).sort((a,b) => a.localeCompare(b));
+
+      const totalProductsMap = {};
+      Object.keys(productsByChannel).forEach(ch => {
+          if (Object.keys(productsByChannel[ch]).length > 0) {
+              const items = Object.values(productsByChannel[ch]);
+              const chStat = channelArray.find(c => c.name === ch);
+              const chRev = chStat ? chStat.revenue : 0;
+              const chOpex = chStat ? chStat.opex : 0;
+
+              items.forEach(p => {
+                  p.opex = chRev > 0 ? (p.revenue / chRev) * chOpex : 0;
+                  
+                  if (!totalProductsMap[p.id]) totalProductsMap[p.id] = { ...p, qty: 0, revenue: 0, cogs: 0, fee: 0, opex: 0, dailyLogs: {} };
+                  const mapP = totalProductsMap[p.id];
+                  mapP.qty += p.qty;
+                  mapP.revenue += p.revenue;
+                  mapP.cogs += p.cogs;
+                  mapP.fee += p.fee;
+                  mapP.opex += p.opex;
+
+                  Object.keys(p.dailyLogs || {}).forEach(ds => {
+                      if (!mapP.dailyLogs[ds]) mapP.dailyLogs[ds] = { date: ds, qty: 0, revenue: 0, cogs: 0, fee: 0, opex: 0 };
+                      mapP.dailyLogs[ds].qty += p.dailyLogs[ds].qty;
+                      mapP.dailyLogs[ds].revenue += p.dailyLogs[ds].revenue;
+                      mapP.dailyLogs[ds].cogs += p.dailyLogs[ds].cogs;
+                      mapP.dailyLogs[ds].fee += p.dailyLogs[ds].fee;
+                      const dailyOpex = chRev > 0 ? (p.dailyLogs[ds].revenue / chRev) * chOpex : 0;
+                      mapP.dailyLogs[ds].opex += dailyOpex;
+                  });
+              });
+          }
+      });
+
+      const totalIngredientsMap = {};
+      Object.keys(ingredientsByChannel).forEach(ch => {
+          if (Object.keys(ingredientsByChannel[ch]).length > 0) {
+              const items = Object.values(ingredientsByChannel[ch]);
+              const chStat = channelArray.find(c => c.name === ch);
+              const chRev = chStat ? chStat.revenue : 0;
+              const chOpex = chStat ? chStat.opex : 0;
+
+              items.forEach(ing => {
+                  ing.opex = chRev > 0 ? (ing.attributedRevenue / chRev) * chOpex : 0;
+
+                  if (!totalIngredientsMap[ing.id]) totalIngredientsMap[ing.id] = { ...ing, qty: 0, attributedRevenue: 0, totalCost: 0, fee: 0, opex: 0, dailyLogs: {} };
+                  const mapIng = totalIngredientsMap[ing.id];
+                  mapIng.qty += ing.qty;
+                  mapIng.attributedRevenue += ing.attributedRevenue;
+                  mapIng.totalCost += ing.totalCost;
+                  mapIng.fee += ing.fee;
+                  mapIng.opex += ing.opex;
+
+                  Object.keys(ing.dailyLogs || {}).forEach(ds => {
+                      if (!mapIng.dailyLogs[ds]) mapIng.dailyLogs[ds] = { date: ds, qty: 0, attributedRevenue: 0, totalCost: 0, fee: 0, opex: 0 };
+                      mapIng.dailyLogs[ds].qty += ing.dailyLogs[ds].qty;
+                      mapIng.dailyLogs[ds].attributedRevenue += ing.dailyLogs[ds].attributedRevenue;
+                      mapIng.dailyLogs[ds].totalCost += ing.dailyLogs[ds].totalCost;
+                      mapIng.dailyLogs[ds].fee += ing.dailyLogs[ds].fee;
+                      const dailyOpex = chRev > 0 ? (ing.dailyLogs[ds].attributedRevenue / chRev) * chOpex : 0;
+                      mapIng.dailyLogs[ds].opex += dailyOpex;
+                  });
+              });
+          }
+      });
+
+      return {
+          totalRevenue, totalCOGS, totalFee, totalOPEX, totalProfit,
+          totalSuccessOrders, totalCancelledOrders,
+          totalMargin: totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0,
+          channels: channelArray.sort((a,b) => b.revenue - a.revenue),
+          dailyTrend: {
+              labels: sortedTrendLabels,
+              revenue: sortedTrendLabels.map(d => dailyTrend[d].revenue),
+              profit: sortedTrendLabels.map(d => dailyTrend[d].profit),
+              orders: sortedTrendLabels.map(d => dailyTrend[d].orders)
+          },
+          totalProductsList: Object.values(totalProductsMap).sort((a,b) => b.qty - a.qty),
+          totalIngredientsList: Object.values(totalIngredientsMap).sort((a,b) => b.qty - a.qty)
+      };
+
+    } catch (err) {
+      console.error(err);
+      return null;
+    }
+  }
+};

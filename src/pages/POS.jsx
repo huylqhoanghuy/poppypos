@@ -1,9 +1,19 @@
 import React, { useState } from 'react';
 import { Search, Plus, Minus, Trash2, CreditCard, Flame } from 'lucide-react';
-import { useData } from '../context/DataContext';
+import { useInventoryEngine } from '../hooks/useInventoryEngine';
+import { useProducts } from '../hooks/useProducts';
+import { useCategories } from '../hooks/useCategories';
+import { useSalesChannels } from '../hooks/useSalesChannels';
+import { useOrders } from '../hooks/useOrders';
+import { useInventory } from '../hooks/useInventory';
+import CurrencyInput from '../components/CurrencyInput';
 
 const POS = () => {
-  const { state, dispatch } = useData();
+  const { activeProducts } = useProducts();
+  const { activeCategories } = useCategories();
+  const { activeSalesChannels } = useSalesChannels();
+  const { activeIngredients } = useInventory();
+  const { addOrder } = useOrders();
   const [activeCategory, setActiveCategory] = useState('Tất cả');
   const [searchQuery, setSearchQuery] = useState('');
   const [cart, setCart] = useState([]);
@@ -16,56 +26,34 @@ const POS = () => {
   const [extraFee, setExtraFee] = useState(0);
   const [extraFeeNote, setExtraFeeNote] = useState('');
   React.useEffect(() => {
-     if (!selectedChannelId && state.salesChannels?.length > 0) {
-        setSelectedChannelId(state.salesChannels[0].id);
+     if (!selectedChannelId && activeSalesChannels?.length > 0) {
+        setSelectedChannelId(activeSalesChannels[0].id);
      }
-  }, [state.salesChannels, selectedChannelId]);
+  }, [activeSalesChannels, selectedChannelId]);
 
-  const categories = ['Tất cả', ...new Set(state.products.map(p => p.category))];
+  const [filterCat, setFilterCat] = useState('Tất cả');
+  
+  const validMenuCategoryNames = activeCategories.filter(c => c.type === 'menu').map(c => c.name);
+  const categories = ['Tất cả', ...Array.from(new Set(activeProducts.map(p => p.category))).filter(c => validMenuCategoryNames.includes(c))];
 
-  const filteredProducts = state.products.filter(p => {
+  const filteredProducts = activeProducts.filter(p => {
     const matchCat = activeCategory === 'Tất cả' || p.category === activeCategory;
     const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
     const isNotDraft = p.status !== 'draft';
     return matchCat && matchSearch && isNotDraft;
   });
 
-  const getEntityMaxPortions = (entityId, requiredQty, unitMode = 'base') => {
-     if (requiredQty <= 0) return Infinity;
-     const ing = state.ingredients.find(i => i.id === entityId);
-     if (ing) {
-        let requiredBaseQty = requiredQty;
-        if (unitMode === 'buy') requiredBaseQty = requiredQty * (ing.conversionRate || 1);
-        if (unitMode === 'divide') requiredBaseQty = 1 / requiredQty;
-        return Math.floor(ing.stock / requiredBaseQty);
-     }
-     const prod = state.products.find(p => p.id === entityId);
-     if (prod && prod.recipe) {
-        let requiredProdQty = requiredQty;
-        if (unitMode === 'divide') requiredProdQty = 1 / requiredQty;
-        const prodMax = getProductMaxCapacity(prod.recipe);
-        return Math.floor(prodMax / requiredProdQty);
-     }
-     return 0;
-  };
-
-  const getProductMaxCapacity = (recipe) => {
-    if (!recipe || recipe.length === 0) return 'Unlimited';
-    let max = Infinity;
-    recipe.forEach(r => {
-      const cap = getEntityMaxPortions(r.ingredientId, r.qty, r.unitMode);
-      if (cap < max) max = cap;
-    });
-    return max === Infinity ? 0 : max;
-  };
+  const { getProductMaxCapacityInfo, calculateMaxPortions } = useInventoryEngine({ ingredients: activeIngredients, products: activeProducts });
 
   const addToCart = (product) => {
-    const port = getProductMaxCapacity(product.recipe);
+    const info = getProductMaxCapacityInfo(product.recipe);
+    const port = info.max;
     // Find current booked in cart to prevent overselling
     const booked = cart.find(c => c.id === product.id)?.qty || 0;
     
-    if (port !== 'Unlimited' && booked >= port) {
-      alert(`Xin lỗi! Kho chỉ còn đủ nguyên liệu để làm TỐI ĐA ${port} suất món này.`);
+    if (port !== Infinity && booked >= port) {
+      if (port <= 0) alert(`Chi tiết lỗi: Nguyên liệu [${info.limitingName || 'Không xác định'}] trong kho đã cạn kiệt, vui lòng Nhập Kho thêm để có thể bán món này!`);
+      else alert(`Kho chỉ còn đủ nguyên liệu để làm TỐI ĐA ${port} suất món này.`);
       return;
     }
 
@@ -79,10 +67,10 @@ const POS = () => {
   };
 
   const updateQty = (product, delta) => {
-    const port = getProductMaxCapacity(product.recipe);
+    const port = calculateMaxPortions(product.recipe);
     const booked = cart.find(c => c.id === product.id)?.qty || 0;
     
-    if (delta > 0 && port !== 'Unlimited' && booked >= port) {
+    if (delta > 0 && port !== Infinity && booked >= port) {
        alert(`Xin lỗi! Kho chỉ còn đủ để làm TỐI ĐA ${port} suất.`);
        return;
     }
@@ -98,7 +86,7 @@ const POS = () => {
 
   const removeItem = (id) => setCart(prev => prev.filter(item => item.id !== id));
 
-  const selectedChannel = state.salesChannels?.find(c => c.id === selectedChannelId) || { discountRate: 0, name: 'Trực tiếp' };
+  const selectedChannel = activeSalesChannels?.find(c => c.id === selectedChannelId) || { discountRate: 0, name: 'Trực tiếp' };
   const total = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
   const discountAmount = total * ((selectedChannel?.discountRate||0) / 100);
   const netAmount = total - discountAmount;
@@ -108,7 +96,7 @@ const POS = () => {
     const orderItems = cart.map(item => ({ product: item, quantity: item.qty }));
     const finalOrderCode = orderCode || `DH-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
     
-    dispatch({ type: 'ADD_POS_ORDER', payload: { 
+    addOrder({
        orderCode: finalOrderCode,
        customerName,
        customerPhone,
@@ -117,7 +105,7 @@ const POS = () => {
        totalAmount: total, discountAmount, netAmount,
        channelId: selectedChannel.id, channelName: selectedChannel.name,
        items: orderItems, type: 'Giao hàng - Kênh Bán' 
-    } });
+    });
     
     const displayTotal = netAmount + (Number(extraFee) || 0);
     alert(`Thanh toán thành công! Mã đơn: ${finalOrderCode}\nNhận tiền net về ví: ${displayTotal.toLocaleString('vi-VN')} đ`);
@@ -135,23 +123,26 @@ const POS = () => {
     setOrderCode(`POS-${Date.now().toString().slice(-6)}`);
   };
 
-  const InputStyle = { 
-    background: 'var(--surface-variant)', 
-    border: '1px solid var(--surface-border)', 
-    color: 'var(--text-primary)', 
-    padding: '8px 12px', 
-    borderRadius: 'var(--radius-sm)', 
-    width: '100%', 
-    outline: 'none',
-    fontSize: 'var(--font-sm)'
-  };
-
   return (
     <div className="pos-container" style={{ display: 'flex', gap: '24px', height: '100%', overflow: 'hidden' }}>
       
       {/* Cột trái: Danh sách Món */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', overflow: 'hidden' }}>
         
+        <div style={{ padding: '16px 24px', background: 'var(--surface-color)', borderRadius: '12px', border: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', gap: '16px', boxShadow: 'var(--shadow-sm)' }}>
+             <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '12px', borderRadius: '12px', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Flame size={24} />
+             </div>
+             <div>
+                <div style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-secondary)' }}>
+                   Tổng Số Món Ăn (Menu Bán Hàng)
+                </div>
+                <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)', marginTop: '2px', lineHeight: 1 }}>
+                   {filteredProducts.length}
+                </div>
+             </div>
+        </div>
+
         <div className="glass-panel" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--surface-variant)', padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--surface-border)' }}>
             <Search size={20} color="var(--text-secondary)" />
@@ -179,46 +170,55 @@ const POS = () => {
 
         <div className="product-scroll-area" style={{ flex: 1, overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(150px, 45%, 210px), 1fr))', gap: 'clamp(12px, 2vw, 20px)', paddingRight: '4px' }}>
           {filteredProducts.map(product => {
-            const port = getProductMaxCapacity(product.recipe);
-            const isOutOfStock = port !== 'Unlimited' && port <= 0;
+            const info = getProductMaxCapacityInfo(product.recipe);
+            const port = info.max;
+            const isOutOfStock = port !== Infinity && port <= 0;
 
             return (
               <div 
                 key={product.id} 
-                className="glass-panel" 
                 style={{ 
                   cursor: isOutOfStock ? 'not-allowed' : 'pointer', 
                   overflow: 'hidden', 
-                  transition: 'transform 0.2s', 
+                  transition: 'transform 0.1s', 
                   display: 'flex', flexDirection: 'column',
+                  background: 'var(--surface-color)',
+                  borderRadius: '16px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                  border: isOutOfStock ? '1px solid #FECACA' : '1px solid var(--surface-border)',
                   opacity: isOutOfStock ? 0.6 : 1,
-                  border: isOutOfStock ? '1px solid var(--danger)' : '1px solid var(--surface-border)'
+                  userSelect: 'none'
                 }}
                 onClick={() => !isOutOfStock && addToCart(product)}
-                onMouseOver={e => !isOutOfStock && (e.currentTarget.style.transform = 'translateY(-4px)')}
-                onMouseOut={e => !isOutOfStock && (e.currentTarget.style.transform = 'translateY(0)')}
+                onMouseDown={e => !isOutOfStock && (e.currentTarget.style.transform = 'scale(0.96)')}
+                onMouseUp={e => !isOutOfStock && (e.currentTarget.style.transform = 'scale(1)')}
+                onMouseLeave={e => !isOutOfStock && (e.currentTarget.style.transform = 'scale(1)')}
               >
-                <div style={{ position: 'relative', width: '100%', height: '140px', backgroundColor: 'var(--surface-variant)' }}>
-                   {product.image && <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                <div style={{ position: 'relative', width: '100%', height: '140px', backgroundColor: 'var(--bg-color)', borderBottom: '1px solid var(--surface-border)' }}>
+                   {product.image ? (
+                     <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                   ) : (
+                     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>No Image</div>
+                   )}
                    
                    {/* BADGE TÌNH TRẠNG KHO TRỰC TIẾP LÊN MÓN */}
                    <div style={{ position: 'absolute', top: 10, right: 10 }}>
-                     {port === 'Unlimited' ? null : (
-                       <span style={{ background: port > 5 ? 'var(--success)' : 'var(--danger)', color: 'white', padding: '6px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold', boxShadow: '0 4px 6px rgba(0,0,0,0.3)' }}>
-                          {port <= 0 ? 'Hết Kho' : `Còn: ${port} suất`}
+                     {port === Infinity ? null : (
+                       <span style={{ background: port > 5 ? '#16A34A' : '#DC2626', color: 'white', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 800, boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                          {port <= 0 ? `HẾT (${info.limitingName})` : `CÒN: ${port}`}
                        </span>
                      )}
                    </div>
                 </div>
                 
-                <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>{product.name}</h4>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
-                    <p style={{ margin: 0, fontSize: '1rem', color: 'var(--primary)', fontWeight: 700 }}>
+                <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.3 }}>{product.name}</h4>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                    <p style={{ margin: 0, fontSize: '16px', color: 'var(--primary)', fontWeight: 800 }}>
                       {product.price.toLocaleString('vi-VN')} đ
                     </p>
-                    <div style={{ background: 'rgba(249, 115, 22, 0.15)', padding: '6px', borderRadius: '8px' }}>
-                       <Flame size={18} color="var(--primary)"/>
+                    <div style={{ background: '#FFF7ED', padding: '6px', borderRadius: '8px' }}>
+                       <Plus size={18} color="var(--primary)"/>
                     </div>
                   </div>
                 </div>
@@ -229,115 +229,107 @@ const POS = () => {
       </div>
 
       {/* Cột phải: Giỏ hàng */}
-      <div className="glass-panel pos-cart" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0 }}>
-        <div style={{ padding: '20px', borderBottom: '1px solid var(--surface-border)' }}>
-          <h3 style={{ margin: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            Đơn Kinh Doanh Đang Lên
+      <div style={{ width: '400px', display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0, background: 'var(--surface-color)', borderLeft: '1px solid var(--surface-border)', boxShadow: '-4px 0 15px rgba(0,0,0,0.02)' }}>
+        <div style={{ padding: '24px 24px 16px 24px', borderBottom: '1px solid var(--surface-border)', background: 'var(--surface-color)' }}>
+          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>
+            Giỏ Hàng / Lên Đơn
           </h3>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--bg-color)' }}>
           {cart.length === 0 ? (
-            <div style={{ textAlign: 'center', color: 'var(--text-secondary)', marginTop: '40px' }}>Kinh doanh mời chọn món để lên Sale</div>
+            <div style={{ textAlign: 'center', color: 'var(--text-secondary)', marginTop: '40px', fontWeight: 600 }}>Chưa có món nào trong giỏ</div>
           ) : (
             cart.map(item => (
-              <div key={item.id} style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px' }}>
+              <div key={item.id} style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '16px', background: 'var(--surface-color)', borderRadius: '12px', border: '1px solid var(--surface-border)', boxShadow: 'var(--shadow-sm)' }}>
                 <div style={{ flex: 1 }}>
-                  <h5 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600 }}>{item.name}</h5>
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--primary)', marginTop: '4px' }}>{(item.price * item.qty).toLocaleString('vi-VN')} đ</p>
+                  <h5 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>{item.name}</h5>
+                  <p style={{ margin: 0, fontSize: '14px', color: 'var(--primary)', fontWeight: 800 }}>{(item.price * item.qty).toLocaleString('vi-VN')} đ</p>
                 </div>
                 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-color)', borderRadius: '8px', padding: '4px' }}>
-                  <button onClick={() => updateQty(item, -1)} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', padding: '4px' }}><Minus size={14} /></button>
-                  <span style={{ width: '20px', textAlign: 'center', fontSize: '0.9rem', fontWeight: 'bold' }}>{item.qty}</span>
-                  <button onClick={() => updateQty(item, 1)} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', padding: '4px' }}><Plus size={14} /></button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg-color)', borderRadius: '8px', padding: '4px', border: '1px solid var(--surface-border)' }}>
+                  <button onClick={() => updateQty(item, -1)} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Minus size={16} /></button>
+                  <span style={{ width: '20px', textAlign: 'center', fontSize: '15px', fontWeight: 800 }}>{item.qty}</span>
+                  <button onClick={() => updateQty(item, 1)} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={16} /></button>
                 </div>
 
-                <button onClick={() => removeItem(item.id)} style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', padding: '4px' }}>
-                  <Trash2 size={16} />
+                <button onClick={() => removeItem(item.id)} style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: 'var(--danger)', cursor: 'pointer', padding: '8px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Trash2 size={18} />
                 </button>
               </div>
             ))
           )}
         </div>
 
-        <div style={{ padding: '20px', borderTop: '1px solid var(--surface-border)', background: 'var(--surface-variant)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ padding: '24px', borderTop: '1px solid var(--surface-border)', background: 'var(--surface-color)', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 -4px 15px rgba(0,0,0,0.02)', zIndex: 10 }}>
           
           {/* Customer Info Section */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
-              <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Tên Khách Hàng:</label>
-              <input style={InputStyle} placeholder="Anh Tuấn..." value={customerName} onChange={e => setCustomerName(e.target.value)} />
+              <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>Khách Hàng:</label>
+              <input className="form-input" placeholder="Anh Tuấn..." value={customerName} onChange={e => setCustomerName(e.target.value)} />
             </div>
             <div>
-              <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Số Điện Thoại:</label>
-              <input style={InputStyle} placeholder="09xxx..." value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
-            </div>
-          </div>
-          <div className="divider-dashed" style={{ margin: '8px 0' }}></div>
-
-          {/* Order Code Section */}
-          <div>
-            <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Mã Đơn (Grab/Shopee/Tự tạo):</label>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <input style={InputStyle} placeholder="KĐ-1234..." value={orderCode} onChange={e => setOrderCode(e.target.value)} />
-              <button className="btn btn-ghost" onClick={generateOrderCode} style={{ padding: '8px', fontSize: '0.7rem' }}>Auto</button>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>Điện thoại (Tra trước):</label>
+              <input className="form-input" placeholder="09xxxxxx" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
             </div>
           </div>
 
-          <div className="divider-dashed"></div>
-
-          {/* Extra Fee Section */}
-          <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '12px', border: '1px dashed var(--surface-border)' }}>
-             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Phí phát sinh (Vd: Ship, Lễ):</span>
-                <input type="number" style={{...InputStyle, width: '100px', padding: '4px 8px'}} value={extraFee} onChange={e => setExtraFee(e.target.value)} />
-             </div>
-             <input style={{...InputStyle, fontSize: '0.8rem', padding: '4px 8px'}} placeholder="Ghi chú phí (Làm nóng món...)" value={extraFeeNote} onChange={e => setExtraFeeNote(e.target.value)} />
+          {/* Order Code & Channel Section */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>Mã Đơn:</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input className="form-input" placeholder="Auto..." value={orderCode} onChange={e => setOrderCode(e.target.value)} />
+                <button className="btn btn-ghost" onClick={generateOrderCode} style={{ padding: '0 12px', background: 'var(--bg-color)', border: '1px solid var(--surface-border)', borderRadius: '8px', fontWeight: 700 }}>Tạo</button>
+              </div>
+            </div>
+            <div>
+               <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>Nguồn Đơn:</label>
+               <select className="form-input" style={{ cursor: 'pointer' }} value={selectedChannelId} onChange={e => setSelectedChannelId(e.target.value)}>
+                 {activeSalesChannels?.map(ch => <option key={ch.id} value={ch.id}>{ch.name}</option>)}
+               </select>
+            </div>
           </div>
 
-          <div style={{ borderTop: '1px solid var(--surface-border)', paddingTop: '12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Kênh chốt đơn:</span>
-              <select style={{ background:'var(--surface-variant)', color:'var(--text-primary)', border:'1px solid var(--surface-border)', padding:'6px', borderRadius:'4px', outline:'none', maxWidth: '200px' }} 
-                       value={selectedChannelId} onChange={e => setSelectedChannelId(e.target.value)}>
-                 {state.salesChannels?.map(ch => <option key={ch.id} value={ch.id} style={{color: 'black'}}>{ch.name} (-{ch.discountRate}%)</option>)}
-              </select>
-            </div>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Tổng bill sản phẩm:</span>
-              <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{total.toLocaleString('vi-VN')} đ</span>
+          <div style={{ width: '100%', height: '1px', background: 'var(--surface-border)', margin: '8px 0' }}/>
+
+          {/* Checkout Info */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '14px', color: 'var(--text-secondary)', fontWeight: 600 }}>Cộng tiền hàng:</span>
+              <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>{total.toLocaleString('vi-VN')} đ</span>
             </div>
 
             {discountAmount > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', color: 'var(--warning)' }}>
-                <span style={{ fontSize: '0.8rem' }}>Phí Sàn ({selectedChannel.discountRate}%):</span>
-                <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>-{discountAmount.toLocaleString('vi-VN')} đ</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#EA580C' }}>
+                <span style={{ fontSize: '13px', fontWeight: 600 }}>Chiết khấu nền tảng ({selectedChannel?.discountRate}%):</span>
+                <span style={{ fontSize: '14px', fontWeight: 800 }}>-{discountAmount.toLocaleString('vi-VN')} đ</span>
               </div>
             )}
 
-            {Number(extraFee) > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', color: 'var(--primary)' }}>
-                <span style={{ fontSize: '0.8rem' }}>Phí phát sinh cộng thêm:</span>
-                <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>+{Number(extraFee).toLocaleString('vi-VN')} đ</span>
-              </div>
-            )}
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', marginBottom: '16px', color: 'var(--success)' }}>
-              <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Thực Thu Vào Quỹ:</span>
-              <span style={{ fontSize: '1.4rem', fontWeight: 'bold', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{(netAmount + (Number(extraFee) || 0)).toLocaleString('vi-VN')} đ</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+               <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600 }}>Phụ thu (Vd: Phí ship):</span>
+               <div style={{ display: 'flex', gap: '8px', width: '140px' }}>
+                 <input className="form-input" style={{ padding: '4px 8px', textAlign: 'right'}} placeholder="Ghi chú" value={extraFeeNote} onChange={e => setExtraFeeNote(e.target.value)} />
+                 <CurrencyInput style={{ padding: '4px 8px', textAlign: 'right', color: 'var(--primary)'}} value={extraFee} onChange={val => setExtraFee(val)} />
+               </div>
             </div>
-            
-            <button 
-              className="btn btn-primary" 
-              style={{ width: '100%', padding: '16px', fontSize: '1.1rem', borderRadius: '12px', fontWeight: 'bold' }}
-              disabled={cart.length === 0}
-              onClick={handleCheckout}
-            >
-              <CreditCard size={20} /> Bán & Thu Tiền Net Bảng
-            </button>
           </div>
+
+          <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+            <span style={{ fontSize: '15px', fontWeight: 800, color: '#EA580C' }}>THỰC THU:</span>
+            <span style={{ fontSize: '24px', fontWeight: 900, color: '#EA580C', letterSpacing: '-0.5px' }}>{(netAmount + (Number(extraFee) || 0)).toLocaleString('vi-VN')} đ</span>
+          </div>
+          
+          <button 
+            className="btn btn-primary" 
+            style={{ width: '100%', padding: '18px', fontSize: '16px', borderRadius: '12px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', boxShadow: '0 4px 12px rgba(247, 83, 0, 0.3)' }}
+            disabled={cart.length === 0}
+            onClick={handleCheckout}
+          >
+            <CreditCard size={20} style={{marginRight: '8px'}} /> Thanh Toán Đơn Tiền
+          </button>
         </div>
       </div>
     </div>

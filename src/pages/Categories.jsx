@@ -1,91 +1,150 @@
 import React, { useState } from 'react';
-import { Tags, Plus, Edit, Trash2, Package, X } from 'lucide-react';
-import { useData } from '../context/DataContext';
+import { Tags, Edit, Trash2, CheckSquare, Square } from 'lucide-react';
+import { useListController } from '../hooks/useListController';
+import { useCategories } from '../hooks/useCategories';
+import { useProducts } from '../hooks/useProducts';
+import { useData } from '../context/DataContext'; // Tạm giữ Toast
+import ModuleLayout from '../components/ModuleLayout';
+import SortHeader from '../components/SortHeader';
 
 const Categories = () => {
-  const { state, dispatch } = useData();
-  const [activeTab, setActiveTab] = useState('menu');
-  
-  const [showForm, setShowForm] = useState(false);
+  const { categories, addCategory, updateCategory, deleteCategory, hardDeleteCategory, restoreCategory, bulkDeleteCategories, bulkHardDeleteCategories, bulkRestoreCategories } = useCategories();
+  const { products } = useProducts();
+  const { dispatch } = useData();
+
+  const handleShowToast = (message, type) => {
+    dispatch({ type: 'SHOW_TOAST', payload: { message, type } });
+  };
+
+  const listState = useListController({ 
+    entityName: 'CATEGORY',
+    data: categories,
+    onDelete: deleteCategory,
+    onHardDelete: hardDeleteCategory,
+    onRestore: restoreCategory,
+    onBulkDelete: bulkDeleteCategories,
+    onBulkHardDelete: bulkHardDeleteCategories,
+    onBulkRestore: bulkRestoreCategories,
+    onShowToast: handleShowToast
+  });
+
+  const { 
+    filteredActiveItems, selectedIds, toggleSelection,
+    showForm, setShowForm,
+    handlers: { handleDelete, showToast },
+    sortConfig, handleSort
+  } = listState;
+
   const [form, setForm] = useState({ id: '', name: '', type: 'menu' });
 
-  const saveCategory = (e) => {
+  const saveCategory = async (e) => {
     e.preventDefault();
-    const payload = { ...form };
-    if (form.id) dispatch({ type: 'UPDATE_CATEGORY', payload });
-    else dispatch({ type: 'ADD_CATEGORY', payload });
+    if (form.id) await updateCategory(form);
+    else await addCategory(form);
+    showToast(`Đã lưu danh mục "${form.name}" thành công!`);
     setShowForm(false);
+    setForm({ id: '', name: '', type: 'menu' });
   };
 
-  const deleteCategory = (id) => {
-    dispatch({ type: 'DELETE_CATEGORY', payload: id });
+  const openEdit = (cat) => {
+    setForm(cat);
+    setShowForm(true);
   };
+
+  React.useEffect(() => {
+     if (listState.viewMode !== 'grid') {
+        listState.setViewMode('grid');
+     }
+  }, []);
+
+  const trashColumns = [
+    { key: 'name', label: 'Tên Danh Mục', render: (val, c) => <strong>{c.name}</strong> },
+    { key: 'type', label: 'Loại', render: (val, c) => c.type === 'menu' ? 'Thực Đơn' : c.type === 'expense' ? 'Thu Chi' : 'Khác' }
+  ];
+
+  const activeColumns = [
+    { 
+      key: 'name', 
+      label: <SortHeader label="Tên Danh Mục" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />, 
+      render: (val, c) => <strong>{c.name}</strong> 
+    },
+    { key: 'type', label: 'Phân Hệ', render: (val, c) => <span style={{ padding: '4px 8px', background: 'var(--surface-variant)', borderRadius: '4px', fontSize: '12px', fontWeight: 600 }}>{c.type === 'menu' ? 'Thực Đơn' : 'Thu Chi'}</span> },
+    { key: 'items', label: 'Mặt hàng', render: (val, c) => <span style={{ padding: '4px 8px', background: 'var(--surface-border)', borderRadius: '4px', fontSize: '12px', fontWeight: 600 }}>{(products || []).filter(p => !p.deleted && p.category === c.name).length} Mục</span> }
+  ];
+
+  const renderActiveList = () => (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+      {filteredActiveItems.map(category => {
+        const isSelected = selectedIds.includes(category.id);
+        const itemCount = (products || []).filter(p => !p.deleted && p.category === category.name).length;
+        
+        return (
+          <div key={category.id} style={{ display: 'flex', flexDirection: 'column', padding: '24px', background: isSelected ? 'rgba(59, 130, 246, 0.05)' : 'var(--bg-color)', borderRadius: '16px', border: `1px solid ${isSelected ? 'var(--primary)' : 'var(--surface-border)'}`, boxShadow: 'var(--shadow-sm)', transition: 'all 0.2s', position: 'relative' }}>
+            
+            <div style={{ position: 'absolute', top: '16px', right: '16px', cursor: 'pointer', zIndex: 10 }} onClick={() => toggleSelection(category.id)}>
+              {isSelected ? <CheckSquare size={22} color="var(--primary)"/> : <Square size={22} color="var(--text-secondary)"/>}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
+              <div style={{ background: 'var(--surface-variant)', width: '60px', height: '60px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+                <Tags size={28} />
+              </div>
+              <div style={{ paddingRight: '20px' }}>
+                <h4 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>{category.name}</h4>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+                  <span style={{ padding: '4px 8px', background: 'var(--surface-variant)', borderRadius: '4px', fontSize: '12px', fontWeight: 600 }}>{category.type === 'menu' ? 'Thực Đơn' : 'Thu Chi'}</span>
+                  <span style={{ padding: '4px 8px', background: 'var(--surface-border)', borderRadius: '4px', fontSize: '12px', fontWeight: 600 }}>{itemCount} Mặt hàng</span>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '8px', marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--surface-border)' }}>
+              <button className="btn btn-ghost" style={{ padding: '8px 12px', background: 'var(--surface-variant)', color: 'var(--text-primary)', border: '1px solid var(--surface-border)', borderRadius: '8px', flex: 1 }} onClick={() => openEdit(category)}>
+                <Edit size={16}/> Sửa
+              </button>
+              <button className="btn btn-ghost" style={{ padding: '8px 12px', background: '#FEF2F2', color: 'var(--danger)', border: '1px solid #FECACA', borderRadius: '8px', flex: 1 }} onClick={() => handleDelete(category)} disabled={itemCount > 0} title={itemCount > 0 ? "Không thể xóa thư mục có sản phẩm" : "Xóa danh mục"}>
+                <Trash2 size={16}/> Xóa
+              </button>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  );
+
+  const renderForm = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div>
+        <label style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom:'6px', display:'block', fontWeight: 600 }}>Cấu trúc Menu / Group:</label>
+        <input required className="form-input" placeholder="VD: Đồ Ăn Trưa" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+      </div>
+      <div>
+        <label style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom:'6px', display:'block', fontWeight: 600 }}>Phân Hệ Hoạt Động:</label>
+        <select className="form-input" value={form.type} onChange={e => setForm({...form, type: e.target.value})}>
+           <option value="menu">Giao diện Bán POS</option>
+           <option value="expense">Khoản phí Giao Hàng</option>
+        </select>
+      </div>
+      <div style={{ marginTop: '32px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+        <button className="btn btn-ghost" onClick={() => setShowForm(false)}>Hủy bỏ</button>
+        <button className="btn btn-primary" onClick={saveCategory}>Lưu thông tin</button>
+      </div>
+    </div>
+  );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', height: '100%', overflowY: 'auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-         <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }}><Tags color="var(--primary)" /> Danh Mục Hệ Thống</h2>
-         <button className="btn btn-primary" onClick={() => { setForm({ id: '', name: '', type: activeTab }); setShowForm(true); }}>
-            <Plus size={18} /> Thêm Danh Mục
-         </button>
-      </div>
-
-      {showForm && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '450px', background: 'var(--bg-color)', display: 'flex', flexDirection: 'column' }}>
-             <div style={{ padding: '20px', borderBottom: '1px solid var(--surface-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0, color: 'var(--primary)' }}>{form.id ? 'Sửa Nhóm' : 'Thêm Nhóm Trực Tiếp'}</h3>
-                <button className="btn btn-ghost" onClick={() => setShowForm(false)} style={{ padding: '8px' }}><X size={20}/></button>
-             </div>
-             
-             <form onSubmit={saveCategory} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div>
-                   <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>Tên danh mục quản lý:</label>
-                   <input required style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--surface-border)', color: 'white', padding: '12px', borderRadius: '8px', width: '100%', outline: 'none' }} 
-                          value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="VD: Gà Ủ Muối Bán Chạy" />
-                </div>
-                <div>
-                   <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>Phân lưu (Root Type):</label>
-                   <select required style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--surface-border)', color: 'white', padding: '12px', borderRadius: '8px', width: '100%', outline: 'none' }} 
-                           value={form.type} onChange={e => setForm({...form, type: e.target.value})}>
-                      <option value="menu">Menu Thực Đơn POS (Kinh Doanh)</option>
-                      <option value="inventory">Kho & Vật Tư Lõi (Kế Toán)</option>
-                   </select>
-                </div>
-                
-                <button type="submit" className="btn btn-primary" style={{ padding: '14px', fontSize: '1.1rem', marginTop: '12px' }}>{form.id ? 'Lưu Thay Đổi' : 'Xác Nhận Đưa Vào Danh Sách'}</button>
-             </form>
-          </div>
-        </div>
-      )}
-
-       <div className="glass-panel" style={{ flex: 1, padding: '24px', display: 'flex', flexDirection: 'column' }}>
-         <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--surface-border)', paddingBottom: '16px', marginBottom: '16px' }}>
-            <button className={`btn ${activeTab === 'menu' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setActiveTab('menu')}>Trại Danh Mục - Món Bán (POS)</button>
-            <button className={`btn ${activeTab === 'inventory' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setActiveTab('inventory')}>Trại Danh Mục - Vật Tư Khẩu Phần</button>
-         </div>
-
-         <div style={{ flex: 1, overflowY: 'auto' }}>
-            {state.categories.filter(c => c.type === activeTab).map(cat => (
-               <div key={cat.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                     <div style={{ background: 'rgba(59, 130, 246, 0.2)', padding: '10px', borderRadius: '12px' }}>
-                        {cat.type === 'menu' ? <Tags size={24} color="var(--primary)"/> : <Package size={24} color="var(--primary)"/>}
-                     </div>
-                     <div>
-                        <h4 style={{ margin: 0, fontSize: '1.2rem' }}>{cat.name}</h4>
-                     </div>
-                  </div>
-                  <div>
-                    <button className="btn btn-ghost" style={{ background: 'rgba(255,255,255,0.05)', padding: '12px', marginRight: '8px' }} onClick={() => { setForm(cat); setShowForm(true); }}><Edit size={18} /></button>
-                    <button className="btn btn-ghost" style={{ background: 'rgba(218,54,51,0.1)', color: 'var(--danger)', padding: '12px' }} onClick={() => deleteCategory(cat.id)}><Trash2 size={18} /></button>
-                  </div>
-               </div>
-            ))}
-            {state.categories.filter(c => c.type === activeTab).length === 0 && <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>Chưa có danh mục nào được khởi tạo ở hệ này.</p>}
-         </div>
-       </div>
-    </div>
+    <ModuleLayout
+      title="Thiết Lập Menu & Group"
+      description="Quản lý cấu trúc danh mục món ăn hiển thị trên màn hình POS."
+      icon={Tags}
+      listState={listState}
+      trashColumns={trashColumns}
+      activeColumns={activeColumns}
+      onEdit={openEdit}
+      formTitle={form.id ? `Cập nhật: ${form.name}` : 'Khai báo Nhóm Mới'}
+      renderActiveList={renderActiveList}
+      renderForm={renderForm}
+    />
   );
 };
 

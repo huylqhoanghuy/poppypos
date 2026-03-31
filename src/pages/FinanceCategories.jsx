@@ -1,108 +1,217 @@
 import React, { useState } from 'react';
-import { ListTree, Plus, Edit, Trash2, ArrowUpCircle, ArrowDownCircle, X } from 'lucide-react';
-import { useData } from '../context/DataContext';
+import { ListTree, Plus, Edit, Trash2, ArrowRight, CheckSquare, Square } from 'lucide-react';
+import { useListController } from '../hooks/useListController';
+import { useFinanceCategories } from '../hooks/useFinanceCategories';
+import { useData } from '../context/DataContext'; // Tạm để toast
+import ModuleLayout from '../components/ModuleLayout';
+import SortHeader from '../components/SortHeader';
 
 const FinanceCategories = () => {
-  const { state, dispatch } = useData();
-  const [activeTab, setActiveTab] = useState('expense');
-  
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ id: '', name: '', type: 'expense' });
+  const { financeCategories, addFinanceCategory, updateFinanceCategory, deleteFinanceCategory, hardDeleteFinanceCategory, restoreFinanceCategory, bulkDeleteFinanceCategories, bulkHardDeleteFinanceCategories, bulkRestoreFinanceCategories } = useFinanceCategories();
+  const { dispatch } = useData();
 
-  const saveCategory = (e) => {
+  const handleShowToast = (message, type) => {
+    dispatch({ type: 'SHOW_TOAST', payload: { message, type } });
+  };
+
+  const listState = useListController({ 
+    entityName: 'FINANCE_CATEGORY',
+    data: financeCategories,
+    onDelete: deleteFinanceCategory,
+    onHardDelete: hardDeleteFinanceCategory,
+    onRestore: restoreFinanceCategory,
+    onBulkDelete: bulkDeleteFinanceCategories,
+    onBulkHardDelete: bulkHardDeleteFinanceCategories,
+    onBulkRestore: bulkRestoreFinanceCategories,
+    onShowToast: handleShowToast
+  });
+
+  const { 
+    filteredActiveItems, selectedIds, toggleSelection,
+    showForm, setShowForm,
+    handlers: { handleDelete, showToast } 
+  } = listState;
+
+  const [form, setForm] = useState({ id: '', name: '', type: 'expense', parentId: null });
+
+  const saveCategory = async (e) => {
     e.preventDefault();
-    const payload = { ...form };
-    if (form.id) dispatch({ type: 'UPDATE_FINANCE_CATEGORY', payload });
-    else dispatch({ type: 'ADD_FINANCE_CATEGORY', payload });
+    if (form.id) await updateFinanceCategory(form);
+    else await addFinanceCategory(form);
+    showToast(`Đã lưu danh mục tài chính "${form.name}"`);
     setShowForm(false);
+    setForm({ id: '', name: '', type: 'expense', parentId: null });
   };
 
-  const deleteCategory = (id) => {
-    if (confirm('Bạn có chắc muốn xóa danh mục này? Các giao dịch cũ vẫn sẽ giữ mã danh mục này.')) {
-        dispatch({ type: 'DELETE_FINANCE_CATEGORY', payload: id });
-    }
+  const openAddChild = (parentId) => {
+     const parentCat = financeCategories.find(c => c.id === parentId);
+     setForm({ id: '', name: '', type: parentCat.type, parentId });
+     setShowForm(true);
   };
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', height: '100%', overflowY: 'auto', paddingBottom: '32px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-         <div>
-            <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
-               <ListTree color="var(--primary)" /> Danh Mục Thu Chi (CFO)
-            </h2>
-            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Quản lý các nhóm phân loại dòng tiền để báo cáo P&L chính xác.</p>
-         </div>
-         <button className="btn btn-primary" onClick={() => { setForm({ id: '', name: '', type: activeTab }); setShowForm(true); }}>
-            <Plus size={18} /> Thêm Danh Mục Mới
-         </button>
-      </div>
+  React.useEffect(() => {
+     if (listState.viewMode !== 'grid') {
+        listState.setViewMode('grid');
+     }
+  }, []);
 
-      {showForm && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '450px', background: 'var(--bg-color)', display: 'flex', flexDirection: 'column' }}>
-             <div style={{ padding: '20px', borderBottom: '1px solid var(--surface-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0, color: 'var(--primary)' }}>{form.id ? 'Cập Nhật Danh Mục' : 'Tạo Danh Mục Thu Chi'}</h3>
-                <button className="btn btn-ghost" onClick={() => setShowForm(false)} style={{ padding: '8px' }}><X size={20}/></button>
-             </div>
-             
-             <form onSubmit={saveCategory} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div>
-                   <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>Tên danh mục (Vd: Tiền điện, Tiếp khách...):</label>
-                   <input required style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--surface-border)', color: 'white', padding: '12px', borderRadius: '8px', width: '100%', outline: 'none' }} 
-                          value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Nhập tên danh mục..." />
+  const hasChildren = (id) => (financeCategories || []).some(cat => !cat.deleted && cat.parentId === id);
+
+  const trashColumns = [
+    { key: 'name', label: 'Tên DM Tài Chính', render: (v, c) => <strong>{c.name}</strong> },
+    { key: 'type', label: 'Tôn Chỉ', render: (v, c) => <span style={{ color: c.type === 'income' ? 'var(--success)' : 'var(--danger)'}}>{c.type === 'income' ? '+ Khoản Thu' : '- Tâm Chi'}</span> },
+    { key: 'parentId', label: 'Cấp Bậc', render: (v, c) => c.parentId ? 'Hạng Mục Con' : 'Danh Mục Gốc' }
+  ];
+
+  // Cột hiển thị View Active
+  const activeColumns = [
+    { 
+       key: 'name', 
+       label: <SortHeader label="Tên Phân Loại" sortKey="name" sortConfig={listState.sortConfig} onSort={listState.handleSort} />, 
+       render: (v, c) => <strong>{c.name}</strong> 
+    },
+    { 
+       key: 'type', 
+       label: <SortHeader label="Dòng Tiền (Thu/Chi)" sortKey="type" sortConfig={listState.sortConfig} onSort={listState.handleSort} />, 
+       render: (v, c) => (
+      <span style={{ 
+        padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 600,
+        background: c.type === 'income' ? '#DCFCE7' : '#FEE2E2',
+        color: c.type === 'income' ? '#166534' : '#991B1B'
+      }}>
+        Báo cáo {c.type === 'income' ? 'Thu nhập' : 'Chi phí'}
+      </span>
+    ) },
+    { key: 'parentId', label: 'Cấp Bậc', render: (v, c) => c.parentId ? <span style={{ color: 'var(--text-secondary)' }}>Hạng Mục Con</span> : <strong>Danh Mục Gốc</strong> }
+  ];
+
+  const renderActiveList = () => {
+    const expenses = filteredActiveItems.filter(c => c.type === 'expense' && !c.parentId);
+    const incomes = filteredActiveItems.filter(c => c.type === 'income' && !c.parentId);
+
+    const renderTree = (categories) => {
+        return categories.map(cat => {
+            const children = filteredActiveItems.filter(c => c.parentId === cat.id);
+            const isSelected = selectedIds.includes(cat.id);
+            return (
+                <div key={cat.id} style={{ marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: isSelected ? 'rgba(59, 130, 246, 0.05)' : '#FFFFFF', border: `1px solid ${isSelected ? 'var(--primary)' : 'var(--surface-border)'}`, borderRadius: '12px', transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                           <div style={{ cursor: 'pointer' }} onClick={() => toggleSelection(cat.id)}>
+                              {isSelected ? <CheckSquare size={20} color="var(--primary)"/> : <Square size={20} color="var(--text-secondary)"/>}
+                           </div>
+                           <h4 style={{ margin: 0, fontSize: '15px', color: 'var(--text-primary)', fontWeight: 700 }}>{cat.name}</h4>
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                            {!cat.parentId && (
+                               <button className="btn btn-ghost" style={{ padding: '6px' }} onClick={() => openAddChild(cat.id)} title="Thêm mục con">
+                                   <Plus size={16} color="var(--primary)" />
+                               </button>
+                            )}
+                            <button className="btn btn-ghost" style={{ padding: '6px' }} onClick={() => { setForm(cat); setShowForm(true); }}><Edit size={16}/></button>
+                            <button className="btn btn-ghost" style={{ padding: '6px', color: 'var(--danger)' }} onClick={() => handleDelete(cat)} disabled={hasChildren(cat.id)} title={hasChildren(cat.id) ? "Không thể xóa thư mục Mẹ khi còn thư mục Con" : ""} >
+                                <Trash2 size={16}/>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    {/* Render Children */}
+                    {children.length > 0 && (
+                        <div style={{ paddingLeft: '24px', paddingTop: '12px', borderLeft: '2px solid var(--surface-border)', marginLeft: '24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {children.map(child => {
+                                const isChildSelected = selectedIds.includes(child.id);
+                                return (
+                                    <div key={child.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: isChildSelected ? 'rgba(59, 130, 246, 0.05)' : 'var(--surface-variant)', border: `1px solid ${isChildSelected ? 'var(--primary)' : 'var(--surface-border)'}`, borderRadius: '10px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ cursor: 'pointer' }} onClick={() => toggleSelection(child.id)}>
+                                               {isChildSelected ? <CheckSquare size={18} color="var(--primary)"/> : <Square size={18} color="var(--text-secondary)"/>}
+                                            </div>
+                                            <ArrowRight size={14} color="var(--text-secondary)" />
+                                            <span style={{ fontSize: '14px', fontWeight: 600 }}>{child.name}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '4px' }}>
+                                            <button className="btn btn-ghost" style={{ padding: '4px' }} onClick={() => { setForm(child); setShowForm(true); }}><Edit size={14}/></button>
+                                            <button className="btn btn-ghost" style={{ padding: '4px', color: 'var(--danger)' }} onClick={() => handleDelete(child)}>
+                                                <Trash2 size={14}/>
+                                            </button>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
                 </div>
-                <div>
-                   <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>Loại dòng tiền:</label>
-                   <select required style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--surface-border)', color: 'white', padding: '12px', borderRadius: '8px', width: '100%', outline: 'none' }} 
-                           value={form.type} onChange={e => setForm({...form, type: e.target.value})}>
-                      <option value="expense">Khoản CHI (Tiền ra)</option>
-                      <option value="income">Khoản THU (Tiền vào)</option>
-                   </select>
-                </div>
-                
-                <button type="submit" className="btn btn-primary" style={{ padding: '14px', fontSize: '1.1rem', marginTop: '12px' }}>{form.id ? 'Lưu Thay Đổi' : 'Xác Nhận Thêm'}</button>
-             </form>
+            )
+        });
+    };
+
+    return (
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(300px, 1fr)', gap: '40px' }}>
+          <div>
+            <h3 style={{ margin: 0, marginBottom: '20px', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '18px', paddingBottom: '12px', borderBottom: '2px solid rgba(34, 197, 94, 0.2)' }}>
+              + Khoản Thu Tiền (Income)
+            </h3>
+            {renderTree(incomes)}
+            {incomes.length === 0 && <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '14px' }}>Chưa có danh mục thu tiền nào.</p>}
+          </div>
+          <div>
+            <h3 style={{ margin: 0, marginBottom: '20px', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '18px', paddingBottom: '12px', borderBottom: '2px solid rgba(239, 68, 68, 0.2)' }}>
+              - Trung Tâm Chi Phí (Expense)
+            </h3>
+            {renderTree(expenses)}
+            {expenses.length === 0 && <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '14px' }}>Chưa có danh mục chi phí nào.</p>}
           </div>
         </div>
-      )}
+    );
+  };
 
-       <div className="glass-panel" style={{ flex: 1, padding: '24px', display: 'flex', flexDirection: 'column' }}>
-         <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--surface-border)', paddingBottom: '16px', marginBottom: '16px' }}>
-            <button className={`btn ${activeTab === 'expense' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setActiveTab('expense')}>
-               <ArrowDownCircle size={18} style={{ marginRight: '8px' }}/> Danh Mục CHI
-            </button>
-            <button className={`btn ${activeTab === 'income' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setActiveTab('income')}>
-               <ArrowUpCircle size={18} style={{ marginRight: '8px' }}/> Danh Mục THU
-            </button>
-         </div>
+  const renderForm = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <div>
+        <label style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom:'6px', display:'block', fontWeight: 600 }}>Tên Khoản Mục:</label>
+        <input required className="form-input" placeholder="VD: Lương, Mặt bằng, Chuyển phát..." value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+      </div>
 
-         <div style={{ flex: 1, overflowY: 'auto' }}>
-            {state.financeCategories?.filter(c => c.type === activeTab).map(cat => (
-               <div key={cat.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', marginBottom: '4px', background: 'rgba(255,255,255,0.02)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                     <div style={{ background: cat.type === 'income' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)', padding: '10px', borderRadius: '12px' }}>
-                        {cat.type === 'income' ? <ArrowUpCircle size={22} color="var(--success)"/> : <ArrowDownCircle size={22} color="var(--danger)"/>}
-                     </div>
-                     <div>
-                        <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>{cat.name}</h4>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Mã: {cat.id}</span>
-                     </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button className="btn btn-ghost" style={{ background: 'rgba(255,255,255,0.05)', padding: '10px' }} onClick={() => { setForm(cat); setShowForm(true); }}><Edit size={16} /></button>
-                    <button className="btn btn-ghost" style={{ background: 'rgba(218,54,51,0.05)', color: 'var(--danger)', padding: '10px' }} onClick={() => deleteCategory(cat.id)}><Trash2 size={16} /></button>
-                  </div>
-               </div>
-            ))}
-            {state.financeCategories?.filter(c => c.type === activeTab).length === 0 && (
-                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
-                    <ListTree size={40} style={{ opacity: 0.2, marginBottom: '12px' }}/>
-                    <p>Chưa có danh mục nào được khởi tạo.</p>
-                </div>
-            )}
-         </div>
-       </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div>
+          <label style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom:'6px', display:'block', fontWeight: 600 }}>Khối Tính Chất:</label>
+          <select className="form-input" value={form.type} onChange={e => setForm({...form, type: e.target.value, parentId: null})} disabled={!!form.parentId}>
+             <option value="expense">- Phân hệ Chi Phí</option>
+             <option value="income">+ Phân hệ Nguồn Thu</option>
+          </select>
+        </div>
+        <div>
+          <label style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom:'6px', display:'block', fontWeight: 600 }}>Thư mục Gốc/Nhánh:</label>
+          <select className="form-input" value={form.parentId || ''} onChange={e => setForm({...form, parentId: e.target.value || null})}>
+             <option value="">-- Thuộc nhánh cao nhất (Root) --</option>
+             {filteredActiveItems
+                .filter(cat => cat.type === form.type && !cat.parentId && cat.id !== form.id)
+                .map(cat => <option key={cat.id} value={cat.id}>Nhánh Mẹ: {cat.name}</option>)
+             }
+          </select>
+        </div>
+      </div>
+
+      <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+        <button className="btn btn-ghost" onClick={() => setShowForm(false)}>Hủy đóng</button>
+        <button className="btn btn-primary" onClick={saveCategory}>Lưu Khai Báo</button>
+      </div>
     </div>
+  );
+
+  return (
+    <ModuleLayout
+      title="Hệ Thống Phân Loại Dòng Tiền"
+      description="Quản lý cây thư mục thu/chi để kế toán phân loại giao dịch chính xác."
+      icon={ListTree}
+      listState={listState}
+      trashColumns={trashColumns}
+      activeColumns={activeColumns}
+      onEdit={(cat) => { setForm(cat); setShowForm(true); }}
+      formTitle={form.id ? `Cập nhật Code: ${form.name}` : 'Mở Node Kế Toán Mới'}
+      renderActiveList={renderActiveList}
+      renderForm={renderForm}
+    />
   );
 };
 
