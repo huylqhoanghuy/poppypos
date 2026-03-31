@@ -3,6 +3,7 @@ import { Search, Plus, Trash2, X, LayoutGrid, List as ListIcon, Edit, CheckSquar
 import UnifiedTrash from './UnifiedTrash';
 import BulkActionBar from './BulkActionBar';
 import SmartTable from './SmartTable';
+import { useAuth } from '../context/AuthContext';
 
 /**
  * ModuleLayout: Wrapper chuẩn hóa cấu trúc UI Vanilla Premium cho các trang
@@ -67,6 +68,10 @@ const ModuleLayout = ({
     handlers = {}
   } = safeListState;
 
+  const { user } = useAuth();
+  const canEditOrDelete = user?.role !== 'CASHIER';
+  const role = user?.role;
+
   const { 
     handleBulkDelete = () => {}, 
     handleBulkRestore = () => {}, 
@@ -114,16 +119,16 @@ const ModuleLayout = ({
       data={overrideData || filteredActiveItems}
       columns={activeColumns}
       confirmBeforeDelete={false} // listState.handlers.handleDelete already has Confirm Box
-      onEdit={onEdit}
-      onDelete={listState.handlers.handleDelete}
+      onEdit={canEditOrDelete ? onEdit : null}
+      onDelete={canEditOrDelete ? listState.handlers.handleDelete : null}
       extraRowActions={extraRowActions}
-      selectable={true}
+      selectable={canEditOrDelete}
       selectedIds={selectedIds}
-      onSelectToggle={(id) => listState.toggleSelection(id)}
-      onSelectAll={() => {
+      onSelectToggle={canEditOrDelete ? ((id) => listState.toggleSelection(id)) : undefined}
+      onSelectAll={canEditOrDelete ? (() => {
         if (selectedIds.length === filteredActiveItems.length && filteredActiveItems.length > 0) clearSelection();
         else listState.setSelectedIds(filteredActiveItems.map(i => i.id));
-      }}
+      }) : undefined}
     />
   );
 
@@ -162,14 +167,16 @@ const ModuleLayout = ({
             </div>
           )}
 
-          <button 
-            className={`btn ${trashMode ? 'btn-danger' : 'btn-outline'}`} 
-            onClick={toggleTrashMode} 
-            style={{ display: listState ? 'flex' : 'none', gap: '8px', alignItems: 'center' }}
-          >
-            <Trash2 size={18} /> {trashMode ? 'Thoát Thùng rác' : `Thùng rác (${trashItems.length})`}
-          </button>
-          {!trashMode && listState && (
+          {canEditOrDelete && (
+            <button 
+              className={`btn ${trashMode ? 'btn-danger' : 'btn-outline'}`} 
+              onClick={toggleTrashMode} 
+              style={{ display: listState ? 'flex' : 'none', gap: '8px', alignItems: 'center' }}
+            >
+              <Trash2 size={18} /> {trashMode ? 'Thoát Thùng rác' : `Thùng rác (${trashItems.length})`}
+            </button>
+          )}
+          {!trashMode && listState && canEditOrDelete && (
              <button className="btn btn-primary" onClick={() => setShowForm(true)} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                <Plus size={18} /> Khai báo mới
              </button>
@@ -312,7 +319,7 @@ const ModuleLayout = ({
       )}
 
       {/* Footer: Bulk Action Bar chỉ hiện bản Active có chọn dữ liệu */}
-      {(!trashMode && listState) && (
+      {(!trashMode && listState && canEditOrDelete) && (
         <BulkActionBar 
           selectedCount={selectedIds.length} 
           onClearSelection={clearSelection} 

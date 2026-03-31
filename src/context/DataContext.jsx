@@ -52,8 +52,21 @@ const initialState = {
   ],
   transactions: [],
   settings: {
-    syncMode: 'auto'
+    syncMode: 'auto',
+    storeName: 'Xóm Gà POPPY',
+    branch: 'Trụ sở chính',
+    address: 'Thái Văn Lung, Quận 1',
+    phone: '1900 1234',
+    logoUrl: '',
+    faviconUrl: '',
+    developerInfo: 'Phát triển bởi CuongDEV.com | Hotline Hỗ Trợ: 0909123456',
+    loginFooter: 'Phần Mềm Quản Trị & Bán Hàng © 2026'
   },
+  users: [
+    { id: 'U1', username: 'admin', password: 'admin', name: 'Quản Trị Tối Cao', role: 'ADMIN', status: 'active' },
+    { id: 'U2', username: 'quanly', password: '123', name: 'Quản Lý Cửa Hàng', role: 'MANAGER', status: 'active' },
+    { id: 'U3', username: 'thungan', password: '123', name: 'Thu Ngân', role: 'CASHIER', status: 'active' }
+  ],
   toast: null
 };
 
@@ -145,6 +158,13 @@ const reducer = (state, action) => {
     case 'BULK_DELETE_CHANNEL': return { ...state, salesChannels: (state.salesChannels || []).map(c => action.payload.includes(c.id) ? { ...c, deleted: true, deletedAt: new Date().toISOString() } : c) };
     case 'BULK_RESTORE_CHANNEL': return { ...state, salesChannels: (state.salesChannels || []).map(c => action.payload.includes(c.id) ? { ...c, deleted: false, deletedAt: null } : c) };
     case 'BULK_HARD_DELETE_CHANNEL': return { ...state, salesChannels: (state.salesChannels || []).filter(c => !action.payload.includes(c.id)) };
+
+    // Users (Auth V2)
+    case 'ADD_USER': return { ...state, users: [...(state.users || []), { ...action.payload, id: generateId('USR-') }] };
+    case 'UPDATE_USER': return { ...state, users: (state.users || []).map(u => u.id === action.payload.id ? action.payload : u) };
+    case 'DELETE_USER': return { ...state, users: (state.users || []).map(u => u.id === action.payload ? { ...u, deleted: true, deletedAt: new Date().toISOString() } : u) };
+    case 'RESTORE_USER': return { ...state, users: (state.users || []).map(u => u.id === action.payload ? { ...u, deleted: false, deletedAt: null } : u) };
+    case 'HARD_DELETE_USER': return { ...state, users: (state.users || []).filter(u => u.id !== action.payload) };
 
     // Accounts (NEW V8)
     case 'ADD_ACCOUNT': return { ...state, accounts: [...state.accounts, { ...action.payload, id: generateId('ACC-'), balance: Number(action.payload.initialBalance || 0), initialBalance: Number(action.payload.initialBalance || 0) }] };
@@ -444,6 +464,15 @@ export const DataProvider = ({ children }) => {
     try {
       const local = localStorage.getItem('omnipos_gaumuoi_v3');
       const parsed = local ? JSON.parse(local) : initial;
+      
+      // Migration: Cập nhật cứng pass '123' của admin (nếu bị kẹt cache local storage cũ) thành 'admin'
+      if (parsed && parsed.users) {
+         const adminObj = parsed.users.find(u => u.username === 'admin');
+         if (adminObj && adminObj.password === '123') {
+             adminObj.password = 'admin';
+         }
+      }
+      
       return { ...initial, ...parsed };
     } catch {
       return initial;
