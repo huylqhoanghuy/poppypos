@@ -169,28 +169,14 @@ const POS = () => {
     <div className="pos-container" style={{ display: 'flex', gap: '24px', height: '100%', overflow: 'hidden' }}>
       
       {/* Cột trái: Danh sách Món */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', overflow: 'hidden' }}>
-        
-        <div style={{ padding: '16px 24px', background: 'var(--surface-color)', borderRadius: '12px', border: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', gap: '16px', boxShadow: 'var(--shadow-sm)' }}>
-             <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '12px', borderRadius: '12px', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Flame size={24} />
-             </div>
-             <div>
-                <div style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-secondary)' }}>
-                   Tổng Số Món Ăn (Menu Bán Hàng)
-                </div>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)', marginTop: '2px', lineHeight: 1 }}>
-                   {filteredProducts.length}
-                </div>
-             </div>
-        </div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px', overflow: 'hidden' }}>
 
-        <div className="glass-panel" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="glass-panel" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--surface-variant)', padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--surface-border)' }}>
             <Search size={20} color="var(--text-secondary)" />
             <input 
               type="text" 
-              placeholder="Bộ phận Kinh doanh: Tìm món để lên Sales (Shopee, Grab...)" 
+              placeholder="Tìm tên món / sản phẩm..." 
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none', width: '100%', fontSize: '1rem' }}
@@ -229,14 +215,15 @@ const POS = () => {
                   boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
                   border: isOutOfStock ? '1px solid #FECACA' : '1px solid var(--surface-border)',
                   opacity: isOutOfStock ? 0.6 : 1,
-                  userSelect: 'none'
+                  userSelect: 'none',
+                  minHeight: '220px'
                 }}
                 onClick={() => addToCart(product)}
                 onMouseDown={e => !isOutOfStock && (e.currentTarget.style.transform = 'scale(0.96)')}
                 onMouseUp={e => !isOutOfStock && (e.currentTarget.style.transform = 'scale(1)')}
                 onMouseLeave={e => !isOutOfStock && (e.currentTarget.style.transform = 'scale(1)')}
               >
-                <div style={{ position: 'relative', width: '100%', height: '110px', backgroundColor: 'var(--bg-color)', borderBottom: '1px solid var(--surface-border)' }}>
+                <div style={{ position: 'relative', width: '100%', height: '110px', flexShrink: 0, backgroundColor: 'var(--bg-color)', borderBottom: '1px solid var(--surface-border)' }}>
                    {product.image ? (
                      <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                    ) : (
@@ -257,7 +244,7 @@ const POS = () => {
                 </div>
                 
                 <div style={{ padding: '12px 14px', flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <div style={{ minHeight: '38px', marginBottom: '2px' }}>
+                  <div style={{ minHeight: '38px', flexShrink: 0, marginBottom: '2px' }}>
                     <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                       {product.name}
                     </h4>
@@ -269,7 +256,7 @@ const POS = () => {
                     </div>
                   )}
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                  <div style={{ display: 'flex', flexShrink: 0, justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
                     <p style={{ margin: 0, fontSize: '15px', color: 'var(--primary)', fontWeight: 800 }}>
                       {product.price.toLocaleString('vi-VN')} đ
                     </p>
