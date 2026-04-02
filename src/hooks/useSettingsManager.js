@@ -86,7 +86,7 @@ export const useSettingsManager = () => {
       
       const payload = {
         timestamp: new Date().toISOString(),
-        storeName: settings.storeName || 'OmniPOS',
+        storeName: settings.storeName || 'POPPY POS',
         data: entireState
       };
       

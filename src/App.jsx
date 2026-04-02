@@ -291,7 +291,7 @@ const AppContent = () => {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 timestamp: new Date().toISOString(),
-                storeName: settings.storeName || 'OmniPOS',
+                storeName: settings.storeName || 'POPPY POS',
                 type: 'auto_webhook_sync',
                 data: currentState
               })

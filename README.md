@@ -1,6 +1,6 @@
-# 🍗 Xóm Gà Ủ Muối POPPY - Hệ Thống OmniPOS (V2.1 Final ERP)
+# 🍗 POPPY POS - Hệ Thống Quản Lý Bán Hàng (V2.1 Final ERP)
 
-OmniPOS V2.1 Final là một hệ thống quản lý điểm bán (Point of Sale) cấp độ Doanh Nghiệp (Mini-ERP) được tùy chỉnh chuyên biệt sâu cho mô hình **Xóm Gà Ủ Muối POPPY**. Phiên bản này tập trung vào 3 cốt lõi: **Khống chế Nợ Ảo**, **Kế toán Hao Hụt Kích Hoạt Tự Động**, và **Tối Ưu Hóa Trải Nghiệm Tốc Độ Ánh Sáng (0ms Latency)**.
+POPPY POS V2.1 Final là một hệ thống quản lý điểm bán (Point of Sale) cấp độ Doanh Nghiệp (Mini-ERP) được tùy chỉnh chuyên biệt sâu cho mô hình **Xóm Gà Ủ Muối POPPY**. Phiên bản này tập trung vào 3 cốt lõi: **Khống chế Nợ Ảo**, **Kế toán Hao Hụt Kích Hoạt Tự Động**, và **Tối Ưu Hóa Trải Nghiệm Tốc Độ Ánh Sáng (0ms Latency)**.
 
 ---
 
