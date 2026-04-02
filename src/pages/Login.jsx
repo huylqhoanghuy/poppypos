@@ -296,7 +296,7 @@ export default function Login() {
                 {loading ? (
                   <><div style={{ width: 18, height: 18, border: '2px solid rgba(255,255,255,0.4)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} /> Đang xác thực...</>
                 ) : (
-                  <><span style={{ fontSize: '18px' }}>🍽️</span> Vào Bếp Thôi nào! <LogIn size={18} /></>
+                  <><span style={{ fontSize: '18px' }}>🍽️</span> Vào làm việc <LogIn size={18} /></>
                 )}
               </button>
             </form>
