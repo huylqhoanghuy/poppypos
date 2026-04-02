@@ -3,6 +3,8 @@ import { doc, getDoc, setDoc, collection, onSnapshot } from 'firebase/firestore'
 import { StorageService } from './storage';
 import { GlobalConfirm } from '../../context/ConfirmContext';
 
+const DB_COLLECTION = import.meta.env.DEV ? 'store_data_dev' : 'store_data';
+
 let debounceTimer = null;
 
 export const CloudSyncService = {
@@ -138,7 +140,7 @@ export const CloudSyncService = {
           }
 
           // [VƯỢT QUA KIỂM DUYỆT] - Bắt đầu đẩy lên Mây
-          await setDoc(doc(db, 'store_data', key), { data: state[key] });
+          await setDoc(doc(db, DB_COLLECTION, key), { data: state[key] });
 
           // Cập nhật lại mốc neo Tracking
           if (Array.isArray(state[key])) {
@@ -167,7 +169,7 @@ export const CloudSyncService = {
       
       const newState = {};
       for (const key of targetKeys) {
-        const docRef = doc(db, 'store_data', key);
+        const docRef = doc(db, DB_COLLECTION, key);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           newState[key] = docSnap.data().data;
@@ -208,7 +210,7 @@ export const CloudSyncService = {
 
   startRealtimeListener: (onRemoteUpdate) => {
     console.log("[Realtime] Đang kết nối kênh đồng bộ thời gian thực giữa các chi nhánh...");
-    const colRef = collection(db, 'store_data');
+    const colRef = collection(db, DB_COLLECTION);
     
     // Trả về hàm unsubscribe để huỷ theo dõi khi cần
     return onSnapshot(colRef, async (snapshot) => {

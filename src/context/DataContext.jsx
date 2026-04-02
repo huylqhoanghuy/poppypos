@@ -852,18 +852,10 @@ export const DataProvider = ({ children }) => {
 
   // Function to manually trigger Firebase sync
   const syncToCloud = async () => {
-    try {
-      rawDispatch({ type: 'SHOW_TOAST', payload: { message: 'Đang đẩy cập nhật lên Đám mây...', type: 'success' } });
-      const keys = Object.keys(state);
-      for (const key of keys) {
-        if (key !== 'toast' && key !== 'settings') {
-          await setDoc(doc(db, 'store_data', key), { data: state[key] });
-        }
-      }
-      rawDispatch({ type: 'SHOW_TOAST', payload: { message: 'Đã đẩy dữ liệu lên Đám mây an toàn!', type: 'success' } });
-    } catch (err) {
-      console.error("Firebase sync error:", err);
-      rawDispatch({ type: 'SHOW_TOAST', payload: { message: 'Lỗi đẩy dữ liệu. Vui lòng kiểm tra kết nối mạng.', type: 'error' } });
+    rawDispatch({ type: 'SHOW_TOAST', payload: { message: 'Đang lưu trữ thay đổi lên Đám mây...', type: 'success' } });
+    const res = await CloudSyncService.syncToCloud();
+    if (!res.success) {
+      rawDispatch({ type: 'SHOW_TOAST', payload: { message: res.message, type: 'error' } });
     }
   };
 
@@ -872,26 +864,14 @@ export const DataProvider = ({ children }) => {
 
   // Function to manually pull from Firebase
   const pullFromCloud = async () => {
-    try {
-      rawDispatch({ type: 'SHOW_TOAST', payload: { message: 'Đang lấy dữ liệu mới nhất từ Đám mây...', type: 'success' } });
-      const keys = Object.keys(initialState);
-      const newState = {};
-      for (const key of keys) {
-        const docRef = doc(db, 'store_data', key);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          newState[key] = docSnap.data().data;
-        }
-      }
-      if (Object.keys(newState).length > 0) {
-        rawDispatch({ type: 'HYDRATE_STATE', payload: newState });
-        rawDispatch({ type: 'SHOW_TOAST', payload: { message: 'Đã tải và cập nhật dữ liệu từ Đám mây!', type: 'success' } });
-      } else {
-        rawDispatch({ type: 'SHOW_TOAST', payload: { message: 'Chưa có bản lưu nào trên Đám mây!', type: 'error' } });
-      }
-    } catch (err) {
-      console.error("Firebase pull error:", err);
-      rawDispatch({ type: 'SHOW_TOAST', payload: { message: 'Lỗi tải dữ liệu. Vui lòng kiểm tra mạng.', type: 'error' } });
+    rawDispatch({ type: 'SHOW_TOAST', payload: { message: 'Đang lấy dữ liệu định kì từ Đám mây...', type: 'success' } });
+    const res = await CloudSyncService.pullFromCloud();
+    if (res.success && res.newState) {
+      // Bỏ qua chặn lưu đệm
+      rawDispatch({ type: 'HYDRATE_STATE_SILENT', payload: { ...res.newState, _skipSave: true } });
+      rawDispatch({ type: 'SHOW_TOAST', payload: { message: res.message, type: 'success' } });
+    } else {
+      rawDispatch({ type: 'SHOW_TOAST', payload: { message: res.message || 'Chưa có bản lưu nào trên máy chủ', type: 'error' } });
     }
   };
 
