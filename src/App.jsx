@@ -41,6 +41,7 @@ const Accounts = React.lazy(() => import('./pages/Accounts'));
 const Orders = React.lazy(() => import('./pages/Orders'));
 const FinanceCategories = React.lazy(() => import('./pages/FinanceCategories'));
 const Settings = React.lazy(() => import('./pages/Settings'));
+const SystemArchitecture = React.lazy(() => import('./pages/SystemArchitecture'));
 const BackupSync = React.lazy(() => import('./pages/BackupSync'));
 const GlobalTrash = React.lazy(() => import('./pages/GlobalTrash'));
 const Purchases = React.lazy(() => import('./pages/Purchases'));
@@ -174,6 +175,7 @@ const SidebarMenu = ({ onNavItemClick }) => {
       icon: <SettingsIcon size={20} />,
       children: [
         { path: '/settings', name: 'Cài Đặt Chung' },
+        { path: '/system-architecture', name: 'Kiến Trúc Hệ Thống' },
         { path: '/backup-sync', name: 'Đồng Bộ & Sao Lưu' },
         { path: '/global-trash', name: 'Thùng Rác Tổng' }
       ]
@@ -516,6 +518,7 @@ const AppContent = () => {
                 <Route path="/reports/inventory" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><InventoryReports /></ProtectedRoute>} />
                 
                 <Route path="/settings" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><Settings /></ProtectedRoute>} />
+                <Route path="/system-architecture" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><SystemArchitecture /></ProtectedRoute>} />
                 <Route path="/backup-sync" element={<ProtectedRoute allowedRoles={['ADMIN']}><BackupSync /></ProtectedRoute>} />
                 <Route path="/global-trash" element={<ProtectedRoute allowedRoles={['ADMIN']}><GlobalTrash /></ProtectedRoute>} />
                 

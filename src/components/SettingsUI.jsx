@@ -7,7 +7,6 @@ import { useAuth } from '../context/AuthContext';
 // Tabs Components
 import TenantConfigTab from './settings_tabs/TenantConfigTab';
 import UsersManagementTab from './settings_tabs/UsersManagementTab';
-import ArchitectureDiagramTab from './settings_tabs/ArchitectureDiagramTab';
 
 export default function SettingsUI({ state, actions }) {
   const { settings, syncing, localBackupInt, localCloudInt, localWebhookUrl, fileInputRef } = state;
@@ -64,25 +63,12 @@ export default function SettingsUI({ state, actions }) {
                  <Users size={18} /> Quản Lý Nhân Sự
                </button>
             )}
-               <button 
-                 onClick={() => setActiveTab('diagram')}
-                 style={{ 
-                   display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', 
-                   background: activeTab === 'diagram' ? 'var(--primary)' : 'transparent',
-                   color: activeTab === 'diagram' ? 'white' : 'var(--text-secondary)',
-                   border: 'none', borderRadius: '12px', fontWeight: 600, fontSize: '15px', cursor: 'pointer',
-                   transition: 'all 0.2s', whiteSpace: 'nowrap'
-                 }}
-               >
-                 <Database size={18} /> Kiến Trúc Hệ Thống
-               </button>
         </div>
 
         {/* Tab Content */}
         <div style={{ minHeight: '400px' }}>
             {activeTab === 'tenant' && <TenantConfigTab settings={settings} />}
             {activeTab === 'users' && <UsersManagementTab />}
-            {activeTab === 'diagram' && <ArchitectureDiagramTab />}
         </div>
       </div>
     </div>

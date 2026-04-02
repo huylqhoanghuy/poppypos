@@ -1,9 +1,10 @@
 import React from 'react';
 import { PackageOpen, ShoppingCart, Calculator, BarChart3, ArrowRight, ArrowDown } from 'lucide-react';
 
-export default function ArchitectureDiagramTab() {
+export default function SystemArchitecture() {
   return (
-    <div className="glass-panel" style={{ padding: '24px', position: 'relative' }}>
+    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+      <div className="glass-panel" style={{ padding: '32px', position: 'relative' }}>
       <h3 style={{ margin: '0 0 24px 0', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
          <BarChart3 size={20} color="var(--primary)" /> Sơ Đồ Kiến Trúc Hệ Sinh Thái Poppy POS
       </h3>
@@ -88,6 +89,7 @@ export default function ArchitectureDiagramTab() {
             </div>
          </div>
       </div>
+    </div>
     </div>
   );
 }
