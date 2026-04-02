@@ -1,7 +1,10 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import { AlertTriangle, ShieldAlert } from 'lucide-react';
 
 const ConfirmContext = createContext();
+
+// Global ref for non-React service usage
+export const GlobalConfirm = { current: null };
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useConfirm = () => useContext(ConfirmContext);
@@ -14,6 +17,8 @@ export const ConfirmProvider = ({ children }) => {
     confirmText: 'Xác nhận',
     cancelText: 'Hủy',
     type: 'danger', // danger | warning | info
+    withInput: false,
+    inputValue: '',
     onConfirm: null,
     onCancel: null
   });
@@ -27,17 +32,23 @@ export const ConfirmProvider = ({ children }) => {
         confirmText: options.confirmText || 'Xác nhận',
         cancelText: options.cancelText || 'Hủy',
         type: options.type || 'danger',
-        onConfirm: () => {
+        withInput: !!options.withInput,
+        inputValue: '',
+        onConfirm: (val) => {
           setConfirmState(prev => ({ ...prev, isOpen: false }));
-          resolve(true);
+          resolve({ confirmed: true, value: val });
         },
         onCancel: () => {
           setConfirmState(prev => ({ ...prev, isOpen: false }));
-          resolve(false);
+          resolve({ confirmed: false, value: null });
         }
       });
     });
   }, []);
+
+  useEffect(() => {
+     GlobalConfirm.current = confirm;
+  }, [confirm]);
 
   return (
     <ConfirmContext.Provider value={{ confirm }}>
@@ -51,9 +62,23 @@ export const ConfirmProvider = ({ children }) => {
               </div>
               <div style={{ flex: 1 }}>
                 <h3 style={{ margin: 0, marginBottom: '8px', fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)' }}>{confirmState.title}</h3>
-                <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '14px', lineHeight: 1.5 }}>
+                <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '14px', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
                   {confirmState.message}
                 </p>
+                {confirmState.withInput && (
+                   <input 
+                     type="password"
+                     autoFocus
+                     inputMode="numeric"
+                     placeholder="****"
+                     style={{ width: '100%', marginTop: '16px', padding: '12px', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--bg-color)', color: 'var(--text-primary)', fontSize: '18px', letterSpacing: '4px', textAlign: 'center', fontWeight: 'bold' }}
+                     value={confirmState.inputValue}
+                     onChange={(e) => setConfirmState(prev => ({...prev, inputValue: e.target.value}))}
+                     onKeyDown={(e) => {
+                        if (e.key === 'Enter') confirmState.onConfirm(confirmState.inputValue);
+                     }}
+                   />
+                )}
               </div>
             </div>
             <div style={{ padding: '16px 20px', background: 'var(--surface-variant)', borderTop: '1px solid var(--surface-border)', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
@@ -66,7 +91,7 @@ export const ConfirmProvider = ({ children }) => {
               </button>
               <button 
                 className={`btn ${confirmState.type === 'danger' ? 'btn-danger' : 'btn-primary'}`} 
-                onClick={confirmState.onConfirm}
+                onClick={() => confirmState.onConfirm(confirmState.inputValue)}
                 style={{ padding: '8px 16px', fontWeight: 600 }}
               >
                 {confirmState.confirmText}
