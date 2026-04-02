@@ -12,7 +12,7 @@ export const useCloudSync = () => {
       const state = await StorageService.getAll();
       const keys = Object.keys(state);
       for (const key of keys) {
-        if (key !== 'toast' && key !== 'settings') {
+        if (key !== 'toast' && key !== 'notifications') {
           await setDoc(doc(db, 'store_data', key), { data: state[key] });
         }
       }
@@ -31,7 +31,7 @@ export const useCloudSync = () => {
       const targetKeys = [
         'categories', 'salesChannels', 'ingredients', 'products', 
         'suppliers', 'purchaseOrders', 'posOrders', 'accounts', 
-        'financeCategories', 'transactions'
+        'financeCategories', 'transactions', 'settings', 'users'
       ];
       
       const newState = {};
