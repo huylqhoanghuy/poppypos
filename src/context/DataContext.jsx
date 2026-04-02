@@ -3,6 +3,7 @@ import { db } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useAutoBackup } from '../hooks/useAutoBackup';
 import { StorageService } from '../services/api/storage';
+import { CloudSyncService } from '../services/api/cloudSyncService';
 import { inferItemsFromPrice } from '../utils/csvParser';
 import { 
   generateId, 
@@ -753,37 +754,31 @@ export const DataProvider = ({ children }) => {
 
   const [loading, setLoading] = useState(true);
 
-  // Fetch from Firebase on initial load (ONLY if no local data)
+  // Realtime Cloud Listener (Online-first Architecture)
   useEffect(() => {
-
-    const fetchFromFirebase = async () => {
-      try {
-        const keys = Object.keys(initialState);
-        const newState = {};
-        for (const key of keys) {
-          const docRef = doc(db, 'store_data', key);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            newState[key] = docSnap.data().data;
-          }
-        }
-        if (Object.keys(newState).length > 0) {
-          dispatch({ type: 'HYDRATE_STATE', payload: newState });
-        }
-      } catch (error) {
-        console.error("Firebase fetch error:", error);
-      } finally {
+    console.log("[DataContext] Khởi động Kiến trúc Realtime...");
+    const unsubscribeCloud = CloudSyncService.startRealtimeListener((mergedState) => {
+        // Chỉ hydrate nếu nhận nhánh data mới
+        rawDispatch({ type: 'HYDRATE_STATE', payload: mergedState });
         setLoading(false);
-      }
-    };
+    });
 
     const hasLocalData = !!localStorage.getItem('omnipos_gaumuoi_v3');
-    if (!hasLocalData) {
-      // Auto-recover data from Firebase if local storage was wiped
-      fetchFromFirebase(); 
+    if (hasLocalData) {
+      StorageService.getAll().then(data => {
+        rawDispatch({ type: 'HYDRATE_STATE', payload: data });
+        setLoading(false);
+      });
     } else {
-      setLoading(false);
+      // Khi load máy trần (chưa có localData), Đợi Firestore onSnapshot kích hoạt (khoảng vài giây)
+      // nên không set loading false ngay lập tức. Cứ để loading screen cho đến khi mây trả về.
     }
+    
+    return () => {
+       if (typeof unsubscribeCloud === 'function') {
+           unsubscribeCloud();
+       }
+    };
   }, []);
 
   // Sync DataContext state when StorageService (CHS) modifies localStorage directly
@@ -874,7 +869,7 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  // Sync locally instantly, Cloud sync is manual
+  // Sync locally instantly, Auto debounce to Cloud
   useEffect(() => {
     if (state._skipSave) return; // Ngăn chặn đè dữ liệu của CHS khi chỉ hiện Toast
     const stateToSave = { ...state };
@@ -882,6 +877,9 @@ export const DataProvider = ({ children }) => {
     delete stateToSave._skipSave;
     localStorage.setItem('omnipos_gaumuoi_v3', JSON.stringify(stateToSave));
     StorageService.notifyAll(); // FIX: Trigger CHS hooks whenever DataContext updates directly
+    
+    // Auto-sync realtime!
+    CloudSyncService.debouncedSyncToCloud();
   }, [state]);
 
   if (loading) {

@@ -1,3 +1,5 @@
+import { CloudSyncService } from './cloudSyncService';
+
 const getInitialState = () => {
   return {
     categories: [
@@ -76,21 +78,27 @@ export const StorageService = {
     return data[collectionName] || [];
   },
 
-  saveAll: async (dataObj) => {
+  saveAll: async (dataObj, triggerSync = true) => {
     return new Promise((resolve) => {
       setTimeout(() => {
         localStorage.setItem(DB_KEY, JSON.stringify(dataObj));
         notifyListeners('*');
+        if (triggerSync) {
+           CloudSyncService.debouncedSyncToCloud();
+        }
         resolve(true);
       }, 0);
     });
   },
 
-  saveCollection: async (collectionName, newCollectionArray) => {
+  saveCollection: async (collectionName, newCollectionArray, triggerSync = true) => {
     const data = await StorageService.getAll();
     data[collectionName] = newCollectionArray;
     localStorage.setItem(DB_KEY, JSON.stringify(data));
     notifyListeners(collectionName);
+    if (triggerSync) {
+       CloudSyncService.debouncedSyncToCloud();
+    }
     return newCollectionArray;
   },
 
