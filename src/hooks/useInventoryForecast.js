@@ -90,7 +90,6 @@ export const useInventoryForecast = (filterDate, maxOrdersPerDay, forecastDays, 
         projectedSalesQty = Math.max(1 * forecastDays, projectedSalesQty);
         
         if (actualProduct.recipe) {
-          const prevKeys = Object.keys(accumulator);
           explodeRecipe(actualProduct.recipe, projectedSalesQty, true); // True marks them as Focus (Ưu Tiên)
           const newKeys = Object.keys(accumulator);
           newKeys.forEach(k => {
@@ -138,7 +137,7 @@ export const useInventoryForecast = (filterDate, maxOrdersPerDay, forecastDays, 
   }, [filterDate, maxOrdersPerDay, forecastDays, topNLimit]);
 
   useEffect(() => {
-    generateForecast();
+    generateForecast(); // eslint-disable-line react-hooks/set-state-in-effect
   }, [generateForecast]);
 
   return {

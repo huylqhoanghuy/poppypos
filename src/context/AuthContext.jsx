@@ -3,20 +3,37 @@ import { useData } from './DataContext';
 
 const AuthContext = createContext();
 
+const SESSION_KEY = 'omnipos_session';
+const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+// Simple SHA-256 hash for client-side password comparison
+const hashPassword = async (password) => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const { state } = useData();
 
   useEffect(() => {
-    // Check session on mount
-    const savedSession = localStorage.getItem('omnipos_session');
+    const savedSession = localStorage.getItem(SESSION_KEY);
     if (savedSession) {
       try {
-        const u = JSON.parse(savedSession);
-        setUser(u);
-      } catch (e) {
-        localStorage.removeItem('omnipos_session');
+        const session = JSON.parse(savedSession);
+        // Check session expiry (24h)
+        if (session.expiresAt && Date.now() > session.expiresAt) {
+          localStorage.removeItem(SESSION_KEY);
+        } else {
+          // eslint-disable-next-line
+          setUser(session.user);
+        }
+      } catch {
+        localStorage.removeItem(SESSION_KEY);
       }
     }
     setLoading(false);
@@ -24,24 +41,38 @@ export const AuthProvider = ({ children }) => {
 
   const login = (username, password) => {
     return new Promise((resolve, reject) => {
-      setTimeout(() => {
+      setTimeout(async () => {
         const defaultUsers = [
           { id: 'U1', username: 'admin', password: 'admin', name: 'Quản Trị Tối Cao', role: 'ADMIN', status: 'active' },
           { id: 'U2', username: 'quanly', password: '123', name: 'Quản Lý Cửa Hàng', role: 'MANAGER', status: 'active' },
           { id: 'U3', username: 'thungan', password: '123', name: 'Thu Ngân', role: 'CASHIER', status: 'active' }
         ];
-        // Merge from state if valid
+        
         let MOCK_USERS = (state?.users && state.users.length > 0) ? state.users : defaultUsers;
         
-        // Force admin pass to "admin" strictly during search in case cache has 123
         const safeUsername = username?.trim().toLowerCase();
         const safePassword = password?.trim();
         
-        const foundUser = MOCK_USERS.find(
-          u => u.username.trim().toLowerCase() === safeUsername && 
-               (u.username === 'admin' ? safePassword === 'admin' : u.password.trim() === safePassword) && 
-               !u.deleted
-        );
+        // Support both hashed and plaintext passwords for backward compatibility
+        let foundUser = null;
+        for (const u of MOCK_USERS) {
+          if (u.username.trim().toLowerCase() !== safeUsername || u.deleted) continue;
+          
+          // Admin account always uses hardcoded password
+          if (u.username === 'admin') {
+            if (safePassword === 'admin') { foundUser = u; break; }
+            continue;
+          }
+          
+          // Check hashed password first, then plaintext fallback
+          if (u.passwordHash) {
+            const inputHash = await hashPassword(safePassword);
+            if (u.passwordHash === inputHash) { foundUser = u; break; }
+          } else if (u.password?.trim() === safePassword) {
+            foundUser = u;
+            break;
+          }
+        }
         
         if (foundUser) {
           if (foundUser.status === 'inactive') {
@@ -49,25 +80,26 @@ export const AuthProvider = ({ children }) => {
             return;
           }
           const uData = { id: foundUser.id, username: foundUser.username, role: foundUser.role, name: foundUser.name };
-          localStorage.setItem('omnipos_session', JSON.stringify(uData));
+          const session = { user: uData, expiresAt: Date.now() + SESSION_TTL_MS };
+          localStorage.setItem(SESSION_KEY, JSON.stringify(session));
           setUser(uData);
           resolve(uData);
         } else {
           reject('Sai tên đăng nhập hoặc mật khẩu!');
         }
-      }, 500); // Simulate network delay
+      }, 500);
     });
   };
 
   const logout = () => {
-    localStorage.removeItem('omnipos_session');
+    localStorage.removeItem(SESSION_KEY);
     setUser(null);
   };
 
-  if (loading) return null; // Or a spinner
+  if (loading) return null;
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user, hashPassword }}>
       {children}
     </AuthContext.Provider>
   );

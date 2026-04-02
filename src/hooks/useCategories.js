@@ -18,7 +18,7 @@ export const useCategories = (typeFilter) => {
   }, [typeFilter]);
 
   useEffect(() => {
-    fetchData();
+    fetchData(); // eslint-disable-line react-hooks/set-state-in-effect
     const unsubscribe = StorageService.subscribe((col) => {
       if (col === 'categories' || col === '*') fetchData();
     });

@@ -44,7 +44,9 @@ const SmartTable = ({
   tableId, // ID định danh dùng để lưu prefered viewMode vào localStorage
   defaultView = 'table', // 'table' | 'card'
   renderCardItem, // Function (item, isSelected, toggleSelection) => ReactNode
-  tableMinWidth = '800px'
+  tableMinWidth = '800px',
+  topCustomLeft,
+  topCustomRight
 }) => {
   const { confirm } = useConfirm();
   
@@ -181,13 +183,13 @@ const SmartTable = ({
   const isAllSelected = data.length > 0 && selectedIds.length === data.length;
 
   const renderPagination = (position = 'bottom') => (
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: 'var(--surface-color)', borderTop: position === 'bottom' ? '1px solid var(--surface-border)' : 'none', borderBottom: position === 'top' ? '1px solid var(--surface-border)' : 'none', flexWrap: 'wrap', gap: '16px' }}>
-         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: position === 'top' ? '6px 16px' : '12px 16px', background: position === 'top' ? '#f0f2f5' : 'var(--surface-color)', borderTop: position === 'bottom' ? '1px solid var(--surface-border)' : 'none', borderBottom: position === 'top' ? '1px solid var(--surface-border)' : 'none', flexWrap: 'wrap', gap: '12px' }}>
+         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Kích thước:</span>
             <select 
               value={itemsPerPage} 
               onChange={e => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-              style={{ padding: '6px 12px', background: 'var(--surface-variant)', border: '1px solid var(--surface-border)', borderRadius: '6px', fontSize: '13px', color: 'var(--text-primary)', outline: 'none' }}
+              style={{ padding: '0 10px', height: '34px', background: 'var(--surface-variant)', border: '1px solid var(--surface-border)', borderRadius: '8px', fontSize: '13px', color: 'var(--text-primary)', outline: 'none' }}
             >
               <option value={10}>10 dòng</option>
               <option value={20}>20 dòng</option>
@@ -197,12 +199,24 @@ const SmartTable = ({
             <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
               (Tổng: <strong style={{ color: 'var(--text-primary)' }}>{sortedData.length}</strong>)
             </span>
+
+            {position === 'top' && topCustomLeft && (
+               <div style={{ display: 'flex', alignItems: 'center', borderLeft: '1px solid var(--surface-border)', paddingLeft: '12px', marginLeft: '4px' }}>
+                  {topCustomLeft}
+               </div>
+            )}
          </div>
 
-         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            {position === 'top' && topCustomRight && (
+               <div style={{ display: 'flex', alignItems: 'center', borderRight: '1px solid var(--surface-border)', paddingRight: '12px', marginRight: '4px' }}>
+                  {topCustomRight}
+               </div>
+            )}
+
             {/* View Toggles - Only show on TOP pagination if renderCardItem is provided */}
             {position === 'top' && renderCardItem && (
-                <div style={{ display: 'flex', background: 'var(--surface-variant)', padding: '4px', borderRadius: '8px', border: '1px solid var(--surface-border)' }}>
+                <div style={{ display: 'flex', background: 'var(--surface-variant)', padding: '2px', borderRadius: '8px', border: '1px solid var(--surface-border)' }}>
                    <button 
                      className="btn btn-ghost"
                      style={{ padding: '6px', background: viewModeState === 'table' ? '#FFFFFF' : 'transparent', boxShadow: viewModeState === 'table' ? 'var(--shadow-sm)' : 'none', color: viewModeState === 'table' ? 'var(--primary)' : 'var(--text-secondary)', transition: 'background 0.2s', border: 'none', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -223,23 +237,23 @@ const SmartTable = ({
             )}
 
             {/* Pagination Controls */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <button className="btn btn-ghost" onClick={() => setCurrentPage(1)} disabled={currentPage === 1} style={{ padding: '6px', opacity: currentPage === 1 ? 0.4 : 1 }} title="Trang Đầu Tiên">
-                   <ChevronsLeft size={16} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <button className="btn btn-ghost" onClick={() => setCurrentPage(1)} disabled={currentPage === 1} style={{ padding: '4px', opacity: currentPage === 1 ? 0.4 : 1 }} title="Trang Đầu Tiên">
+                   <ChevronsLeft size={18} />
                 </button>
-                <button className="btn btn-ghost" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} style={{ padding: '6px', opacity: currentPage === 1 ? 0.4 : 1 }} title="Trang Trước">
-                   <ChevronLeft size={16} />
+                <button className="btn btn-ghost" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} style={{ padding: '4px', opacity: currentPage === 1 ? 0.4 : 1 }} title="Trang Trước">
+                   <ChevronLeft size={18} />
                 </button>
                 
-                <span style={{ padding: '4px 12px', background: 'var(--surface-variant)', border: '1px solid var(--surface-border)', borderRadius: '6px', fontSize: '13px', fontWeight: 700, minWidth: '80px', textAlign: 'center' }}>
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '28px', padding: '0 12px', background: 'var(--surface-variant)', border: '1px solid var(--surface-border)', borderRadius: '6px', fontSize: '13px', fontWeight: 700, minWidth: '70px', textAlign: 'center' }}>
                    {currentPage} / {totalPages}
                 </span>
 
-                <button className="btn btn-ghost" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages || totalPages === 0} style={{ padding: '6px', opacity: (currentPage === totalPages || totalPages === 0) ? 0.4 : 1 }} title="Trang Sau">
-                   <ChevronRight size={16} />
+                <button className="btn btn-ghost" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages || totalPages === 0} style={{ padding: '4px', opacity: (currentPage === totalPages || totalPages === 0) ? 0.4 : 1 }} title="Trang Sau">
+                   <ChevronRight size={18} />
                 </button>
-                <button className="btn btn-ghost" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages || totalPages === 0} style={{ padding: '6px', opacity: (currentPage === totalPages || totalPages === 0) ? 0.4 : 1 }} title="Trang Cuối">
-                   <ChevronsRight size={16} />
+                <button className="btn btn-ghost" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages || totalPages === 0} style={{ padding: '4px', opacity: (currentPage === totalPages || totalPages === 0) ? 0.4 : 1 }} title="Trang Cuối">
+                   <ChevronsRight size={18} />
                 </button>
             </div>
          </div>

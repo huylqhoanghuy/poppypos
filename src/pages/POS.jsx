@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Search, Plus, Minus, Trash2, CreditCard, Flame } from 'lucide-react';
 import { useInventoryEngine } from '../hooks/useInventoryEngine';
 import { useProducts } from '../hooks/useProducts';
@@ -6,9 +6,12 @@ import { useCategories } from '../hooks/useCategories';
 import { useSalesChannels } from '../hooks/useSalesChannels';
 import { useOrders } from '../hooks/useOrders';
 import { useInventory } from '../hooks/useInventory';
+import { useData } from '../context/DataContext';
 import CurrencyInput from '../components/CurrencyInput';
 
 const POS = () => {
+  const { dispatch } = useData();
+  const orderCounter = useRef(0);
   const { activeProducts } = useProducts();
   const { activeCategories } = useCategories();
   const { activeSalesChannels } = useSalesChannels();
@@ -31,7 +34,7 @@ const POS = () => {
      }
   }, [activeSalesChannels, selectedChannelId]);
 
-  const [filterCat, setFilterCat] = useState('Tất cả');
+
   
   const validMenuCategoryNames = activeCategories.filter(c => c.type === 'menu').map(c => c.name);
   const categories = ['Tất cả', ...Array.from(new Set(activeProducts.map(p => p.category))).filter(c => validMenuCategoryNames.includes(c))];
@@ -52,8 +55,25 @@ const POS = () => {
     const booked = cart.find(c => c.id === product.id)?.qty || 0;
     
     if (port !== Infinity && booked >= port) {
-      if (port <= 0) alert(`Chi tiết lỗi: Nguyên liệu [${info.limitingName || 'Không xác định'}] trong kho đã cạn kiệt, vui lòng Nhập Kho thêm để có thể bán món này!`);
-      else alert(`Kho chỉ còn đủ nguyên liệu để làm TỐI ĐA ${port} suất món này.`);
+      if (port <= 0) {
+        dispatch({
+          type: 'ADD_NOTIFICATION',
+          payload: {
+            title: 'Hết nguyên liệu',
+            message: `Nguyên liệu [${info.limitingName || 'Không xác định'}] đã cạn kiệt. Vui lòng Nhập Kho!`,
+            type: 'error'
+          }
+        });
+      } else {
+        dispatch({
+          type: 'ADD_NOTIFICATION',
+          payload: {
+            title: 'Sắp hết nguyên liệu',
+            message: `Kho chỉ còn đủ nguyên liệu để làm TỐI ĐA ${port} suất món này.`,
+            type: 'warning'
+          }
+        });
+      }
       return;
     }
 
@@ -71,7 +91,14 @@ const POS = () => {
     const booked = cart.find(c => c.id === product.id)?.qty || 0;
     
     if (delta > 0 && port !== Infinity && booked >= port) {
-       alert(`Xin lỗi! Kho chỉ còn đủ để làm TỐI ĐA ${port} suất.`);
+       dispatch({
+         type: 'ADD_NOTIFICATION',
+         payload: {
+           title: 'Sắp hết nguyên liệu',
+           message: `Kho chỉ còn đủ nguyên liệu để làm TỐI ĐA ${port} suất món này.`,
+           type: 'warning'
+         }
+       });
        return;
     }
 
@@ -91,10 +118,17 @@ const POS = () => {
   const discountAmount = total * ((selectedChannel?.discountRate||0) / 100);
   const netAmount = total - discountAmount;
 
-  const handleCheckout = () => {
+  const handleCheckout = (paymentStatus = 'Paid') => {
     if (cart.length === 0) return;
+    if (paymentStatus === 'Debt' && (!customerName || !customerName.trim())) {
+       dispatch({
+          type: 'ADD_NOTIFICATION',
+          payload: { title: 'Thiếu thông tin', message: 'Khi chọn hình thức Ghi Nợ, bắt buộc phải nhập Tên Khách Hàng.', type: 'error' }
+       });
+       return;
+    }
     const orderItems = cart.map(item => ({ product: item, quantity: item.qty }));
-    const finalOrderCode = orderCode || `DH-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+    const finalOrderCode = orderCode || `POS-${(++orderCounter.current).toString(36).toUpperCase().padStart(5, '0')}`;
     
     addOrder({
        orderCode: finalOrderCode,
@@ -104,11 +138,19 @@ const POS = () => {
        extraFeeNote,
        totalAmount: total, discountAmount, netAmount,
        channelId: selectedChannel.id, channelName: selectedChannel.name,
+       paymentStatus,
        items: orderItems, type: 'Giao hàng - Kênh Bán' 
     });
     
     const displayTotal = netAmount + (Number(extraFee) || 0);
-    alert(`Thanh toán thành công! Mã đơn: ${finalOrderCode}\nNhận tiền net về ví: ${displayTotal.toLocaleString('vi-VN')} đ`);
+    dispatch({
+      type: 'ADD_NOTIFICATION',
+      payload: { 
+        title: `Đơn hàng mới: ${finalOrderCode}`, 
+        message: paymentStatus === 'Debt' ? `Đã ghi nhận công nợ ${displayTotal.toLocaleString('vi-VN')} đ cho khách ${customerName}` : `Thanh toán thành công. Thu về: ${displayTotal.toLocaleString('vi-VN')} đ`, 
+        type: 'success' 
+      }
+    });
     
     // Reset form
     setCart([]);
@@ -189,7 +231,7 @@ const POS = () => {
                   opacity: isOutOfStock ? 0.6 : 1,
                   userSelect: 'none'
                 }}
-                onClick={() => !isOutOfStock && addToCart(product)}
+                onClick={() => addToCart(product)}
                 onMouseDown={e => !isOutOfStock && (e.currentTarget.style.transform = 'scale(0.96)')}
                 onMouseUp={e => !isOutOfStock && (e.currentTarget.style.transform = 'scale(1)')}
                 onMouseLeave={e => !isOutOfStock && (e.currentTarget.style.transform = 'scale(1)')}
@@ -322,14 +364,24 @@ const POS = () => {
             <span style={{ fontSize: '24px', fontWeight: 900, color: '#EA580C', letterSpacing: '-0.5px' }}>{(netAmount + (Number(extraFee) || 0)).toLocaleString('vi-VN')} đ</span>
           </div>
           
-          <button 
-            className="btn btn-primary" 
-            style={{ width: '100%', padding: '18px', fontSize: '16px', borderRadius: '12px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', boxShadow: '0 4px 12px rgba(247, 83, 0, 0.3)' }}
-            disabled={cart.length === 0}
-            onClick={handleCheckout}
-          >
-            <CreditCard size={20} style={{marginRight: '8px'}} /> Thanh Toán Đơn Tiền
-          </button>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button 
+              className="btn btn-secondary" 
+              style={{ flex: 1, padding: '16px', fontSize: '14px', borderRadius: '12px', fontWeight: 800, textTransform: 'uppercase', background: '#FFF7ED', color: '#B45309', border: '1px solid #FDE68A', boxShadow: '0 4px 12px rgba(180, 83, 9, 0.1)' }}
+              disabled={cart.length === 0}
+              onClick={() => handleCheckout('Debt')}
+            >
+              Ghi Nợ KH
+            </button>
+            <button 
+              className="btn btn-primary" 
+              style={{ flex: 2, padding: '16px', fontSize: '15px', borderRadius: '12px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', boxShadow: '0 4px 12px rgba(247, 83, 0, 0.3)' }}
+              disabled={cart.length === 0}
+              onClick={() => handleCheckout('Paid')}
+            >
+              <CreditCard size={18} style={{marginRight: '8px'}} /> Thu Tiền Đơn
+            </button>
+          </div>
         </div>
       </div>
     </div>

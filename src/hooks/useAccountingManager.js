@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useData } from '../context/DataContext';
+import { useListController } from './useListController';
 
 export const useAccountingManager = () => {
   const { state, dispatch } = useData();
@@ -83,8 +84,20 @@ export const useAccountingManager = () => {
 
   const monthlyNet = statsByRange.income - statsByRange.expense;
 
+  const listCtrl = useListController({
+    data: state.transactions,
+    entityName: 'TRANSACTION',
+    onDelete: (id) => dispatch({ type: 'DELETE_TRANSACTION', payload: id }),
+    onBulkDelete: (ids) => dispatch({ type: 'BULK_DELETE_TRANSACTION', payload: ids }),
+    onRestore: (id) => dispatch({ type: 'RESTORE_TRANSACTION', payload: id }),
+    onBulkRestore: (ids) => dispatch({ type: 'BULK_RESTORE_TRANSACTION', payload: ids }),
+    onHardDelete: (id) => dispatch({ type: 'HARD_DELETE_TRANSACTION', payload: id }),
+    onBulkHardDelete: (ids) => dispatch({ type: 'BULK_HARD_DELETE_TRANSACTION', payload: ids })
+  });
+
   const filteredTransactions = useMemo(() => {
     return state.transactions.filter(t => {
+      if (t.deleted) return false;
       // Tab filter
       if (activeJournalTab === 'income' && t.type !== 'Thu') return false;
       if (activeJournalTab === 'expense' && t.type !== 'Chi') return false;
@@ -116,11 +129,18 @@ export const useAccountingManager = () => {
         dispatch({ type: 'UPDATE_TRANSACTION', payload });
     } else {
         if (vForm.relatedId) {
-            if (vForm.relatedId.startsWith('NK-')) {
+            // FIX: Robust check for order existence rather than fragile prefix checking
+            // This prevents imported or legacy IDs from bypassing status updates
+            const isPurchaseOrder = state.purchaseOrders?.some(p => p.id === vForm.relatedId);
+            const isPosOrder = state.posOrders?.some(o => o.id === vForm.relatedId);
+
+            if (isPurchaseOrder || vForm.relatedId.startsWith('PO-') || vForm.relatedId.startsWith('NK-')) {
                 dispatch({ type: 'UPDATE_PURCHASE_ORDER_STATUS', payload: { id: vForm.relatedId, status: 'Paid', transactionData: payload } });
-            } else if (vForm.relatedId.startsWith('DH-')) {
+            } else if (isPosOrder || vForm.relatedId.startsWith('ORD-') || vForm.relatedId.startsWith('POS-') || vForm.relatedId.startsWith('DH-')) {
                 dispatch({ type: 'ADD_TRANSACTION', payload });
                 dispatch({ type: 'UPDATE_POS_ORDER_STATUS', payload: { id: vForm.relatedId, paymentStatus: 'Paid' } });
+            } else {
+                dispatch({ type: 'ADD_TRANSACTION', payload });
             }
         } else {
             dispatch({ type: 'ADD_TRANSACTION', payload });
@@ -143,14 +163,15 @@ export const useAccountingManager = () => {
 
   const handleProcessDebt = (item, type) => {
     const isPayable = type === 'payable';
+    const supplierName = isPayable ? (state.suppliers?.find(s => s.id === item.supplierId)?.name || item.seller || 'NCC') : null;
     setVForm({
         id: null,
         type: isPayable ? 'Chi' : 'Thu',
         accountId: 'ACC1',
-        categoryId: isPayable ? 'FC9' : 'FC1',
+        categoryId: isPayable ? 'FC9' : 'FC2',
         amount: item.totalAmount,
         note: isPayable ? `Thanh toán công nợ đơn nhập ${item.id}` : `Thu tiền công nợ đơn bán ${item.id}`,
-        collector: isPayable ? (item.seller || 'NCC') : 'Cửa hàng',
+        collector: isPayable ? supplierName : 'Cửa hàng',
         payer: isPayable ? 'Cửa hàng' : (item.customerName || 'Khách hàng'),
         relatedId: item.id,
         date: new Date().toISOString().split('T')[0]
@@ -171,19 +192,28 @@ export const useAccountingManager = () => {
       return matchSearch && (!start || itemDate >= start) && (!end || itemDate <= end);
   };
 
-  const filteredPayables = useMemo(() => {
-    return state.purchaseOrders
-      .filter(p => p.status !== 'Paid')
-      .filter(p => debtFilters.supplierId === 'all' || p.seller === debtFilters.supplierId)
-      .filter(p => matchCommonFilters(p));
-  }, [state.purchaseOrders, debtFilters, filters]);
+  const filteredPayables = state.purchaseOrders
+    .filter(p => p.status !== 'Paid')
+    .filter(p => {
+        if (debtFilters.supplierId === 'all') return true;
+        const sup = state.suppliers?.find(s => s.id === p.supplierId);
+        const nameToMatch = sup?.name || p.seller;
+        return nameToMatch === debtFilters.supplierId;
+    })
+    .filter(p => matchCommonFilters(p));
 
-  const filteredReceivables = useMemo(() => {
-    return state.posOrders
-      .filter(o => o.paymentStatus !== 'Paid')
-      .filter(o => debtFilters.channelId === 'all' || (o.channelName || 'Tại quầy') === debtFilters.channelId)
-      .filter(o => matchCommonFilters(o));
-  }, [state.posOrders, debtFilters, filters]);
+  const filteredReceivables = state.posOrders
+    .filter(o => o.paymentStatus === 'Debt' || o.paymentStatus === 'Unpaid')
+    .filter(o => {
+        if (debtFilters.channelId === 'all') return true;
+        const channelName = (o.channelName || '').toLowerCase();
+        if (debtFilters.channelId === 'Grab') return channelName.includes('grab');
+        if (debtFilters.channelId === 'Shopee') return channelName.includes('shopee');
+        if (debtFilters.channelId === 'Tại quầy') return !channelName.includes('grab') && !channelName.includes('shopee');
+        return true;
+    })
+    .filter(o => matchCommonFilters(o))
+    .map(o => ({ ...o, totalAmount: (o.netAmount || 0) + (Number(o.extraFee) || 0) }));
 
   return {
     state, dispatch,
@@ -208,7 +238,8 @@ export const useAccountingManager = () => {
       monthlyNet,
       filteredTransactions,
       filteredPayables,
-      filteredReceivables
+      filteredReceivables,
+      listCtrl
     },
     actions: {
       setSelectedAcc, setShowVoucherModal, setShowAdjustModal, setShowTransferModal, setShowCatModal,

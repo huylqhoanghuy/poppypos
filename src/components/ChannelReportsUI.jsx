@@ -124,7 +124,7 @@ const ChannelReportsUI = ({
              Hiệu năng kinh doanh, tiêu hao nguyên liệu chi tiết cho từng kênh độc lập.
           </p>
         </div>
-        <button className="btn btn-primary" onClick={() => window.print()}><Download size={18}/> Xuất Báo Cáo</button>
+        <button className="btn btn-primary table-feature-btn" onClick={() => window.print()}><Download size={16}/> Xuất Báo Cáo</button>
       </div>
 
       <div className="glass-panel" style={{ padding: '16px 24px', display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', background: 'var(--surface-color)' }}>
@@ -137,7 +137,7 @@ const ChannelReportsUI = ({
                  return (
                     <button key={pt} onClick={() => handlePresetChange(pt)} 
                             style={{ 
-                                padding: '6px 16px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px',
+                                padding: '0 16px', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px', display: 'flex', alignItems: 'center',
                                 background: datePreset === pt ? 'white' : 'transparent',
                                 color: datePreset === pt ? 'var(--primary)' : 'var(--text-secondary)',
                                 boxShadow: datePreset === pt ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
@@ -146,9 +146,9 @@ const ChannelReportsUI = ({
                     </button>
                  );
              })}
-             <button onClick={() => setDatePreset('custom')}
+             <button onClick={() => handlePresetChange('custom')}
                  style={{ 
-                    padding: '6px 16px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px',
+                    padding: '0 16px', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px',
                     background: datePreset === 'custom' ? 'white' : 'transparent',
                     color: datePreset === 'custom' ? 'var(--primary)' : 'var(--text-secondary)',
                     boxShadow: datePreset === 'custom' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
@@ -189,7 +189,7 @@ const ChannelReportsUI = ({
                         {[{id: 'day', label: 'Theo Ngày'}, {id: 'week', label: 'Theo Tuần'}, {id: 'month', label: 'Theo Tháng'}, {id: 'year', label: 'Theo Năm'}].map(tab => (
                             <button key={tab.id} onClick={() => setTimeTab(tab.id)}
                                 style={{
-                                    padding: '6px 16px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px',
+                                    padding: '0 16px', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px', display: 'flex', alignItems: 'center',
                                     background: timeTab === tab.id ? 'white' : 'transparent',
                                     color: timeTab === tab.id ? 'var(--primary)' : 'var(--text-secondary)',
                                     boxShadow: timeTab === tab.id ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
@@ -229,7 +229,7 @@ const ChannelReportsUI = ({
                     const chCost = items.reduce((s, i) => s + i.totalCost, 0);
                     const chAttrRev = items.reduce((s, i) => s + i.attributedRevenue, 0);
                     const chTotalFees = items.reduce((s, i) => s + i.fee + i.opex, 0);
-                    const chProfit = chAttrRev - chCost - chTotalFees;
+                    const _chProfit = chAttrRev - chCost - chTotalFees;
 
                     return (
                     <div key={chName} className="glass-panel" style={{ padding: '24px' }}>

@@ -116,7 +116,7 @@ const UnifiedTrash = ({
                   </td>
                   {columns.map((col, idx) => (
                     <td key={idx} style={{ padding: '12px 16px', color: 'var(--text-primary)' }}>
-                      {col.render ? col.render(item) : item[col.key]}
+                      {col.render ? col.render(item[col.key], item) : item[col.key]}
                     </td>
                   ))}
                   <td style={{ padding: '12px 16px', textAlign: 'right' }}>

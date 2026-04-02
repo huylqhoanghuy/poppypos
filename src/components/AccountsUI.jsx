@@ -3,6 +3,17 @@ import { CreditCard, Edit, Trash2, CheckSquare, Square, RefreshCcw, Landmark, Wa
 import CurrencyInput from './CurrencyInput';
 import SmartTable from './SmartTable';
 
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  render() {
+    if (this.state.hasError) {
+      return <div style={{padding: '20px', color: 'red'}}>Error: {this.state.error.message}</div>;
+    }
+    return this.props.children;
+  }
+}
+
 export default function AccountsUI({ 
   accounts, 
   onSave, 
@@ -11,17 +22,6 @@ export default function AccountsUI({
   isRefreshing,
   getTransactions
 }) {
-  class ErrorBoundary extends React.Component {
-    constructor(props) { super(props); this.state = { hasError: false, error: null }; }
-    static getDerivedStateFromError(error) { return { hasError: true, error }; }
-    render() {
-      if (this.state.hasError) {
-        return <div style={{padding: '20px', color: 'red'}}>Error: {this.state.error.message}</div>;
-      }
-      return this.props.children;
-    }
-  }
-
   const [form, setForm] = useState(null);
   const [statementAccount, setStatementAccount] = useState(null);
   const [statementTxs, setStatementTxs] = useState([]);
@@ -121,7 +121,7 @@ export default function AccountsUI({
          columns={accColumns}
          tableId="accounts_manager"
          defaultView="card"
-         renderCardItem={(acc, isSelected) => (
+         renderCardItem={(acc) => (
              <div 
                className="glass-panel hover-glow" 
                style={{ padding: '24px', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '16px', background: acc.type === 'cash' ? 'linear-gradient(135deg, #F0FDF4, #DCFCE7)' : 'linear-gradient(135deg, #F0F9FF, #E0F2FE)', border: '1px solid var(--surface-border)' }}
@@ -315,8 +315,8 @@ export default function AccountsUI({
             <h2 style={{ margin: 0 }}>Quản Lý Két / Số Dư</h2>
          </div>
          <div style={{ display: 'flex', gap: '12px' }}>
-            <button className="btn btn-primary" onClick={openNew}>+ Mở thẻ mới</button>
-            <button className="btn btn-ghost" onClick={onRefresh} disabled={isRefreshing}>
+            <button className="btn btn-primary table-feature-btn" onClick={openNew}>+ Mở thẻ mới</button>
+            <button className="btn btn-ghost table-feature-btn" onClick={onRefresh} disabled={isRefreshing}>
                <RefreshCcw size={18} className={isRefreshing ? 'spin-anim' : ''} /> Load lại
             </button>
          </div>

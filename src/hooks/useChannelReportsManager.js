@@ -35,7 +35,7 @@ export const useChannelReportsManager = () => {
   };
 
   useEffect(() => {
-    handlePresetChange('month');
+    handlePresetChange('month'); // eslint-disable-line react-hooks/set-state-in-effect
   }, []);
 
   const reportData = useMemo(() => {

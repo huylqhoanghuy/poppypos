@@ -13,13 +13,13 @@ const ProductsUI = ({ manager }) => {
     recipeItem, setRecipeItem,
     viewingProduct, setViewingProduct,
     showDetail, setShowDetail,
-    viewMode, setViewMode,
+    _viewMode, _setViewMode,
     filterCategory, setFilterCategory,
     safeNumber, getPercentage, getMargin,
     calculateTotalCost, getProductMaxCapacityInfo, getEntityDisplayDetails, calculateMaxPortions, getRecipeItemCost,
     saveProduct, duplicateProduct, addRecipeItem, removeRecipeItem, updateRecipeQty, updateRecipeUnitMode,
     finalFilteredItems,
-    filteredActiveItems, search, selectedIds, toggleSelection, showForm, setShowForm, handleDelete, showToast
+    _filteredActiveItems, _search, selectedIds, toggleSelection, _showForm, setShowForm, handleDelete, _showToast
   } = manager;
 
   const renderActiveList = () => {
@@ -396,7 +396,7 @@ const ProductsUI = ({ manager }) => {
 
   const customFilters = (
     <>
-      <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} style={{ background: 'var(--surface-variant)', color: 'var(--text-primary)', border: '1px solid var(--surface-border)', padding: '10px 18px', borderRadius: 'var(--radius-md)', outline: 'none', fontSize: 'var(--font-base)' }}>
+      <select className="table-feature-select" value={filterCategory} onChange={e => setFilterCategory(e.target.value)}>
         <option value="all">-- Tất cả Danh Mục POS --</option>
         {(categories || []).filter(c => c.type === 'menu').map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
       </select>

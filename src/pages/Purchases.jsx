@@ -47,20 +47,13 @@ const Purchases = () => {
     }
   };
 
-  const handlePayDebt = async (poId, amount, supplierName) => {
-    const isConfirmed = await confirm({
-       title: 'Thanh toán Phiếu Nhập Nợ',
-       message: `Bạn xác nhận dùng Quỹ Tiền Mặt xuất ${amount.toLocaleString('vi-VN')} đ để trả nợ phiếu này cho ${supplierName}?`,
-       confirmText: 'Xác nhận Đã Trả Nợ',
-       type: 'info'
-    });
-    if (isConfirmed) {
-       try {
-         await updatePurchaseStatus(poId, 'Paid');
-         showToast('Đã cấn trừ công nợ thành công bằng Quỹ Tiền Mặt!', 'success');
-       } catch (err) {
-         showToast('Lỗi thanh toán: ' + err.message, 'error');
-       }
+  const handlePayDebt = async (poId, amount, supplierName, accountId) => {
+    const safeAmount = Number(amount) || 0;
+    try {
+      await updatePurchaseStatus(poId, 'Paid', accountId);
+      showToast('Đã cấn trừ công nợ thành công!', 'success');
+    } catch (err) {
+      showToast('Lỗi thanh toán: ' + err.message, 'error');
     }
   };
 

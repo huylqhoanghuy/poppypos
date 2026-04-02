@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useReducer, useEffect, useState } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useState, useRef } from 'react';
 import { db } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useAutoBackup } from '../hooks/useAutoBackup';
+import { StorageService } from '../services/api/storage';
 import { inferItemsFromPrice } from '../utils/csvParser';
 import { 
   generateId, 
@@ -67,11 +68,94 @@ const initialState = {
     { id: 'U2', username: 'quanly', password: '123', name: 'Quản Lý Cửa Hàng', role: 'MANAGER', status: 'active' },
     { id: 'U3', username: 'thungan', password: '123', name: 'Thu Ngân', role: 'CASHIER', status: 'active' }
   ],
+  notifications: [],
   toast: null
 };
 
-const reducer = (state, action) => {
+const baseReducer = (state, action) => {
   switch (action.type) {
+    case 'ADD_NOTIFICATION': {
+      const newNotif = {
+        id: generateId('NOT_'),
+        title: action.payload.title || 'Thông báo mới',
+        message: action.payload.message || '',
+        type: action.payload.type || 'info', // info, success, warning, error
+        silent: action.payload.silent || false,
+        timestamp: action.payload.timestamp || new Date().toISOString(),
+        isRead: false
+      };
+      const currentList = state.notifications || [];
+      const newList = [newNotif, ...currentList].slice(0, 20); // Lưu tối đa 20 thông báo gần nhất
+      const newState = { ...state, notifications: newList };
+      StorageService.saveCollection('notifications', newList);
+      return newState;
+    }
+    
+    case 'MARK_NOTIFICATION_READ': {
+      const currentList = state.notifications || [];
+      const newList = currentList.map(n => 
+        n.id === action.payload ? { ...n, isRead: true } : n
+      );
+      const newState = { ...state, notifications: newList };
+      StorageService.saveCollection('notifications', newList);
+      return newState;
+    }
+    
+    case 'MARK_ALL_NOTIFICATIONS_READ': {
+      const currentList = state.notifications || [];
+      const newList = currentList.map(n => ({ ...n, isRead: true }));
+      const newState = { ...state, notifications: newList };
+      StorageService.saveCollection('notifications', newList);
+      return newState;
+    }
+    
+    case 'DELETE_NOTIFICATION': {
+      const currentList = state.notifications || [];
+      const newList = currentList.map(n => n.id === action.payload ? { ...n, deleted: true, deletedAt: new Date().toISOString() } : n);
+      const newState = { ...state, notifications: newList };
+      StorageService.saveCollection('notifications', newList);
+      return newState;
+    }
+    case 'RESTORE_NOTIFICATION': {
+      const currentList = state.notifications || [];
+      const newList = currentList.map(n => n.id === action.payload ? { ...n, deleted: false, deletedAt: null, hiddenFromStaff: false } : n);
+      const newState = { ...state, notifications: newList };
+      StorageService.saveCollection('notifications', newList);
+      return newState;
+    }
+    case 'HARD_DELETE_NOTIFICATION': {
+      const currentList = state.notifications || [];
+      const newList = currentList.filter(n => n.id !== action.payload);
+      const newState = { ...state, notifications: newList };
+      StorageService.saveCollection('notifications', newList);
+      return newState;
+    }
+    case 'BULK_RESTORE_NOTIFICATION': {
+      const currentList = state.notifications || [];
+      const newList = currentList.map(n => action.payload.includes(n.id) ? { ...n, deleted: false, deletedAt: null, hiddenFromStaff: false } : n);
+      const newState = { ...state, notifications: newList };
+      StorageService.saveCollection('notifications', newList);
+      return newState;
+    }
+    case 'BULK_HARD_DELETE_NOTIFICATION': {
+      const currentList = state.notifications || [];
+      const newList = currentList.filter(n => !action.payload.includes(n.id));
+      const newState = { ...state, notifications: newList };
+      StorageService.saveCollection('notifications', newList);
+      return newState;
+    }
+    
+    case 'HIDE_FROM_STAFF': {
+        const { entityKey, ids } = action.payload;
+        if (!state[entityKey]) return state;
+        const newList = state[entityKey].map(item => 
+             ids.includes(item.id) ? { ...item, hiddenFromStaff: true } : item
+        );
+        const newState = { ...state, [entityKey]: newList };
+        StorageService.saveCollection(entityKey, newList);
+        return newState;
+    }
+
     case 'MIGRATE_LEGACY_ORDERS': {
         let hasChanges = false;
         const migratedOrders = [];
@@ -128,62 +212,62 @@ const reducer = (state, action) => {
     }
     case 'HYDRATE_STATE': {
       const incoming = action.payload;
-      return { ...state, ...incoming };
+      return { ...state, ...incoming, _skipSave: true };
     }
 
     case 'UPDATE_SETTINGS':
       return { ...state, settings: { ...state.settings, ...action.payload } };
 
     case 'SHOW_TOAST':
-      return { ...state, toast: { message: action.payload.message, type: action.payload.type || 'success', id: Date.now() } };
+      return { ...state, toast: { message: action.payload.message, type: action.payload.type || 'success', id: Date.now() }, _skipSave: true };
     case 'HIDE_TOAST':
-      return { ...state, toast: null };
+      return { ...state, toast: null, _skipSave: true };
 
     // Categories
     case 'ADD_CATEGORY': return { ...state, categories: [...state.categories, { ...action.payload, id: generateId('CAT-') }] };
     case 'UPDATE_CATEGORY': return { ...state, categories: state.categories.map(c => c.id === action.payload.id ? action.payload : c) };
     case 'DELETE_CATEGORY': return { ...state, categories: state.categories.map(c => c.id === action.payload ? { ...c, deleted: true, deletedAt: new Date().toISOString() } : c) };
-    case 'RESTORE_CATEGORY': return { ...state, categories: state.categories.map(c => c.id === action.payload ? { ...c, deleted: false, deletedAt: null } : c) };
+    case 'RESTORE_CATEGORY': return { ...state, categories: state.categories.map(c => c.id === action.payload ? { ...c, deleted: false, deletedAt: null, hiddenFromStaff: false } : c) };
     case 'HARD_DELETE_CATEGORY': return { ...state, categories: state.categories.filter(c => c.id !== action.payload) };
     case 'BULK_DELETE_CATEGORY': return { ...state, categories: state.categories.map(c => action.payload.includes(c.id) ? { ...c, deleted: true, deletedAt: new Date().toISOString() } : c) };
-    case 'BULK_RESTORE_CATEGORY': return { ...state, categories: state.categories.map(c => action.payload.includes(c.id) ? { ...c, deleted: false, deletedAt: null } : c) };
+    case 'BULK_RESTORE_CATEGORY': return { ...state, categories: state.categories.map(c => action.payload.includes(c.id) ? { ...c, deleted: false, deletedAt: null, hiddenFromStaff: false } : c) };
     case 'BULK_HARD_DELETE_CATEGORY': return { ...state, categories: state.categories.filter(c => !action.payload.includes(c.id)) };
 
     // Sales Channels
     case 'ADD_CHANNEL': return { ...state, salesChannels: [...(state.salesChannels || []), { ...action.payload, id: generateId('CH-') }] };
     case 'UPDATE_CHANNEL': return { ...state, salesChannels: (state.salesChannels || []).map(c => c.id === action.payload.id ? action.payload : c) };
     case 'DELETE_CHANNEL': return { ...state, salesChannels: (state.salesChannels || []).map(c => c.id === action.payload ? { ...c, deleted: true, deletedAt: new Date().toISOString() } : c) };
-    case 'RESTORE_CHANNEL': return { ...state, salesChannels: (state.salesChannels || []).map(c => c.id === action.payload ? { ...c, deleted: false, deletedAt: null } : c) };
+    case 'RESTORE_CHANNEL': return { ...state, salesChannels: (state.salesChannels || []).map(c => c.id === action.payload ? { ...c, deleted: false, deletedAt: null, hiddenFromStaff: false } : c) };
     case 'HARD_DELETE_CHANNEL': return { ...state, salesChannels: (state.salesChannels || []).filter(c => c.id !== action.payload) };
     case 'BULK_DELETE_CHANNEL': return { ...state, salesChannels: (state.salesChannels || []).map(c => action.payload.includes(c.id) ? { ...c, deleted: true, deletedAt: new Date().toISOString() } : c) };
-    case 'BULK_RESTORE_CHANNEL': return { ...state, salesChannels: (state.salesChannels || []).map(c => action.payload.includes(c.id) ? { ...c, deleted: false, deletedAt: null } : c) };
+    case 'BULK_RESTORE_CHANNEL': return { ...state, salesChannels: (state.salesChannels || []).map(c => action.payload.includes(c.id) ? { ...c, deleted: false, deletedAt: null, hiddenFromStaff: false } : c) };
     case 'BULK_HARD_DELETE_CHANNEL': return { ...state, salesChannels: (state.salesChannels || []).filter(c => !action.payload.includes(c.id)) };
 
     // Users (Auth V2)
     case 'ADD_USER': return { ...state, users: [...(state.users || []), { ...action.payload, id: generateId('USR-') }] };
     case 'UPDATE_USER': return { ...state, users: (state.users || []).map(u => u.id === action.payload.id ? action.payload : u) };
     case 'DELETE_USER': return { ...state, users: (state.users || []).map(u => u.id === action.payload ? { ...u, deleted: true, deletedAt: new Date().toISOString() } : u) };
-    case 'RESTORE_USER': return { ...state, users: (state.users || []).map(u => u.id === action.payload ? { ...u, deleted: false, deletedAt: null } : u) };
+    case 'RESTORE_USER': return { ...state, users: (state.users || []).map(u => u.id === action.payload ? { ...u, deleted: false, deletedAt: null, hiddenFromStaff: false } : u) };
     case 'HARD_DELETE_USER': return { ...state, users: (state.users || []).filter(u => u.id !== action.payload) };
 
     // Accounts (NEW V8)
     case 'ADD_ACCOUNT': return { ...state, accounts: [...state.accounts, { ...action.payload, id: generateId('ACC-'), balance: Number(action.payload.initialBalance || 0), initialBalance: Number(action.payload.initialBalance || 0) }] };
     case 'UPDATE_ACCOUNT': return { ...state, accounts: state.accounts.map(a => a.id === action.payload.id ? action.payload : a) };
     case 'DELETE_ACCOUNT': return { ...state, accounts: state.accounts.map(a => a.id === action.payload ? { ...a, deleted: true, deletedAt: new Date().toISOString() } : a) };
-    case 'RESTORE_ACCOUNT': return { ...state, accounts: state.accounts.map(a => a.id === action.payload ? { ...a, deleted: false, deletedAt: null } : a) };
+    case 'RESTORE_ACCOUNT': return { ...state, accounts: state.accounts.map(a => a.id === action.payload ? { ...a, deleted: false, deletedAt: null, hiddenFromStaff: false } : a) };
     case 'HARD_DELETE_ACCOUNT': return { ...state, accounts: state.accounts.filter(a => a.id !== action.payload) };
     case 'BULK_DELETE_ACCOUNT': return { ...state, accounts: state.accounts.map(a => action.payload.includes(a.id) ? { ...a, deleted: true, deletedAt: new Date().toISOString() } : a) };
-    case 'BULK_RESTORE_ACCOUNT': return { ...state, accounts: state.accounts.map(a => action.payload.includes(a.id) ? { ...a, deleted: false, deletedAt: null } : a) };
+    case 'BULK_RESTORE_ACCOUNT': return { ...state, accounts: state.accounts.map(a => action.payload.includes(a.id) ? { ...a, deleted: false, deletedAt: null, hiddenFromStaff: false } : a) };
     case 'BULK_HARD_DELETE_ACCOUNT': return { ...state, accounts: state.accounts.filter(a => !action.payload.includes(a.id)) };
 
     // Finance Categories (NEW V8)
     case 'ADD_FINANCE_CATEGORY': return { ...state, financeCategories: [...state.financeCategories, { ...action.payload, id: generateId('FCAT-') }] };
     case 'UPDATE_FINANCE_CATEGORY': return { ...state, financeCategories: state.financeCategories.map(c => c.id === action.payload.id ? action.payload : c) };
     case 'DELETE_FINANCE_CATEGORY': return { ...state, financeCategories: state.financeCategories.map(c => c.id === action.payload ? { ...c, deleted: true, deletedAt: new Date().toISOString() } : c) };
-    case 'RESTORE_FINANCE_CATEGORY': return { ...state, financeCategories: state.financeCategories.map(c => c.id === action.payload ? { ...c, deleted: false, deletedAt: null } : c) };
+    case 'RESTORE_FINANCE_CATEGORY': return { ...state, financeCategories: state.financeCategories.map(c => c.id === action.payload ? { ...c, deleted: false, deletedAt: null, hiddenFromStaff: false } : c) };
     case 'HARD_DELETE_FINANCE_CATEGORY': return { ...state, financeCategories: state.financeCategories.filter(c => c.id !== action.payload) };
     case 'BULK_DELETE_FINANCE_CATEGORY': return { ...state, financeCategories: state.financeCategories.map(c => action.payload.includes(c.id) ? { ...c, deleted: true, deletedAt: new Date().toISOString() } : c) };
-    case 'BULK_RESTORE_FINANCE_CATEGORY': return { ...state, financeCategories: state.financeCategories.map(c => action.payload.includes(c.id) ? { ...c, deleted: false, deletedAt: null } : c) };
+    case 'BULK_RESTORE_FINANCE_CATEGORY': return { ...state, financeCategories: state.financeCategories.map(c => action.payload.includes(c.id) ? { ...c, deleted: false, deletedAt: null, hiddenFromStaff: false } : c) };
     case 'BULK_HARD_DELETE_FINANCE_CATEGORY': return { ...state, financeCategories: state.financeCategories.filter(c => !action.payload.includes(c.id)) };
 
     // Money Transfer (NEW V8)
@@ -191,19 +275,119 @@ const reducer = (state, action) => {
 
     case 'DELETE_TRANSACTION': {
       const transaction = state.transactions.find(t => t.id === action.payload);
-      if (!transaction) return state;
+      if (!transaction || transaction.deleted) return state;
+
+      let updatedPOs = [...state.purchaseOrders];
+      let updatedSuppliers = [...state.suppliers];
+      let updatedPosOrders = [...state.posOrders];
+
+      if (transaction.relatedId) {
+          if (transaction.relatedId.startsWith('PO-') || transaction.relatedId.startsWith('NK-')) {
+              const poIdx = updatedPOs.findIndex(p => p.id === transaction.relatedId);
+              if (poIdx !== -1 && updatedPOs[poIdx].status === 'Paid') {
+                  updatedPOs[poIdx] = { ...updatedPOs[poIdx], status: 'Pending' }; // Revert to Debt
+                  const supplierId = updatedPOs[poIdx].supplierId;
+                  if (supplierId) {
+                     const sIdx = updatedSuppliers.findIndex(s => s.id === supplierId);
+                     if (sIdx !== -1) {
+                        updatedSuppliers[sIdx] = { ...updatedSuppliers[sIdx], debt: (updatedSuppliers[sIdx].debt || 0) + transaction.amount };
+                     }
+                  }
+              }
+          } else if (transaction.relatedId.startsWith('ORD-') || transaction.relatedId.startsWith('POS-') || transaction.relatedId.startsWith('DH-')) {
+              const oIdx = updatedPosOrders.findIndex(o => o.id === transaction.relatedId);
+              if (oIdx !== -1 && updatedPosOrders[oIdx].paymentStatus === 'Paid') {
+                  updatedPosOrders[oIdx] = { ...updatedPosOrders[oIdx], paymentStatus: 'Debt' };
+              }
+          }
+      }
 
       return {
         ...state,
-        transactions: state.transactions.filter(t => t.id !== action.payload),
+        purchaseOrders: updatedPOs,
+        suppliers: updatedSuppliers,
+        posOrders: updatedPosOrders,
+        transactions: state.transactions.map(t => t.id === action.payload ? { ...t, deleted: true, deletedAt: new Date().toISOString() } : t),
         accounts: state.accounts.map(acc => {
           if (acc.id === transaction.accountId) {
+             // Reversed: Thu -> Trừ tiền, Chi -> Cộng lại tiền
             const adjustment = transaction.type === 'Thu' ? -transaction.amount : transaction.amount;
             return { ...acc, balance: acc.balance + adjustment };
           }
           return acc;
         })
       };
+    }
+
+    case 'RESTORE_TRANSACTION': {
+      const transaction = state.transactions.find(t => t.id === action.payload);
+      if (!transaction || !transaction.deleted) return state;
+
+      let updatedPOs = [...state.purchaseOrders];
+      let updatedSuppliers = [...state.suppliers];
+      let updatedPosOrders = [...state.posOrders];
+
+      if (transaction.relatedId) {
+          if (transaction.relatedId.startsWith('PO-') || transaction.relatedId.startsWith('NK-')) {
+              const poIdx = updatedPOs.findIndex(p => p.id === transaction.relatedId);
+              if (poIdx !== -1 && (updatedPOs[poIdx].status === 'Pending' || updatedPOs[poIdx].status === 'Debt')) {
+                  updatedPOs[poIdx] = { ...updatedPOs[poIdx], status: 'Paid' }; // Trả lại status Paid
+                  const supplierId = updatedPOs[poIdx].supplierId;
+                  if (supplierId) {
+                     const sIdx = updatedSuppliers.findIndex(s => s.id === supplierId);
+                     if (sIdx !== -1) {
+                        updatedSuppliers[sIdx] = { ...updatedSuppliers[sIdx], debt: Math.max(0, (updatedSuppliers[sIdx].debt || 0) - transaction.amount) };
+                     }
+                  }
+              }
+          } else if (transaction.relatedId.startsWith('ORD-') || transaction.relatedId.startsWith('POS-') || transaction.relatedId.startsWith('DH-')) {
+              const oIdx = updatedPosOrders.findIndex(o => o.id === transaction.relatedId);
+              if (oIdx !== -1 && (updatedPosOrders[oIdx].paymentStatus === 'Debt' || updatedPosOrders[oIdx].paymentStatus === 'Unpaid')) {
+                  updatedPosOrders[oIdx] = { ...updatedPosOrders[oIdx], paymentStatus: 'Paid' };
+              }
+          }
+      }
+
+      return {
+        ...state,
+        purchaseOrders: updatedPOs,
+        suppliers: updatedSuppliers,
+        posOrders: updatedPosOrders,
+        transactions: state.transactions.map(t => t.id === action.payload ? { ...t, deleted: false, deletedAt: null, hiddenFromStaff: false } : t),
+        accounts: state.accounts.map(acc => {
+          if (acc.id === transaction.accountId) {
+             // Restore: Thu -> Cộng tiền, Chi -> Trừ tiền
+            const adjustment = transaction.type === 'Thu' ? transaction.amount : -transaction.amount;
+            return { ...acc, balance: acc.balance + adjustment };
+          }
+          return acc;
+        })
+      };
+    }
+
+    case 'HARD_DELETE_TRANSACTION': {
+      return {
+        ...state,
+        transactions: state.transactions.filter(t => t.id !== action.payload)
+      };
+    }
+
+    case 'BULK_DELETE_TRANSACTION': {
+      let tempState = state;
+      action.payload.forEach(id => { tempState = baseReducer(tempState, { type: 'DELETE_TRANSACTION', payload: id }); });
+      return tempState;
+    }
+
+    case 'BULK_RESTORE_TRANSACTION': {
+      let tempState = state;
+      action.payload.forEach(id => { tempState = baseReducer(tempState, { type: 'RESTORE_TRANSACTION', payload: id }); });
+      return tempState;
+    }
+
+    case 'BULK_HARD_DELETE_TRANSACTION': {
+      let tempState = state;
+      action.payload.forEach(id => { tempState = baseReducer(tempState, { type: 'HARD_DELETE_TRANSACTION', payload: id }); });
+      return tempState;
     }
 
     case 'UPDATE_TRANSACTION': {
@@ -293,10 +477,10 @@ const reducer = (state, action) => {
       return { ...state, ingredients: state.ingredients.map(i => i.id === updatedIng.id ? updatedIng : i), products: healedProducts };
     }
     case 'DELETE_INGREDIENT': return { ...state, ingredients: state.ingredients.map(i => i.id === action.payload ? { ...i, deleted: true, deletedAt: new Date().toISOString() } : i) };
-    case 'RESTORE_INGREDIENT': return { ...state, ingredients: state.ingredients.map(i => i.id === action.payload ? { ...i, deleted: false, deletedAt: null } : i) };
+    case 'RESTORE_INGREDIENT': return { ...state, ingredients: state.ingredients.map(i => i.id === action.payload ? { ...i, deleted: false, deletedAt: null, hiddenFromStaff: false } : i) };
     case 'HARD_DELETE_INGREDIENT': return { ...state, ingredients: state.ingredients.filter(i => i.id !== action.payload) };
     case 'BULK_DELETE_INGREDIENT': return { ...state, ingredients: state.ingredients.map(i => action.payload.includes(i.id) ? { ...i, deleted: true, deletedAt: new Date().toISOString() } : i) };
-    case 'BULK_RESTORE_INGREDIENT': return { ...state, ingredients: state.ingredients.map(i => action.payload.includes(i.id) ? { ...i, deleted: false, deletedAt: null } : i) };
+    case 'BULK_RESTORE_INGREDIENT': return { ...state, ingredients: state.ingredients.map(i => action.payload.includes(i.id) ? { ...i, deleted: false, deletedAt: null, hiddenFromStaff: false } : i) };
     case 'BULK_HARD_DELETE_INGREDIENT': return { ...state, ingredients: state.ingredients.filter(i => !action.payload.includes(i.id)) };
     case 'ADJUST_STOCK': return {
       ...state,
@@ -306,24 +490,24 @@ const reducer = (state, action) => {
     case 'ADD_PRODUCT': return { ...state, products: [...state.products, { ...action.payload, id: generateId('SP-'), status: action.payload.status || 'active' }] };
     case 'UPDATE_PRODUCT': return { ...state, products: state.products.map(p => p.id === action.payload.id ? { ...p, ...action.payload } : p) };
     case 'DELETE_PRODUCT': return { ...state, products: state.products.map(p => p.id === action.payload ? { ...p, deleted: true, deletedAt: new Date().toISOString() } : p) };
-    case 'RESTORE_PRODUCT': return { ...state, products: state.products.map(p => p.id === action.payload ? { ...p, deleted: false, deletedAt: null } : p) };
+    case 'RESTORE_PRODUCT': return { ...state, products: state.products.map(p => p.id === action.payload ? { ...p, deleted: false, deletedAt: null, hiddenFromStaff: false } : p) };
     case 'HARD_DELETE_PRODUCT': return { ...state, products: state.products.filter(p => p.id !== action.payload) };
     case 'BULK_DELETE_PRODUCT': return { ...state, products: state.products.map(p => action.payload.includes(p.id) ? { ...p, deleted: true, deletedAt: new Date().toISOString() } : p) };
-    case 'BULK_RESTORE_PRODUCT': return { ...state, products: state.products.map(p => action.payload.includes(p.id) ? { ...p, deleted: false, deletedAt: null } : p) };
+    case 'BULK_RESTORE_PRODUCT': return { ...state, products: state.products.map(p => action.payload.includes(p.id) ? { ...p, deleted: false, deletedAt: null, hiddenFromStaff: false } : p) };
     case 'BULK_HARD_DELETE_PRODUCT': return { ...state, products: state.products.filter(p => !action.payload.includes(p.id)) };
 
     // Suppliers
     case 'ADD_SUPPLIER': return { ...state, suppliers: [...state.suppliers, { ...action.payload, id: generateId('SUP-') }] };
     case 'UPDATE_SUPPLIER': return { ...state, suppliers: state.suppliers.map(s => s.id === action.payload.id ? action.payload : s) };
     case 'DELETE_SUPPLIER': return { ...state, suppliers: state.suppliers.map(s => s.id === action.payload ? { ...s, deleted: true, deletedAt: new Date().toISOString() } : s) };
-    case 'RESTORE_SUPPLIER': return { ...state, suppliers: state.suppliers.map(s => s.id === action.payload ? { ...s, deleted: false, deletedAt: null } : s) };
+    case 'RESTORE_SUPPLIER': return { ...state, suppliers: state.suppliers.map(s => s.id === action.payload ? { ...s, deleted: false, deletedAt: null, hiddenFromStaff: false } : s) };
     case 'HARD_DELETE_SUPPLIER': return { ...state, suppliers: state.suppliers.filter(s => s.id !== action.payload) };
     case 'BULK_DELETE_SUPPLIER': return { ...state, suppliers: state.suppliers.map(s => action.payload.includes(s.id) ? { ...s, deleted: true, deletedAt: new Date().toISOString() } : s) };
-    case 'BULK_RESTORE_SUPPLIER': return { ...state, suppliers: state.suppliers.map(s => action.payload.includes(s.id) ? { ...s, deleted: false, deletedAt: null } : s) };
+    case 'BULK_RESTORE_SUPPLIER': return { ...state, suppliers: state.suppliers.map(s => action.payload.includes(s.id) ? { ...s, deleted: false, deletedAt: null, hiddenFromStaff: false } : s) };
     case 'BULK_HARD_DELETE_SUPPLIER': return { ...state, suppliers: state.suppliers.filter(s => !action.payload.includes(s.id)) };
 
     case 'BULK_DELETE_POS_ORDER': return { ...state, posOrders: state.posOrders.map(o => action.payload.includes(o.id) ? { ...o, deleted: true, deletedAt: new Date().toISOString() } : o) };
-    case 'BULK_RESTORE_POS_ORDER': return { ...state, posOrders: state.posOrders.map(o => action.payload.includes(o.id) ? { ...o, deleted: false, deletedAt: null } : o) };
+    case 'BULK_RESTORE_POS_ORDER': return { ...state, posOrders: state.posOrders.map(o => action.payload.includes(o.id) ? { ...o, deleted: false, deletedAt: null, hiddenFromStaff: false } : o) };
     case 'BULK_HARD_DELETE_POS_ORDER': return { ...state, posOrders: state.posOrders.filter(o => !action.payload.includes(o.id)) };
 
     // Purchase Orders (Kho & Công Nợ)
@@ -459,6 +643,26 @@ const reducer = (state, action) => {
   }
 };
 
+const reducer = (state, action) => {
+  const newState = baseReducer(state, action);
+  
+  // Xóa cờ _skipSave nếu action không phải là Hydrate hoặc Toast
+  // Giúp các thao tác như DELETE_POS_ORDER được MỞ KHÓA lưu xuống localStorage!
+  if (
+    action.type !== 'HYDRATE_STATE' &&
+    action.type !== 'HYDRATE_STATE_SILENT' &&
+    action.type !== 'SHOW_TOAST' &&
+    action.type !== 'HIDE_TOAST' &&
+    action.type !== 'CLEAN_LEGACY_DATA' && 
+    action.type !== 'MIGRATE_LEGACY_ORDERS'
+  ) {
+    if (newState._skipSave) {
+      return { ...newState, _skipSave: false };
+    }
+  }
+  return newState;
+};
+
 export const DataProvider = ({ children }) => {
   const [state, rawDispatch] = useReducer(reducer, initialState, (initial) => {
     try {
@@ -485,22 +689,26 @@ export const DataProvider = ({ children }) => {
       return;
     }
 
+    const showToast = (message) => {
+      setTimeout(() => rawDispatch({ type: 'SHOW_TOAST', payload: { message } }), 50);
+    };
+
     if (action.type.startsWith('ADD_')) {
-      rawDispatch({ type: 'SHOW_TOAST', payload: { message: 'Dữ liệu đã được lưu thành công!' } });
+      showToast('Dữ liệu đã được lưu thành công!');
     } else if (action.type.startsWith('UPDATE_')) {
-      rawDispatch({ type: 'SHOW_TOAST', payload: { message: 'Cập nhật thay đổi thành công!' } });
+      showToast('Cập nhật thay đổi thành công!');
     } else if (action.type.startsWith('DELETE_')) {
-      rawDispatch({ type: 'SHOW_TOAST', payload: { message: 'Đã đưa dữ liệu vào Thùng rác!' } });
+      showToast('Đã đưa dữ liệu vào Thùng rác!');
     } else if (action.type.startsWith('RESTORE_')) {
-      rawDispatch({ type: 'SHOW_TOAST', payload: { message: 'Đã khôi phục dữ liệu từ Thùng rác!' } });
+      showToast('Đã khôi phục dữ liệu từ Thùng rác!');
     } else if (action.type.startsWith('HARD_DELETE_')) {
-      rawDispatch({ type: 'SHOW_TOAST', payload: { message: 'Đã xóa vĩnh viễn khỏi hệ thống!' } });
+      showToast('Đã xóa vĩnh viễn khỏi hệ thống!');
     } else if (action.type === 'PROCESS_POS_ORDER' || action.type === 'PROCESS_IMPORT_ORDER') {
-      rawDispatch({ type: 'SHOW_TOAST', payload: { message: 'Thanh toán & Xuất kho thành công!' } });
+      showToast('Thanh toán & Xuất kho thành công!');
     } else if (action.type === 'UPDATE_ORDER_STATUS') {
-      rawDispatch({ type: 'SHOW_TOAST', payload: { message: 'Đã đổi trạng thái đơn hàng!' } });
+      showToast('Đã đổi trạng thái đơn hàng!');
     } else if (action.type === 'TRANSFER_FUNDS') {
-      rawDispatch({ type: 'SHOW_TOAST', payload: { message: 'Đã ghi nhận giao dịch luân chuyển!' } });
+      showToast('Đã ghi nhận giao dịch luân chuyển!');
     }
   };
 
@@ -539,20 +747,33 @@ export const DataProvider = ({ children }) => {
     }
   }, []);
 
-  // Cleanup legacy data once (Migration V30)
+  // Sync DataContext state when StorageService (CHS) modifies localStorage directly
   useEffect(() => {
-    if (loading) return;
+    const unsubscribe = StorageService.subscribe((col) => {
+       StorageService.getAll().then(data => {
+          rawDispatch({ type: 'HYDRATE_STATE', payload: data });
+       });
+    });
+    return () => unsubscribe();
+  }, [rawDispatch]);
+
+  // Cleanup legacy data once (Migration V30)
+  const legacyCleanAttempted = useRef(false);
+  useEffect(() => {
+    if (loading || legacyCleanAttempted.current) return;
     const hasLegacy = state.transactions.some(t => t.note?.includes('[Import')) ||
       state.posOrders.some(o => o.id?.startsWith('IMP-'));
     if (hasLegacy) {
       console.log("[Migration] Cleaning legacy import labels...");
       dispatch({ type: 'CLEAN_LEGACY_DATA' });
     }
+    legacyCleanAttempted.current = true;
   }, [loading, state.transactions, state.posOrders]);
 
   // Clean ghost items (Store names parsed as products) from legacy imports
+  const ghostCleanAttempted = useRef(false);
   useEffect(() => {
-    if (loading) return;
+    if (loading || ghostCleanAttempted.current) return;
     const needsMigration = state.posOrders.some(order => {
         if (order.channelName?.toLowerCase().includes('grab') && order.customerName !== 'Khách Grab') return true;
         if (order.channelName?.toLowerCase().includes('shopee') && order.customerName !== 'Khách Shopee') return true;
@@ -566,6 +787,7 @@ export const DataProvider = ({ children }) => {
        console.log("[Migration] CSDL có chứa rác dư thừa từ các nhóm Header Report Grab/Shopee. Đang khởi chạy quy trình tự khắc phục...");
        dispatch({ type: 'MIGRATE_LEGACY_ORDERS' });
     }
+    ghostCleanAttempted.current = true;
   }, [loading, state.posOrders]);
 
   // Function to manually trigger Firebase sync
@@ -615,9 +837,12 @@ export const DataProvider = ({ children }) => {
 
   // Sync locally instantly, Cloud sync is manual
   useEffect(() => {
+    if (state._skipSave) return; // Ngăn chặn đè dữ liệu của CHS khi chỉ hiện Toast
     const stateToSave = { ...state };
     delete stateToSave.toast; // Không lưu toast
+    delete stateToSave._skipSave;
     localStorage.setItem('omnipos_gaumuoi_v3', JSON.stringify(stateToSave));
+    StorageService.notifyAll(); // FIX: Trigger CHS hooks whenever DataContext updates directly
   }, [state]);
 
   if (loading) {

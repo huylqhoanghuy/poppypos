@@ -14,7 +14,7 @@ export const useOrders = () => {
   }, []);
 
   useEffect(() => {
-    fetchData();
+    fetchData(); // eslint-disable-line react-hooks/set-state-in-effect
     const unsubscribe = StorageService.subscribe((col) => {
       if (col === 'posOrders' || col === '*') fetchData();
     });
@@ -25,6 +25,11 @@ export const useOrders = () => {
   const update = async (payload) => { await OrderApi.update(payload); };
   const cancel = async (id) => { await OrderApi.cancel(id); };
   const remove = async (id) => { await OrderApi.delete(id); };
+  const restore = async (id) => { await OrderApi.restore(id); };
+  const hardDelete = async (id) => { await OrderApi.hardDelete(id); };
+  const bulkDelete = async (ids) => { await OrderApi.bulkDelete(ids); };
+  const bulkRestore = async (ids) => { await OrderApi.bulkRestore(ids); };
+  const bulkHardDelete = async (ids) => { await OrderApi.bulkHardDelete(ids); };
 
   return {
     orders: data,
@@ -32,6 +37,11 @@ export const useOrders = () => {
     addOrder: add,
     updateOrder: update,
     cancelOrder: cancel,
-    deleteOrder: remove
+    deleteOrder: remove,
+    restoreOrder: restore,
+    hardDeleteOrder: hardDelete,
+    bulkDeleteOrder: bulkDelete,
+    bulkRestoreOrder: bulkRestore,
+    bulkHardDeleteOrder: bulkHardDelete
   };
 };

@@ -312,7 +312,7 @@ const InventoryReports = () => {
           </h2>
           <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>Phân tích định giá hàng hóa hiện tại và theo dõi biến động dòng tiền nhập xuất kỳ vọng.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => window.print()}><Download size={18}/> Xuất Báo Cáo</button>
+        <button className="btn btn-primary table-feature-btn" onClick={() => window.print()}><Download size={16}/> Xuất Báo Cáo</button>
       </div>
 
       <div className="glass-panel" style={{ padding: '16px 24px', display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', background: 'var(--surface-color)' }}>
@@ -325,7 +325,7 @@ const InventoryReports = () => {
                  return (
                     <button key={pt} onClick={() => handlePresetChange(pt)} 
                             style={{ 
-                                padding: '6px 16px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px',
+                                padding: '0 16px', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px', display: 'flex', alignItems: 'center',
                                 background: datePreset === pt ? 'white' : 'transparent',
                                 color: datePreset === pt ? 'var(--primary)' : 'var(--text-secondary)',
                                 boxShadow: datePreset === pt ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
@@ -336,7 +336,7 @@ const InventoryReports = () => {
              })}
              <button onClick={() => setDatePreset('custom')}
                  style={{ 
-                    padding: '6px 16px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px',
+                    padding: '0 16px', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px',
                     background: datePreset === 'custom' ? 'white' : 'transparent',
                     color: datePreset === 'custom' ? 'var(--primary)' : 'var(--text-secondary)',
                     boxShadow: datePreset === 'custom' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'

@@ -33,6 +33,7 @@ const getInitialState = () => {
       { id: 'FC10', name: 'Điều chỉnh số dư', type: 'income' }
     ],
     transactions: [],
+    notifications: [],
     settings: {
       syncMode: 'auto'
     }
@@ -60,7 +61,7 @@ export const StorageService = {
         if (dataStr) {
           try {
             resolve(JSON.parse(dataStr));
-          } catch (e) {
+          } catch {
             resolve(getInitialState());
           }
         } else {
@@ -92,6 +93,8 @@ export const StorageService = {
     notifyListeners(collectionName);
     return newCollectionArray;
   },
+
+  notifyAll: () => notifyListeners('*'),
 
   generateId: (prefix) => prefix + Math.random().toString(36).substr(2, 5).toUpperCase()
 };

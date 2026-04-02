@@ -1,0 +1,11 @@
+
+> bai1go@2.0.0 lint
+> eslint .
+
+
+/Volumes/DATA/APP/bai1go/src/hooks/useSettingsManager.js
+  22:7  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+
+✖ 1 problem (0 errors, 1 warning)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+

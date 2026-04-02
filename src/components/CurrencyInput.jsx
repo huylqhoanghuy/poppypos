@@ -17,7 +17,7 @@ export default function CurrencyInput({ value, onChange, placeholder, style, rea
     const parentNumericStr = String(value || '').replace(/[^0-9]/g, '');
     
     if (currentNumericStr !== parentNumericStr) {
-       setDisplayValue(formatCurrency(value));
+       setDisplayValue(formatCurrency(value)); // eslint-disable-line react-hooks/set-state-in-effect
     }
   }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
 

@@ -171,7 +171,7 @@ const InventoryUI = ({
               else currentListState.setSelectedIds(currentListState.filteredActiveItems.map(i => i.id));
            }}
            onEdit={(i) => openIngEdit(i)}
-           onDelete={(i) => onDeleteIngredient(i)}
+           onDelete={(i) => onDeleteIngredient(i.id)}
            confirmBeforeDelete={true}
            extraRowActions={(i) => (
               <button className="btn btn-ghost" title="Lịch sử nhập" onClick={(e) => { e.stopPropagation(); setExpandedIngId(i.id); }} style={{ padding: '6px' }}><Eye size={16} color="var(--primary)"/></button>
@@ -200,7 +200,7 @@ const InventoryUI = ({
               else currentListState.setSelectedIds(currentListState.filteredActiveItems.map(i => i.id));
            }}
            onEdit={(s) => openSupEdit(s)}
-           onDelete={(s) => onDeleteSupplier(s)}
+           onDelete={(s) => onDeleteSupplier(s.id)}
            confirmBeforeDelete={true}
            emptyMessage="Chưa có nhà cung cấp nào được cấu hình."
         />

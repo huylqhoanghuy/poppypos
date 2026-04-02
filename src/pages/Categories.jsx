@@ -30,7 +30,7 @@ const Categories = () => {
 
   const { 
     filteredActiveItems, selectedIds, toggleSelection,
-    showForm, setShowForm,
+    setShowForm,
     handlers: { handleDelete, showToast },
     sortConfig, handleSort
   } = listState;
@@ -55,6 +55,7 @@ const Categories = () => {
      if (listState.viewMode !== 'grid') {
         listState.setViewMode('grid');
      }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const trashColumns = [

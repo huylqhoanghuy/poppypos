@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useData } from '../context/DataContext';
 import { 
   Briefcase, 
@@ -30,7 +30,7 @@ export default function FinancialStatements() {
 
   const {
     totalCash, totalInventoryValue, totalAssets, totalLiabilities, ownersEquity,
-    totalRevenue, totalCOGS, grossProfit, operatingExpenses, ebitda, netProfit,
+    totalRevenue, totalCOGS, grossProfit, operatingExpenses, netProfit,
     cashInflows, cashOutflows, netCashFlow, filteredTransactions = []
   } = statements;
 
@@ -58,18 +58,18 @@ export default function FinancialStatements() {
          </div>
 
          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', background: 'var(--surface-color)', padding: '6px', borderRadius: '12px', border: '1px solid var(--surface-border)' }}>
-              <Calendar size={18} style={{ margin: '0 8px', color: 'var(--text-secondary)' }} />
-              <select className="form-input" style={{ border: 'none', background: 'transparent', padding: '6px 32px 6px 8px', fontWeight: 600, color: 'var(--text-primary)', cursor: 'pointer', outline: 'none', margin: 0, boxShadow: 'none' }} value={period} onChange={(e) => setPeriod(e.target.value)}>
-                 <option value="today">Hôm nay</option>
-                 <option value="month">Tháng này</option>
-                 <option value="year">Năm nay</option>
-                 <option value="all">Toàn thời gian (Lũy kế)</option>
-              </select>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+               <select className="table-feature-select" value={period} onChange={(e) => setPeriod(e.target.value)} style={{ paddingLeft: '32px' }}>
+                  <option value="today">Hôm nay</option>
+                  <option value="month">Tháng này</option>
+                  <option value="year">Năm nay</option>
+                  <option value="all">Toàn thời gian (Lũy kế)</option>
+               </select>
+               <Calendar size={14} style={{ position: 'absolute', left: '10px', color: 'var(--text-secondary)', pointerEvents: 'none' }} />
             </div>
             
-            <button onClick={handleRefresh} className="btn btn-primary" style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '12px 20px', borderRadius: '12px' }}>
-              <RefreshCcw size={18} className={isRefreshing ? 'spin-anim' : ''} />
+            <button onClick={handleRefresh} className="btn btn-primary table-feature-btn">
+              <RefreshCcw size={16} className={isRefreshing ? 'spin-anim' : ''} />
               Đồng Bộ Dữ Liệu
             </button>
          </div>

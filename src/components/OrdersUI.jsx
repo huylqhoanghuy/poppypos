@@ -6,7 +6,7 @@ const OrdersUI = ({ manager }) => {
   const {
     state,
     listState,
-    expandedOrderId, setExpandedOrderId,
+    _expandedOrderId, setExpandedOrderId,
     filterStatus, setFilterStatus,
     filterChannel, setFilterChannel,
     showImportModal, setShowImportModal,
@@ -16,10 +16,10 @@ const OrdersUI = ({ manager }) => {
     handlePreviewCSV,
     formData, setFormData,
     handleEdit, handleSave, confirmImport, handleFileUpload,
-    sortConfig, handleSort,
+    _sortConfig, _handleSort,
     displayOrders,
     updateStatus, toggleExpand, selectedOrder,
-    selectedIds, toggleSelection,
+    _selectedIds, _toggleSelection,
   } = manager;
 
   const getStatusBadge = (status) => {
@@ -32,21 +32,24 @@ const OrdersUI = ({ manager }) => {
   };
 
   const extraFiltersBlock = (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ background:'var(--surface-variant)', color:'var(--text-primary)', border:'1px solid var(--surface-border)', padding:'8px', borderRadius:'6px', outline:'none' }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+        <select className="table-feature-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
           <option value="all">-- Tất cả Trạng thái --</option>
           <option value="Pending">Chờ Ship</option>
           <option value="Success">Thành Công</option>
           <option value="Cancelled">Đã Hủy</option>
         </select>
-        <select value={filterChannel} onChange={e => setFilterChannel(e.target.value)} style={{ background:'var(--surface-variant)', color:'var(--text-primary)', border:'1px solid var(--surface-border)', padding:'8px', borderRadius:'6px', outline:'none' }}>
+        <select className="table-feature-select" value={filterChannel} onChange={e => setFilterChannel(e.target.value)}>
           <option value="all">-- Tất cả Kênh --</option>
           {state.salesChannels?.map(ch => <option key={ch.id} value={ch.name}>{ch.name}</option>)}
         </select>
-        <button className="btn btn-primary" onClick={() => setShowImportModal(true)} style={{ background: 'var(--warning)', borderColor: 'var(--warning)', color: 'black', padding: '8px 16px' }}>
-          <UploadCloud size={16} /> Nhập Báo Cáo Sàn
-        </button>
     </div>
+  );
+
+  const headerActionsBlock = (
+    <button className="btn btn-primary table-feature-btn" onClick={() => setShowImportModal(true)} style={{ background: 'var(--warning)', borderColor: 'var(--warning)', color: 'black' }}>
+      <UploadCloud size={16} /> Nhập Báo Cáo Sàn
+    </button>
   );
 
   const trashColumns = [
@@ -139,6 +142,7 @@ const OrdersUI = ({ manager }) => {
         extraRowActions={extraRowActions}
         trashColumns={trashColumns}
         extraFilters={extraFiltersBlock}
+        extraHeaderActions={headerActionsBlock}
         renderForm={renderForm}
       />
 

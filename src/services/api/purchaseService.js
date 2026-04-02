@@ -14,6 +14,25 @@ export const PurchaseApi = {
     list.unshift(newDoc);
     await StorageService.saveCollection('purchaseOrders', list);
 
+    // Update Ingredients Stock & Buy Price
+    if (purchase.items && purchase.items.length > 0) {
+        const ingredients = await StorageService.getCollection('ingredients');
+        let ingredientsChanged = false;
+        purchase.items.forEach(item => {
+            const idx = ingredients.findIndex(i => i.id === item.ingredientId);
+            if (idx !== -1) {
+                ingredients[idx].stock = (Number(ingredients[idx].stock) || 0) + Number(item.baseQty);
+                if (Number(item.cost) > 0) {
+                   ingredients[idx].buyPrice = Number(item.cost);
+                }
+                ingredientsChanged = true;
+            }
+        });
+        if (ingredientsChanged) {
+            await StorageService.saveCollection('ingredients', ingredients);
+        }
+    }
+
     // Xử lý nợ Supplier
     if (purchase.supplierId && purchase.status === 'Pending') {
        const suppliers = await StorageService.getCollection('suppliers');
@@ -41,6 +60,7 @@ export const PurchaseApi = {
                 categoryId: 'FC4',
                 categoryName: 'Nhập hàng nguyên liệu',
                 date: purchase.date,
+                voucherCode: StorageService.generateId('PC-'),
                 note: `Thanh toán phiếu nhập kho ${newDoc.id}`,
                 relatedId: newDoc.id,
                 status: 'Completed'
@@ -54,7 +74,7 @@ export const PurchaseApi = {
     return newDoc;
   },
 
-  updateStatus: async (id, status) => {
+  updateStatus: async (id, status, targetAccountId = null) => {
     const list = await PurchaseApi.getAll();
     const i = list.findIndex(p => p.id === id);
     if (i !== -1) {
@@ -71,23 +91,31 @@ export const PurchaseApi = {
           // Generate Tx
           const txList = await StorageService.getCollection('transactions');
           const accounts = await StorageService.getCollection('accounts');
-          const cashAcc = accounts.find(a => a.type === 'cash') || accounts[0];
           
-          if (cashAcc) {
+          let payAcc = null;
+          if (targetAccountId) {
+             payAcc = accounts.find(a => a.id === targetAccountId);
+          }
+          if (!payAcc) {
+             payAcc = accounts.find(a => a.type === 'cash') || accounts[0];
+          }
+          
+          if (payAcc) {
               txList.unshift({
                   id: StorageService.generateId('TX-'),
                   type: 'Chi',
                   amount: Number(p.totalAmount),
-                  accountId: cashAcc.id,
+                  accountId: payAcc.id,
                   categoryId: 'FC4',
                   categoryName: 'Nhập hàng nguyên liệu',
                   date: new Date().toISOString(),
+                  voucherCode: StorageService.generateId('PC-'),
                   note: `Cấn trừ nợ phụ tùng/nguyên liệu phiếu ${p.id}`,
                   relatedId: p.id,
                   status: 'Completed'
               });
               await StorageService.saveCollection('transactions', txList);
-              cashAcc.balance -= Number(p.totalAmount);
+              payAcc.balance -= Number(p.totalAmount);
               await StorageService.saveCollection('accounts', accounts);
           }
       }
@@ -121,6 +149,7 @@ export const PurchaseApi = {
                   categoryId: 'FC10',
                   categoryName: 'Điều chỉnh số dư',
                   date: new Date().toISOString(),
+                  voucherCode: StorageService.generateId('PT-'),
                   note: `Hoàn tiền xóa phiếu nhập kho ${po.id}`,
                   relatedId: po.id,
                   status: 'Completed'
@@ -133,6 +162,22 @@ export const PurchaseApi = {
                 accounts[accIdx].balance += Number(po.totalAmount);
                 await StorageService.saveCollection('accounts', accounts);
             }
+        }
+    }
+
+    // Revert Ingredients Stock
+    if (po.items && po.items.length > 0) {
+        const ingredients = await StorageService.getCollection('ingredients');
+        let ingredientsChanged = false;
+        po.items.forEach(item => {
+            const idx = ingredients.findIndex(i => i.id === item.ingredientId);
+            if (idx !== -1) {
+                ingredients[idx].stock = Math.max(0, (Number(ingredients[idx].stock) || 0) - Number(item.baseQty));
+                ingredientsChanged = true;
+            }
+        });
+        if (ingredientsChanged) {
+            await StorageService.saveCollection('ingredients', ingredients);
         }
     }
 

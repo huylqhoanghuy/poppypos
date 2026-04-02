@@ -136,41 +136,16 @@ export const processUpdatePurchaseOrderStatus = (state, action) => {
   const updatedPOs = state.purchaseOrders.map(p => p.id === id ? { ...p, status } : p);
   let newState = { ...state, purchaseOrders: updatedPOs };
 
-  if (wasPending && (status === 'Paid' || status === 'Debt')) {
-      let updatedIngredients = [...newState.ingredients];
-      po.items.forEach(poItem => {
-        const ingIndex = updatedIngredients.findIndex(i => i.id === poItem.ingredientId);
-        if (ingIndex !== -1) {
-          const ing = updatedIngredients[ingIndex];
-          const conv = Number(ing.conversionRate) || 1;
-          const newStock = ing.stock + poItem.baseQty;
-          const itemTotal = poItem.itemTotal || (poItem.cost * poItem.baseQty);
-          const oldTotalCost = ing.stock * ((ing.cost || 0) * conv);
-          const newTotalCost = oldTotalCost + itemTotal;
-          const avgCostPerUsageUnit = newTotalCost / (newStock * conv || 1);
-          updatedIngredients[ingIndex] = { ...ing, stock: newStock, cost: avgCostPerUsageUnit, buyPrice: avgCostPerUsageUnit * conv };
-        }
-      });
-      newState.ingredients = updatedIngredients;
-
-      if (status === 'Debt' && po.supplierId) {
-         let updatedSuppliers = [...newState.suppliers];
-         const sIdx = updatedSuppliers.findIndex(s => s.id === po.supplierId);
-         if (sIdx !== -1) {
-           updatedSuppliers[sIdx] = { ...updatedSuppliers[sIdx], debt: (updatedSuppliers[sIdx].debt || 0) + po.totalAmount };
-         }
-         newState.suppliers = updatedSuppliers;
-      }
-  }
-
   if (status === 'Paid') {
     const tData = action.payload.transactionData || {};
+    const transactionAmount = tData.amount || po.totalAmount;
+    
     const transaction = {
       id: generateId('GD-'),
       voucherCode: tData.voucherCode || generateId('PC-'),
       date: tData.date || new Date().toISOString(),
       type: 'Chi',
-      amount: tData.amount || po.totalAmount,
+      amount: transactionAmount,
       accountId: tData.accountId || 'ACC1',
       categoryId: tData.categoryId || 'FC4',
       note: tData.note || `XUẤT QUỸ BÙ NỢ: Thanh toán công nợ hóa đơn nhập (${po.id})`,
@@ -179,11 +154,13 @@ export const processUpdatePurchaseOrderStatus = (state, action) => {
     };
     newState.transactions = [transaction, ...state.transactions];
     newState.accounts = state.accounts.map(acc =>
-      acc.id === 'ACC1' ? { ...acc, balance: acc.balance - po.totalAmount } : acc
+      acc.id === transaction.accountId ? { ...acc, balance: acc.balance - transactionAmount } : acc
     );
-    if (po.supplierId && po.status === 'Debt') {
+    
+    // Giảm trừ nợ nếu PO trước đó là nợ (Pending hoặc Debt đều đóng vai trò là ghi nợ với phiên bản mới)
+    if (po.supplierId && (po.status === 'Debt' || po.status === 'Pending')) {
       newState.suppliers = state.suppliers.map(s => 
-        s.id === po.supplierId ? { ...s, debt: Math.max(0, (s.debt || 0) - po.totalAmount) } : s
+        s.id === po.supplierId ? { ...s, debt: Math.max(0, (s.debt || 0) - transactionAmount) } : s
       );
     }
   }
@@ -208,13 +185,16 @@ export const processDeletePurchaseOrder = (state, action) => {
   const newState = { ...state, purchaseOrders: remainingPOs, ingredients: updatedIngredients };
 
   if (po.status === 'Paid') {
+    const originalTx = state.transactions.find(t => t.relatedId === poId && t.type === 'Chi');
+    const targetAccountId = originalTx ? originalTx.accountId : 'ACC1';
+
     const transaction = {
       id: generateId('GD-'),
       voucherCode: generateId('PT-'),
       date: new Date().toISOString(),
       type: 'Thu',
       amount: po.totalAmount,
-      accountId: 'ACC1',
+      accountId: targetAccountId,
       categoryId: 'FC10',
       note: `HOÀN QUỸ KHO: Xóa phiếu nhập/Khử trả hàng (${po.id})`,
       payer: state.suppliers.find(s => s.id === po.supplierId)?.name || 'Nhà Cung Cấp',
@@ -222,7 +202,7 @@ export const processDeletePurchaseOrder = (state, action) => {
     };
     newState.transactions = [transaction, ...state.transactions];
     newState.accounts = state.accounts.map(acc =>
-      acc.id === 'ACC1' ? { ...acc, balance: acc.balance + po.totalAmount } : acc
+      acc.id === targetAccountId ? { ...acc, balance: acc.balance + po.totalAmount } : acc
     );
   }
   return newState;
@@ -236,6 +216,7 @@ export const processAddPosOrder = (state, action) => {
     customerPhone: order.customerPhone || '',
     extraFee: order.extraFee || 0,
     extraFeeNote: order.extraFeeNote || '',
+    paymentStatus: order.paymentStatus || 'Paid',
     ...order,
     date: new Date().toISOString(),
     status: order.status || 'Pending'
@@ -263,18 +244,26 @@ export const processAddPosOrder = (state, action) => {
     relatedId: newOrder.id
   };
 
-  return {
+  const newState = {
     ...state,
     posOrders: [{ ...newOrder, accountId: targetAccountId }, ...state.posOrders],
     ingredients: updatedIngredients,
-    transactions: [transaction, ...state.transactions],
-    accounts: state.accounts.map(acc => {
-      if (acc.id === targetAccountId) {
-        return { ...acc, balance: acc.balance + transaction.amount };
-      }
-      return acc;
-    })
+    transactions: state.transactions,
+    accounts: state.accounts
   };
+  
+  // Chỉ thu tiền vào quỹ nếu không phải là Ghi Nợ
+  if (newOrder.paymentStatus !== 'Debt') {
+     newState.transactions = [transaction, ...state.transactions];
+     newState.accounts = state.accounts.map(acc => {
+       if (acc.id === targetAccountId) {
+         return { ...acc, balance: acc.balance + transaction.amount };
+       }
+       return acc;
+     });
+  }
+
+  return newState;
 };
 
 export const processUpdateOrderStatus = (state, action) => {
@@ -296,38 +285,44 @@ export const processUpdateOrderStatus = (state, action) => {
        updatedIngredients = adjustInventoryQuantity(updatedIngredients, state.products, item.product.recipe, item.quantity, false);
     });
 
-    const refundTx = {
-      id: generateId('GD-'),
-      date: new Date().toISOString(),
-      type: 'Chi',
-      categoryId: 'FC1',
-      accountId: targetAccountId,
-      amount: orderTotalMoney,
-      note: `HOÀN TIỀN: Khách hủy đơn POS (${order.id})`,
-    };
-    newTransactions = [refundTx, ...newTransactions];
-    newAccounts = newAccounts.map(acc =>
-      acc.id === targetAccountId ? { ...acc, balance: acc.balance - orderTotalMoney } : acc
-    );
+    if (order.paymentStatus !== 'Debt') {
+       const refundTx = {
+         id: generateId('GD-'),
+         voucherCode: generateId('PC-'),
+         date: new Date().toISOString(),
+         type: 'Chi',
+         categoryId: 'FC1',
+         accountId: targetAccountId,
+         amount: orderTotalMoney,
+         note: `HOÀN TIỀN: Khách hủy đơn POS (${order.id})`,
+       };
+       newTransactions = [refundTx, ...newTransactions];
+       newAccounts = newAccounts.map(acc =>
+         acc.id === targetAccountId ? { ...acc, balance: acc.balance - orderTotalMoney } : acc
+       );
+    }
   }
   else if (order.status === 'Cancelled') {
     order.items.forEach(item => {
        updatedIngredients = adjustInventoryQuantity(updatedIngredients, state.products, item.product.recipe, item.quantity, true);
     });
 
-    const rechargeTx = {
-      id: generateId('GD-'),
-      date: new Date().toISOString(),
-      type: 'Thu',
-      categoryId: 'FC1',
-      accountId: targetAccountId,
-      amount: orderTotalMoney,
-      note: `THU LẠI TIỀN: Phục hồi đơn POS (${order.id})`,
-    };
-    newTransactions = [rechargeTx, ...newTransactions];
-    newAccounts = newAccounts.map(acc =>
-      acc.id === targetAccountId ? { ...acc, balance: acc.balance + orderTotalMoney } : acc
-    );
+    if (order.paymentStatus !== 'Debt') {
+       const rechargeTx = {
+         id: generateId('GD-'),
+         voucherCode: generateId('PT-'),
+         date: new Date().toISOString(),
+         type: 'Thu',
+         categoryId: 'FC1',
+         accountId: targetAccountId,
+         amount: orderTotalMoney,
+         note: `THU LẠI TIỀN: Phục hồi đơn POS (${order.id})`,
+       };
+       newTransactions = [rechargeTx, ...newTransactions];
+       newAccounts = newAccounts.map(acc =>
+         acc.id === targetAccountId ? { ...acc, balance: acc.balance + orderTotalMoney } : acc
+       );
+    }
   }
 
   return {
@@ -351,10 +346,23 @@ export const processHardDeletePosOrder = (state, action) => {
     });
   }
 
+  const relatedTx = state.transactions.find(t => t.relatedId === orderId && t.type === 'Thu');
+  let updatedTransactions = state.transactions;
+  let updatedAccounts = state.accounts;
+
+  if (relatedTx) {
+      updatedTransactions = state.transactions.filter(t => t.id !== relatedTx.id);
+      updatedAccounts = state.accounts.map(acc => 
+          acc.id === relatedTx.accountId ? { ...acc, balance: acc.balance - relatedTx.amount } : acc
+      );
+  }
+
   return {
     ...state,
     ingredients: updatedIngredients,
-    posOrders: state.posOrders.filter(o => o.id !== orderId)
+    posOrders: state.posOrders.filter(o => o.id !== orderId),
+    transactions: updatedTransactions,
+    accounts: updatedAccounts
   };
 };
 

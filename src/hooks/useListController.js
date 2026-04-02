@@ -1,5 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useConfirm } from '../context/ConfirmContext';
+import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
+import { StorageService } from '../services/api/storage';
 
 export const useListController = ({ 
   data = [], 
@@ -13,6 +16,21 @@ export const useListController = ({
   onShowToast
 }) => {
   const { confirm } = useConfirm();
+  const { user } = useAuth();
+  const { dispatch } = useData();
+
+  const entityKeyMap = {
+      'CATEGORY': 'categories',
+      'CHANNEL': 'salesChannels',
+      'ACCOUNT': 'accounts',
+      'FINANCE_CATEGORY': 'financeCategories',
+      'INGREDIENT': 'ingredients',
+      'PRODUCT': 'products',
+      'SUPPLIER': 'suppliers',
+      'POS_ORDER': 'posOrders',
+      'TRANSACTION': 'transactions'
+  };
+  const entityKey = entityKeyMap[entityName];
 
   const [search, setSearch] = useState('');
   const [trashMode, setTrashMode] = useState(false);
@@ -75,7 +93,7 @@ export const useListController = ({
   };
 
   const activeItems = data.filter(item => !item.deleted);
-  const trashItems = data.filter(item => item.deleted);
+  const trashItems = data.filter(item => item.deleted && !item.hiddenFromStaff);
 
   // Filter Active View
   const filteredActiveItems = useMemo(() => {
@@ -142,8 +160,16 @@ export const useListController = ({
       message: `Bạn có chắc muốn đưa "${item.name}" vào thùng rác?`,
       confirmText: 'Đưa vào thùng rác'
     });
-    if (isConfirmed && onDelete) {
-      await onDelete(item.id);
+    if (isConfirmed) {
+      if (onDelete) {
+        await onDelete(item.id);
+      } else if (entityKey) {
+        const list = await StorageService.getCollection(entityKey);
+        if (list) {
+          const updatedList = list.map(p => p.id === item.id ? { ...p, deleted: true, deletedAt: new Date().toISOString() } : p);
+          await StorageService.saveCollection(entityKey, updatedList);
+        }
+      }
       showToast(`Đã xóa ${item.name} vào thùng rác`);
     }
   };
@@ -156,8 +182,16 @@ export const useListController = ({
       confirmText: 'Đưa vào thùng rác',
       type: 'danger'
     });
-    if (isConfirmed && onBulkDelete) {
-      await onBulkDelete(selectedIds);
+    if (isConfirmed) {
+      if (onBulkDelete) {
+        await onBulkDelete(selectedIds);
+      } else if (entityKey) {
+        const list = await StorageService.getCollection(entityKey);
+        if (list) {
+          const updatedList = list.map(item => selectedIds.includes(item.id) ? { ...item, deleted: true, deletedAt: new Date().toISOString() } : item);
+          await StorageService.saveCollection(entityKey, updatedList);
+        }
+      }
       showToast(`Đã đưa ${selectedIds.length} mục vào thùng rác`);
       setSelectedIds([]);
     }
@@ -166,13 +200,17 @@ export const useListController = ({
   const handleBulkRestore = async (ids) => {
     if (onBulkRestore) {
       await onBulkRestore(ids);
-      showToast(`Đã khôi phục ${ids.length} mục`);
-      setSelectedIds([]);
     } else if (onRestore) {
       for (const id of ids) await onRestore(id);
-      showToast(`Đã khôi phục ${ids.length} mục`);
-      setSelectedIds([]);
+    } else if (entityKey) {
+      const list = await StorageService.getCollection(entityKey);
+      if (list) {
+        const updatedList = list.map(item => ids.includes(item.id) ? { ...item, deleted: false, deletedAt: null, hiddenFromStaff: false } : item);
+        await StorageService.saveCollection(entityKey, updatedList);
+      }
     }
+    showToast(`Đã khôi phục ${ids.length} mục`);
+    setSelectedIds([]);
   };
 
   const handleBulkHardDelete = async (ids) => {
@@ -183,12 +221,29 @@ export const useListController = ({
       type: 'danger'
     });
     if (isConfirmed) {
-      if (onBulkHardDelete) {
-         await onBulkHardDelete(ids);
-      } else if (onHardDelete) {
-         for (const id of ids) await onHardDelete(id);
+      if (user?.role !== 'ADMIN' && entityKey) {
+          // Fake hard delete => Direct pure storage update to avoid stale DataContext
+          const list = await StorageService.getCollection(entityKey);
+          if (list) {
+             const updatedList = list.map(item => ids.includes(item.id) ? { ...item, hiddenFromStaff: true } : item);
+             await StorageService.saveCollection(entityKey, updatedList);
+          }
+          showToast(`Đã xóa vĩnh viễn ${ids.length} mục`, 'error');
+      } else {
+          // Real Admin hard delete
+          if (onBulkHardDelete) {
+             await onBulkHardDelete(ids);
+          } else if (onHardDelete) {
+             for (const id of ids) await onHardDelete(id);
+          } else if (entityKey) {
+             const list = await StorageService.getCollection(entityKey);
+             if (list) {
+               const updatedList = list.filter(item => !ids.includes(item.id));
+               await StorageService.saveCollection(entityKey, updatedList);
+             }
+          }
+          showToast(`Đã xóa vĩnh viễn ${ids.length} mục`, 'error');
       }
-      showToast(`Đã xóa vĩnh viễn ${ids.length} mục`, 'error');
       setSelectedIds([]);
     }
   };

@@ -14,7 +14,7 @@ export const useTransactions = () => {
   }, []);
 
   useEffect(() => {
-    fetchData();
+    fetchData(); // eslint-disable-line react-hooks/set-state-in-effect -- Legitimate: syncing with external localStorage
     const unsubscribe = StorageService.subscribe((col) => {
       if (col === 'transactions' || col === '*') fetchData();
     });

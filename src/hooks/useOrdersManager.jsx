@@ -3,6 +3,7 @@ import { ShoppingBag, TrendingUp, PackageMinus } from 'lucide-react';
 import { useListController } from './useListController';
 import { useData } from '../context/DataContext';
 import { parseCSVToOrders } from '../utils/csvParser';
+import { OrderApi } from '../services/api/orderService';
 
 export const useOrdersManager = () => {
   const { state, dispatch } = useData();
@@ -15,12 +16,12 @@ export const useOrdersManager = () => {
   const listState = useListController({ 
     entityName: 'POS_ORDER',
     data: posOrders,
-    onDelete: (order) => dispatch({ type: 'DELETE_POS_ORDER', payload: order.id }),
-    onHardDelete: (order) => dispatch({ type: 'HARD_DELETE_POS_ORDER', payload: order.id }),
-    onRestore: (order) => dispatch({ type: 'RESTORE_POS_ORDER', payload: order.id }),
-    onBulkDelete: (ids) => dispatch({ type: 'BULK_DELETE_POS_ORDER', payload: ids }),
-    onBulkHardDelete: (ids) => dispatch({ type: 'BULK_HARD_DELETE_POS_ORDER', payload: ids }),
-    onBulkRestore: (ids) => dispatch({ type: 'BULK_RESTORE_POS_ORDER', payload: ids }),
+    onDelete: async (id) => { await OrderApi.delete(id); showToast('Đã đưa đơn hàng vào Thùng rác!'); },
+    onHardDelete: async (id) => { await OrderApi.hardDelete(id); showToast('Đã xóa vĩnh viễn đơn hàng!'); },
+    onRestore: async (id) => { await OrderApi.restore(id); showToast('Đã khôi phục đơn hàng!'); },
+    onBulkDelete: async (ids) => { await OrderApi.bulkDelete(ids); showToast('Đã xóa nhiều đơn hàng!'); },
+    onBulkHardDelete: async (ids) => { await OrderApi.bulkHardDelete(ids); showToast('Đã xóa vĩnh viễn nhiều đơn hàng!'); },
+    onBulkRestore: async (ids) => { await OrderApi.bulkRestore(ids); showToast('Đã khôi phục nhiều đơn hàng!'); },
     onShowToast: handleShowToast
   });
 
@@ -75,8 +76,8 @@ export const useOrdersManager = () => {
      listState.setShowForm(true);
   };
 
-  const handleSave = () => {
-     dispatch({ type: 'UPDATE_POS_ORDER', payload: formData });
+  const handleSave = async () => {
+     await OrderApi.update(formData);
      listState.setShowForm(false);
      listState.handlers.showToast('Đã lưu thay đổi đơn hàng!');
   };
@@ -190,8 +191,15 @@ export const useOrdersManager = () => {
     return filtered;
   }, [filteredActiveItems, filterStatus, filterChannel, sortConfig, state.salesChannels]);
 
-  const updateStatus = (orderId, status) => {
-    dispatch({ type: 'UPDATE_ORDER_STATUS', payload: { orderId, status } });
+  const updateStatus = async (orderId, status) => {
+    if (status === 'Cancelled') {
+        await OrderApi.cancel(orderId);
+    } else {
+        const order = state.posOrders.find(o => o.id === orderId);
+        if (order) {
+           await OrderApi.update({ ...order, status });
+        }
+    }
     showToast(`Đã chuyển trạng thái đơn hàng thành ${status}`);
   };
 

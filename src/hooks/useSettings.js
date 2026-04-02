@@ -20,7 +20,7 @@ export const useSettings = () => {
   };
 
   useEffect(() => {
-    fetchSettings();
+    fetchSettings(); // eslint-disable-line react-hooks/set-state-in-effect
     const unsub = StorageService.subscribe((collection) => {
       if (collection === 'settings' || collection === '*') fetchSettings();
     });

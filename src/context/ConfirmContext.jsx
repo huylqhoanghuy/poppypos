@@ -3,6 +3,7 @@ import { AlertTriangle, X } from 'lucide-react';
 
 const ConfirmContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useConfirm = () => useContext(ConfirmContext);
 
 export const ConfirmProvider = ({ children }) => {

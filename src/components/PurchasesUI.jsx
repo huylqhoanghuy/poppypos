@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocalList } from '../hooks/useLocalList';
 import SortHeader from './SortHeader';
+import { useData } from '../context/DataContext';
 import CurrencyInput from './CurrencyInput';
 import { PackagePlus, CheckSquare, Square, Trash2, Eye, Truck, CreditCard, Search, XCircle } from 'lucide-react';
 
@@ -10,18 +11,19 @@ export default function PurchasesUI({
   ingredients, 
   onAddPurchase, 
   onPayDebt, 
-  onDeletePurchase,
-  isRefreshing, 
-  onRefresh 
+  onDeletePurchase
 }) {
+  const { state: rootState, dispatch } = useData();
   const [showForm, setShowForm] = useState(false);
   const [expandedPoId, setExpandedPoId] = useState(null);
+  const [payDebtForm, setPayDebtForm] = useState(null);
 
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === 'Escape') {
         setShowForm(false);
         setExpandedPoId(null);
+        setPayDebtForm(null);
       }
     };
     window.addEventListener('keydown', handleEsc);
@@ -34,7 +36,7 @@ export default function PurchasesUI({
 
   const listState = useLocalList(purchases);
 
-  const selectedSupplier = suppliers.find(s => s.id === importForm.supplierId);
+  const _selectedSupplier = suppliers.find(s => s.id === importForm.supplierId);
 
   // Auto-fill cost from ingredient's buyPrice or cost
   const onSelectIngredient = (ingId) => {
@@ -80,8 +82,14 @@ export default function PurchasesUI({
   };
 
   const commitPurchaseLocal = (status) => {
-    if (!importForm.supplierId) return alert('Vui lòng chọn Nhà Cung Cấp đối tác');
-    if (importForm.items.length === 0) return alert('Chưa có danh sách mặt hàng nào được nạp vào đơn');
+    if (!importForm.supplierId) {
+       dispatch({ type: 'ADD_NOTIFICATION', payload: { title: 'Lỗi Nhập Kho', message: 'Bắt buộc phải chọn Nhà Cung Cấp. Nếu chưa có, vui lòng tạo mới.', type: 'error' } });
+       return;
+    }
+    if (importForm.items.length === 0) {
+       dispatch({ type: 'ADD_NOTIFICATION', payload: { title: 'Thiếu Mặt Hàng', message: 'Chưa bốc mặt hàng nào lên phiếu ngỏ.', type: 'warning' } });
+       return;
+    }
 
     const totalAmount = importForm.items.reduce((sum, item) => sum + item.totalLine, 0);
     
@@ -93,6 +101,11 @@ export default function PurchasesUI({
         date: new Date().toISOString()
     });
     
+    dispatch({ 
+      type: 'ADD_NOTIFICATION', 
+      payload: { title: 'Nhập Kho Bãi', message: `Nhập lô hàng trị giá ${totalAmount.toLocaleString('vi-VN')} đ thành công!`, type: 'success' } 
+    });
+
     setShowForm(false);
     setImportForm({ supplierId: '', items: [] });
   };
@@ -154,28 +167,7 @@ export default function PurchasesUI({
                     </td>
                   </tr>
 
-                  {expandedPoId === o.id && (
-                     <tr style={{ background: '#F8FAFC' }}>
-                        <td colSpan="6" style={{ padding: '20px' }}>
-                           <div style={{ background: '#fff', border: '1px solid var(--surface-border)', borderRadius: '8px', overflow: 'hidden' }}>
-                              <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--surface-border)', background: 'var(--surface-variant)', fontWeight: 600, color: 'var(--text-secondary)', fontSize: '13px' }}>
-                                 CHI TIẾT MẶT HÀNG NHẬP VÀO KHO
-                              </div>
-                              {o.items?.map((item, idx) => {
-                                 const itemIngName = ingredients.find(i => i.id === item.ingredientId)?.name || 'Nguyên liệu bốc hơi';
-                                 return (
-                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', borderBottom: idx === o.items.length - 1 ? 'none' : '1px dashed var(--surface-border)' }}>
-                                        <div style={{ flex: 2, fontWeight: 500, color: 'var(--text-primary)' }}>{itemIngName}</div>
-                                        <div style={{ flex: 1, color: 'var(--text-secondary)' }}>SL Nhập: <strong>{item.baseQty}</strong> (Quy chuẩn kho)</div>
-                                        <div style={{ flex: 1, color: 'var(--text-secondary)', textAlign: 'right' }}>Giá/Đơn Vị: {(item.cost||0).toLocaleString('vi-VN')} đ</div>
-                                        <div style={{ flex: 1, fontWeight: 700, color: 'var(--primary)', textAlign: 'right' }}>{((item.baseQty * (item.cost||0)) || 0).toLocaleString('vi-VN')} đ</div>
-                                    </div>
-                                 )
-                              })}
-                           </div>
-                        </td>
-                     </tr>
-                  )}
+                  {/* Inline expansion removed, using Modal instead */}
                 </React.Fragment>
               )
             })
@@ -190,23 +182,21 @@ export default function PurchasesUI({
        {/* Toolbar */}
        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', gap: '12px', flex: 1, maxWidth: '500px' }}>
-            <div className="search-bar" style={{ flex: 1, display: 'flex', alignItems: 'center', background: 'var(--bg-color)', border: '1px solid var(--surface-border)', borderRadius: '12px', padding: '0 16px' }}>
-                <Search size={18} color="var(--text-secondary)" />
-                <input style={{ border: 'none', outline: 'none', background: 'transparent', padding: '14px', width: '100%', color: 'var(--text-primary)' }} placeholder="Tìm kiếm phiếu nhập..." value={listState.search} onChange={e => listState.setSearch(e.target.value)} />
+            <div className="search-bar" style={{ flex: 1, display: 'flex', alignItems: 'center', background: 'var(--bg-color)', border: '1px solid var(--surface-border)', borderRadius: '8px', padding: '0 14px', height: '34px' }}>
+                <Search size={16} color="var(--text-secondary)" />
+                <input style={{ border: 'none', outline: 'none', background: 'transparent', padding: '0 0 0 8px', width: '100%', color: 'var(--text-primary)', height: '100%', fontSize: '13px', fontWeight: 500 }} placeholder="Tìm kiếm phiếu nhập..." value={listState.search} onChange={e => listState.setSearch(e.target.value)} />
             </div>
             
-            <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-color)', padding: '0 16px', borderRadius: '12px', border: '1px solid var(--surface-border)' }}>
-               <select className="form-input" style={{ border: 'none', background: 'transparent', padding: '12px 0', outline: 'none', margin: 0, boxShadow: 'none' }} value={listState.datePreset} onChange={(e) => listState.handlePresetChange(e.target.value)}>
-                    <option value="all">Mọi thời gian</option>
-                    <option value="today">Hôm nay</option>
-                    <option value="week">Tuần này</option>
-                    <option value="month">Tháng này</option>
-               </select>
-            </div>
+            <select className="table-feature-select" value={listState.datePreset} onChange={(e) => listState.handlePresetChange(e.target.value)}>
+               <option value="all">Mọi thời gian</option>
+               <option value="today">Hôm nay</option>
+               <option value="week">Tuần này</option>
+               <option value="month">Tháng này</option>
+            </select>
           </div>
           
-          <button className="btn btn-primary" onClick={() => setShowForm(!showForm)} style={{ padding: '12px 24px', display: 'flex', gap: '8px' }}>
-             {showForm ? <XCircle size={18}/> : <PackagePlus size={18}/>}
+          <button className="btn btn-primary table-feature-btn" onClick={() => setShowForm(!showForm)}>
+             {showForm ? <XCircle size={16}/> : <PackagePlus size={16}/>}
              {showForm ? 'Hủy Lập Phiếu' : 'Lập Phiếu Nhập'}
           </button>
        </div>
@@ -301,6 +291,132 @@ export default function PurchasesUI({
              </div>
           </div>
        ) : renderActiveList()}
+
+       {/* Modal Chi Tiết Phiếu Nhập */}
+       {expandedPoId && (
+        (() => {
+          const po = purchases.find(p => p.id === expandedPoId);
+          if (!po) return null;
+          const sup = suppliers.find(s => s.id === po.supplierId);
+          return (
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ background: '#fff', borderRadius: '16px', padding: '24px', width: '700px', maxWidth: '95%', maxHeight: '90vh', overflowY: 'auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Chi Tiết Phiếu Nhập Kho</h3>
+                  <button className="btn btn-ghost" style={{ padding: '6px' }} onClick={() => setExpandedPoId(null)}>
+                    <XCircle size={24} color="var(--text-secondary)" />
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', background: 'var(--surface-variant)', padding: '16px', borderRadius: '12px', marginBottom: '24px', justifyContent: 'space-between' }}>
+                  <div>
+                    <label style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Mã Phiếu</label>
+                    <div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '16px' }}>{po.id}</div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Nhà Cung Cấp</label>
+                    <div style={{ fontWeight: 600 }}>{sup?.name || 'N/A'}</div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Trạng Thái</label>
+                    <div style={{ fontWeight: 600, color: po.status === 'Paid' ? 'var(--success)' : 'var(--danger)' }}>
+                      {po.status === 'Paid' ? 'Đã thanh toán' : 'Ghi Nợ'}
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Ngày Lập</label>
+                    <div style={{ fontWeight: 500 }}>{new Date(po.date).toLocaleDateString('vi-VN')}</div>
+                  </div>
+                </div>
+
+                <div style={{ border: '1px solid var(--surface-border)', borderRadius: '12px', overflow: 'hidden' }}>
+                    <div style={{ padding: '12px 16px', background: 'var(--bg-color)', borderBottom: '1px solid var(--surface-border)', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                        DANH SÁCH MẶT HÀNG NHẬP VÀO KHO
+                    </div>
+                    {po.items?.map((item, idx) => {
+                        const ing = ingredients.find(i => i.id === item.ingredientId);
+                        return (
+                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', borderBottom: idx === po.items.length - 1 ? 'none' : '1px solid var(--surface-border)' }}>
+                                <div style={{ flex: 2 }}>
+                                   <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>{ing?.name || 'Nguyên liệu không xác định'}</div>
+                                   <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Mã NL: {item.ingredientId}</div>
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                   <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Số lượng nhập</div>
+                                   <div style={{ fontWeight: 700 }}>{item.baseQty} <span style={{ fontWeight: 400, fontSize: '13px' }}>{ing?.unit}</span></div>
+                                </div>
+                                <div style={{ flex: 1, textAlign: 'right' }}>
+                                   <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Đơn giá kho</div>
+                                   <div style={{ fontWeight: 500 }}>{Number(item.cost || 0).toLocaleString('vi-VN')} đ</div>
+                                </div>
+                                <div style={{ flex: 1, textAlign: 'right' }}>
+                                   <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Thành tiền</div>
+                                   <div style={{ fontWeight: 700, color: 'var(--primary)' }}>{((item.baseQty * Number(item.cost||0)) || 0).toLocaleString('vi-VN')} đ</div>
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+
+                <div style={{ marginTop: '24px', padding: '16px', background: 'var(--bg-color)', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                   <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-secondary)' }}>Tổng giá trị lô hàng:</div>
+                   <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--primary)' }}>{Number(po.totalAmount || 0).toLocaleString('vi-VN')} đ</div>
+                </div>
+
+                {po.status === 'Pending' && (
+                    <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+                        <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', fontSize: '15px' }} onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setPayDebtForm({ 
+                                poId: po.id, 
+                                amount: po.totalAmount, 
+                                supplierName: sup?.name || po.seller,
+                                accountId: 'ACC1' 
+                            });
+                        }}>
+                            <CreditCard size={20}/>
+                            Duyệt Xuất Quỹ & Cấn Trừ Nợ Phụ Tùng
+                        </button>
+                    </div>
+                )}
+
+              </div>
+            </div>
+          )
+        })()
+       )}
+       
+       {payDebtForm && (
+        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, backdropFilter: 'blur(4px)' }}>
+          <form style={{ width: '450px', padding: '32px', background: 'var(--bg-color)', borderRadius: '16px', boxShadow: 'var(--shadow-lg)' }} onSubmit={(e) => {
+             e.preventDefault();
+             if (onPayDebt) {
+                onPayDebt(payDebtForm.poId, payDebtForm.amount, payDebtForm.supplierName, payDebtForm.accountId);
+             }
+             setPayDebtForm(null);
+          }}>
+             <h3 style={{ margin: 0, marginBottom: '20px', fontSize: '20px', color: 'var(--text-primary)', fontWeight: 800 }}>Xác Nhận Thanh Toán Nợ</h3>
+             <div style={{ marginBottom: '24px' }}>
+                <p style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                   Duyệt chi <strong>{payDebtForm.amount.toLocaleString('vi-VN')} đ</strong> để trả nợ cho <strong>{payDebtForm.supplierName || 'Nhà cung cấp'}</strong> (Mã đơn: {payDebtForm.poId}). Phiếu chi tương ứng sẽ tự động được lập vào Sổ nhật ký.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                   <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>Chọn nguồn Quỹ chi trả:</label>
+                   <select className="form-input" style={{ width: '100%', padding: '10px' }} value={payDebtForm.accountId} onChange={e => setPayDebtForm({...payDebtForm, accountId: e.target.value})}>
+                      {rootState.accounts.map(acc => (
+                         <option key={acc.id} value={acc.id}>{acc.name} (Tồn quỹ: {acc.balance.toLocaleString('vi-VN')} đ)</option>
+                      ))}
+                   </select>
+                </div>
+             </div>
+             <div style={{ display: 'flex', gap: '8px' }}>
+               <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '12px' }}><CheckSquare size={18}/> Xác nhân Xuất Quỹ</button>
+               <button type="button" className="btn btn-ghost" style={{ flex: 1, padding: '12px' }} onClick={() => setPayDebtForm(null)}>Hủy</button>
+             </div>
+          </form>
+        </div>
+       )}
     </div>
   );
 }

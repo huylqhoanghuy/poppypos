@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Package, Search, Edit, Trash2, CheckSquare, Square, AlertCircle, ShoppingCart, Calendar, Focus } from 'lucide-react';
 import { useData } from '../context/DataContext';
-import { useConfirm } from '../context/ConfirmContext';
 import { useInventoryForecast } from '../hooks/useInventoryForecast';
+import { PurchaseApi } from '../services/api/purchaseService';
 
 const InventoryWarning = () => {
     const { state, dispatch } = useData();
@@ -20,16 +20,19 @@ const InventoryWarning = () => {
     // Top N selection
     const [topNLimit, setTopNLimit] = useState(5); // default to 5
     
-    // Pagination for Ranked Products
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(8); // dynamic lines per page
-
     const { forecastData, rankedProducts, loading, refreshForecast } = useInventoryForecast(filterDate, thresholdX, forecastDays, topNLimit);
 
-    useEffect(() => {
-        // Reset page when list length changes (like changing TopN dropdown)
-        setCurrentPage(1);
-    }, [topNLimit, rankedProducts.length]);
+    // Pagination for Ranked Products
+    const resetKey = useMemo(() => `${topNLimit}-${rankedProducts.length}`, [topNLimit, rankedProducts.length]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(8);
+
+    // Reset page when key changes
+    const [prevResetKey, setPrevResetKey] = useState(resetKey);
+    if (resetKey !== prevResetKey) {
+        setPrevResetKey(resetKey);
+        if (currentPage !== 1) setCurrentPage(1);
+    }
 
     const [selectedShortfalls, setSelectedShortfalls] = useState([]);
 
@@ -297,15 +300,12 @@ const InventoryWarning = () => {
                                         cost: item.buyPrice / (Number(item.conversionRate) || 1),
                                         itemTotal: item.estimatedCost
                                     }));
-                                    dispatch({
-                                        type: 'ADD_PURCHASE_ORDER',
-                                        payload: {
-                                            supplierId: sid,
-                                            items: poItems,
-                                            totalAmount: selectedItemsData.reduce((sum, i) => sum + i.estimatedCost, 0),
-                                            status: 'Pending',
-                                            date: new Date().toISOString()
-                                        }
+                                    PurchaseApi.add({
+                                        supplierId: sid,
+                                        items: poItems,
+                                        totalAmount: selectedItemsData.reduce((sum, i) => sum + i.estimatedCost, 0),
+                                        status: 'Pending',
+                                        date: new Date().toISOString()
                                     });
                                     showToast(`Đã phác thảo trình ký kế hoạch Nhập Dự Cấp (${selectedShortfalls.length} món) vào hàng chờ Duyệt Kế Toán!`);
                                     setSelectedShortfalls([]);

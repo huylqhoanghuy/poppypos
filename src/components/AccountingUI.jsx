@@ -2,6 +2,8 @@ import React from 'react';
 import { Wallet, Plus, Search, Building2, CreditCard, Banknote, ArrowLeftRight, Trash2, Edit3, FileText, Printer, AlertCircle, TrendingUp } from 'lucide-react';
 import CurrencyInput from './CurrencyInput';
 import SmartTable from './SmartTable';
+import BulkActionBar from './BulkActionBar';
+import UnifiedTrash from './UnifiedTrash';
 
 const Settings2 = ({ size, onClick, style, title }) => (
   <Edit3 size={size} onClick={onClick} style={style} title={title} />
@@ -50,7 +52,8 @@ export default function AccountingUI({ manager }) {
       selectedAcc, showVoucherModal, showAdjustModal, showTransferModal, showCatModal, 
       viewVoucher, vForm, adjustForm, transferForm, catForm, confirmDelete, 
       viewOrder, debtFilters, filters, activeJournalTab, datePreset, statsByRange, 
-      monthlyNet, filteredTransactions, filteredPayables, filteredReceivables 
+      monthlyNet, filteredTransactions, filteredPayables, filteredReceivables,
+      listCtrl
   } = manager.models;
   const { 
       setSelectedAcc, setShowVoucherModal, setShowAdjustModal, setShowTransferModal, setShowCatModal,
@@ -58,6 +61,13 @@ export default function AccountingUI({ manager }) {
       setDebtFilters, setFilters, setActiveJournalTab, setDatePreset,
       handleAdjustSubmit, handleVoucherSubmit, handleEditTransaction, handleDeleteTransaction, handleProcessDebt
   } = manager.actions;
+
+  const {
+      trashMode, toggleTrashMode,
+      selectedIds, clearSelection, toggleSelection,
+      trashItems,
+      handlers
+  } = listCtrl || {};
 
   const [showDatePicker, setShowDatePicker] = React.useState(false);
   const datePickerRef = React.useRef(null);
@@ -131,10 +141,10 @@ export default function AccountingUI({ manager }) {
           <p className="mobile-hide" style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Quản lý dòng tiền, đối soát ví và công nợ tập trung.</p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
-           <button className="btn btn-ghost" onClick={() => setShowTransferModal(true)} style={{ border: '1px solid var(--surface-border)', padding: '6px 12px', fontSize: 'var(--font-xs)' }}>
+           <button className="btn btn-ghost table-feature-btn" onClick={() => setShowTransferModal(true)}>
               <ArrowLeftRight size={16} /> Chuyển Ví
            </button>
-           <button className="btn btn-primary" onClick={() => setShowVoucherModal(true)} style={{ padding: '6px 16px', fontSize: 'var(--font-xs)' }}>
+           <button className="btn btn-primary table-feature-btn" onClick={() => setShowVoucherModal(true)}>
               <Plus size={16} /> Lập Phiếu
            </button>
         </div>
@@ -142,21 +152,35 @@ export default function AccountingUI({ manager }) {
 
       <div className="accounting-layout">
          <div className="stats-horizontal-grid">
-            <div className="glass-panel" style={{ padding: '12px 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderLeft: '4px solid var(--danger)', background: 'rgba(239, 68, 68, 0.02)' }}>
-               <h4 style={{ margin: 0, marginBottom: '8px', fontSize: '10px', color: 'var(--danger)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.05em' }}>Cảnh Báo Công Nợ</h4>
-               <div style={{ display: 'flex', gap: '20px' }}>
+            <div className="glass-panel" style={{ padding: '12px 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderTop: '4px solid var(--warning)', background: 'rgba(249, 115, 22, 0.02)' }}>
+               <h4 style={{ margin: 0, marginBottom: '12px', fontSize: '11px', color: 'var(--warning)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.05em', borderBottom: '1px dashed #fed7aa', paddingBottom: '6px', width: 'fit-content' }}>Cảnh Báo Công Nợ</h4>
+               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1px 1fr', gap: '20px' }}>
+                  {/* Cột Phải Trả NCC */}
                   <div>
-                     <span style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'block' }}>Phải trả NCC:</span>
-                     <strong style={{ fontSize: '1.2rem', color: 'var(--danger)' }}>
-                        {rootState.purchaseOrders.filter(p => p.status !== 'Paid').reduce((sum, p) => sum + p.totalAmount, 0).toLocaleString()} <small style={{fontSize:'var(--font-xs)'}}>đ</small>
-                     </strong>
+                     <span style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px', fontWeight: 600 }}>NỢ NCC (PHẢI TRẢ):</span>
+                     <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
+                        <strong style={{ fontSize: '1.2rem', color: 'var(--danger)', lineHeight: 1 }}>
+                           {rootState.purchaseOrders.filter(p => p.status === 'Debt' || p.status === 'Pending').reduce((sum, p) => sum + (p.totalAmount || 0), 0).toLocaleString()} <small style={{fontSize:'var(--font-xs)'}}>đ</small>
+                        </strong>
+                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px', fontWeight: 600 }}>
+                           ({rootState.purchaseOrders.filter(p => p.status === 'Debt' || p.status === 'Pending').length} phiếu)
+                        </span>
+                     </div>
                   </div>
-                  <div style={{ width: '1px', background: 'var(--surface-border)', height: '30px', alignSelf: 'center' }}></div>
+                  
+                  <div style={{ width: '1px', background: 'var(--surface-border)', height: '100%' }}></div>
+                  
+                  {/* Cột Phải Thu Khách Hàng */}
                   <div>
-                     <span style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'block' }}>Đơn sắp đến hạn:</span>
-                     <strong style={{ fontSize: '1.2rem', color: 'var(--warning)' }}>
-                        {rootState.purchaseOrders.filter(p => p.status !== 'Paid').length} <small style={{fontSize:'var(--font-xs)'}}>phiếu</small>
-                     </strong>
+                     <span style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px', fontWeight: 600 }}>NỢ KHÁCH HÀNG (PHẢI THU):</span>
+                     <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
+                        <strong style={{ fontSize: '1.2rem', color: '#B45309', lineHeight: 1 }}>
+                           {rootState.posOrders.filter(o => o.paymentStatus === 'Debt' || o.paymentStatus === 'Unpaid').reduce((sum, o) => sum + ((o.netAmount || 0) + (Number(o.extraFee) || 0)), 0).toLocaleString()} <small style={{fontSize:'var(--font-xs)'}}>đ</small>
+                        </strong>
+                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px', fontWeight: 600 }}>
+                           ({rootState.posOrders.filter(o => o.paymentStatus === 'Debt' || o.paymentStatus === 'Unpaid').length} đơn)
+                        </span>
+                     </div>
                   </div>
                </div>
             </div>
@@ -167,9 +191,10 @@ export default function AccountingUI({ manager }) {
                      <TrendingUp size={18} color="var(--primary)"/> Thống Kê Nhanh
                   </h4>
                   <select 
+                    className="table-feature-select"
                     value={datePreset} 
                     onChange={e => setDatePreset(e.target.value)}
-                    style={{ background: 'var(--surface-variant)', color: 'var(--primary)', border: '1px solid var(--primary)', padding: '4px 12px', borderRadius: 'var(--radius-sm)', fontSize: 'var(--font-xs)', fontWeight: 700, outline: 'none' }}
+                    style={{ borderColor: 'var(--primary)', color: 'var(--primary)' }}
                   >
                     <option value="today">Hôm nay</option>
                     <option value="yesterday">Hôm qua</option>
@@ -234,19 +259,31 @@ export default function AccountingUI({ manager }) {
                   </div>
 
                   {activeJournalTab !== 'payable' && activeJournalTab !== 'receivable' && (
-                     <select 
-                        style={{ background:'var(--surface-variant)', color:'var(--text-primary)', border:'1px solid var(--surface-border)', padding:'10px 16px', borderRadius:'var(--radius-sm)', outline:'none', fontSize: 'var(--font-xs)', fontWeight: 600 }}
-                        value={selectedAcc?.id || 'all'} 
-                        onChange={e => setSelectedAcc(rootState.accounts.find(a => a.id === e.target.value) || null)}
-                     >
-                        <option value="all">Tất cả Ví</option>
-                        {rootState.accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}{acc.accountNumber ? ` - ${acc.accountNumber}` : ''}</option>)}
-                     </select>
+                     <>
+                       <button className="btn btn-outline" style={{ display: 'flex', gap: '8px', alignItems: 'center', position: 'relative', background: 'var(--surface-color)', padding: '8px 16px' }} onClick={toggleTrashMode}>
+                         <Trash2 size={16} color={trashMode ? 'var(--primary)' : 'var(--text-secondary)'}/>
+                         <span className="mobile-hide" style={{ color: trashMode ? 'var(--primary)' : 'var(--text-primary)' }}>{trashMode ? 'Quay lại Sổ Quỹ' : 'Thùng rác'}</span>
+                         {trashItems && trashItems.length > 0 && !trashMode && (
+                           <span style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--danger)', color: 'white', fontSize: '10px', padding: '2px 6px', borderRadius: '10px', fontWeight: 800 }}>
+                             {trashItems.length}
+                           </span>
+                         )}
+                       </button>
+
+                       <select 
+                          className="table-feature-select"
+                          value={selectedAcc?.id || 'all'} 
+                          onChange={e => setSelectedAcc(rootState.accounts.find(a => a.id === e.target.value) || null)}
+                       >
+                          <option value="all">Tất cả Ví</option>
+                          {rootState.accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}{acc.accountNumber ? ` - ${acc.accountNumber}` : ''}</option>)}
+                       </select>
+                     </>
                   )}
 
                   {activeJournalTab === 'payable' && (
                      <select 
-                        style={{ background:'var(--surface-variant)', color:'var(--text-primary)', border:'1px solid var(--surface-border)', padding:'10px 16px', borderRadius:'var(--radius-sm)', outline:'none', fontSize: 'var(--font-xs)', fontWeight: 600 }}
+                        className="table-feature-select"
                         value={debtFilters.supplierId}
                         onChange={e => setDebtFilters({...debtFilters, supplierId: e.target.value})}
                      >
@@ -257,7 +294,7 @@ export default function AccountingUI({ manager }) {
 
                   {activeJournalTab === 'receivable' && (
                      <select 
-                        style={{ background:'var(--surface-variant)', color:'var(--text-primary)', border:'1px solid var(--surface-border)', padding:'10px 16px', borderRadius:'var(--radius-sm)', outline:'none', fontSize: 'var(--font-xs)', fontWeight: 600 }}
+                        className="table-feature-select"
                         value={debtFilters.channelId}
                         onChange={e => setDebtFilters({...debtFilters, channelId: e.target.value})}
                      >
@@ -270,8 +307,8 @@ export default function AccountingUI({ manager }) {
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }} ref={datePickerRef}>
                      <button 
-                        className="btn btn-ghost"
-                        style={{ padding: '8px 16px', background: 'var(--surface-variant)', border: '1px solid var(--surface-border)', borderRadius: '8px', fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)', display: 'flex', gap: '8px', alignItems: 'center' }}
+                        className="btn btn-ghost table-feature-btn"
+                        style={{ background: 'var(--surface-variant)', border: '1px solid var(--surface-border)' }}
                         onClick={() => setShowDatePicker(!showDatePicker)}
                      >
                         <AlertCircle size={16} color="var(--primary)" />
@@ -327,7 +364,7 @@ export default function AccountingUI({ manager }) {
                    columns={[
                      { key: 'date', label: 'Ngày Nhập', sortable: true, render: val => new Date(val).toLocaleDateString('vi-VN') },
                      { key: 'id', label: 'Mã Đơn', sortable: true, render: val => <span style={{fontWeight: 700}}>{val}</span> },
-                     { key: 'seller', label: 'Nhà Cung Cấp', sortable: true },
+                     { key: 'seller', label: 'Nhà Cung Cấp', sortable: true, render: (_, p) => rootState.suppliers?.find(s => s.id === p.supplierId)?.name || p.seller || 'N/A' },
                      { key: 'items', label: 'Diễn Giải', render: (val, p) => (
                         <button className="btn btn-ghost" onClick={() => setViewOrder({ ...p, orderType: 'PO' })} style={{ padding: '0', color: 'var(--primary)', textDecoration: 'underline', fontSize: '13px' }}>
                            Xem {p.items?.length || 0} mục
@@ -367,14 +404,63 @@ export default function AccountingUI({ manager }) {
                    actions={false}
                    emptyMessage="Toàn bộ khoản thu đã được thanh toán đầy đủ."
                  />
-               ) : (
-                 <SmartTable 
-                   data={filteredTransactions}
+               ) : trashMode ? (
+                 <UnifiedTrash 
+                   items={trashItems}
                    columns={[
+                     { key: 'voucherCode', label: 'Mã Phiếu', render: val => <span style={{fontWeight: 700, color: 'var(--primary)'}}>{val}</span> },
+                     { key: 'date', label: 'Ngày Tháng', render: val => new Date(val).toLocaleString('vi-VN', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) },
+                     { key: 'accountId', label: 'Vật Mang (Ví)', render: val => rootState.accounts.find(a => a.id === val)?.name || val },
+                     { key: 'amount', label: 'Số Tiền', render: (_, t) => (
+                         <span style={{ fontWeight: 800, color: t.type === 'Thu' ? 'var(--success)' : 'var(--danger)' }}>
+                            {t.type === 'Thu' ? '+' : '-'}{t.amount.toLocaleString('vi-VN')} đ
+                         </span>
+                     )}
+                   ]}
+                   onRestore={handlers?.handleBulkRestore ? (id) => handlers.handleBulkRestore([id]) : null}
+                   onHardDelete={handlers?.handleBulkHardDelete ? (id) => handlers.handleBulkHardDelete([id]) : null}
+                   onBulkRestore={handlers?.handleBulkRestore}
+                   onBulkHardDelete={handlers?.handleBulkHardDelete}
+                   emptyMessage="Không có chứng từ nào trong thùng rác."
+                 />
+               ) : (
+                 <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                   {selectedIds && selectedIds.length > 0 && (
+                     <BulkActionBar 
+                       selectedCount={selectedIds.length} 
+                       onClearSelection={clearSelection} 
+                       onDeleteSelected={handlers?.handleBulkDelete} 
+                     />
+                   )}
+                   <SmartTable 
+                     data={filteredTransactions}
+                     selectable={true}
+                     selectedIds={selectedIds}
+                     onSelectToggle={toggleSelection}
+                     onSelectAll={() => {
+                        if (selectedIds.length === filteredTransactions.length && filteredTransactions.length > 0) {
+                            clearSelection();
+                        } else {
+                            listCtrl.setSelectedIds(filteredTransactions.map(t => t.id));
+                        }
+                     }}
+                     columns={[
                      { key: 'voucherCode', label: 'Mã Phiếu', sortable: true, render: val => <span style={{fontWeight: 700, color: 'var(--primary)'}}>{val}</span> },
                      { key: 'date', label: 'Ngày Tháng', sortable: true, render: val => new Date(val).toLocaleString('vi-VN', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) },
                      { key: 'accountId', label: 'Vật Mang (Ví)', sortable: true, render: val => rootState.accounts.find(a => a.id === val)?.name || val },
-                     { key: 'target', label: 'Đối Tượng', render: (_, t) => t.type === 'Thu' ? (t.payer || '---') : (t.collector || '---') },
+                     { key: 'target', label: 'Đối Tượng', render: (_, t) => {
+                         let targetName = t.type === 'Thu' ? (t.payer || '') : (t.collector || '');
+                         if (!targetName && t.relatedId) {
+                             if (t.relatedId.startsWith('PO-')) {
+                                 const po = rootState.purchaseOrders?.find(p => p.id === t.relatedId);
+                                 if (po) targetName = rootState.suppliers?.find(s => s.id === po.supplierId)?.name || po.seller;
+                             } else if (t.relatedId.startsWith('ORD-') || t.relatedId.startsWith('POS-')) {
+                                 const o = rootState.posOrders?.find(p => p.id === t.relatedId);
+                                 if (o) targetName = o.customerName || 'Khách lẻ';
+                             }
+                         }
+                         return targetName || '---';
+                     }},
                      { key: 'note', label: 'Diễn Giải', render: (_, t) => (
                         <div style={{ display:'flex', flexDirection:'column' }}>
                            <span>{t.note || '---'}</span>
@@ -388,22 +474,21 @@ export default function AccountingUI({ manager }) {
                      ), sumFunc: t => (t.type === 'Thu' ? Number(t.amount) : -Number(t.amount)) }
                    ]}
                    onEdit={handleEditTransaction}
-                   onDelete={t => setConfirmDelete(t.id)}
-                   confirmBeforeDelete={false} // Custom modal confirmDelete is in AccountingUI!
+                   onDelete={(t) => handlers?.handleDelete ? handlers.handleDelete(t) : setConfirmDelete(t.id)}
+                   confirmBeforeDelete={false} 
                    onView={setViewVoucher}
                    extraRowActions={(t) => (
                       <button className="btn btn-ghost" onClick={(e) => { e.stopPropagation(); setViewVoucher(t); }} style={{ padding: '6px' }} title="In Phiếu"><Printer size={16}/></button>
                    )}
                    emptyMessage="Hệ thống chưa ghi nhận dữ liệu dòng tiền nào."
                  />
+                 </div>
                )}
             </div>
          </div>
       </div>
 
       {/* MODALS */}
-      {confirmDelete && <></>}
-      {/*... and others... wait, keeping it simple to just get it written properly. */}
       {confirmDelete && (
          <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
             <div className="glass-panel" style={{ width: '320px', padding: '24px', textAlign: 'center' }}>
@@ -427,7 +512,7 @@ export default function AccountingUI({ manager }) {
                </div>
                <div style={{ background: 'var(--surface-variant)', padding: '16px', borderRadius: '8px', marginBottom: '20px' }}>
                   <p><strong>Ngày:</strong> {new Date(viewOrder.date).toLocaleString('vi-VN')}</p>
-                  <p><strong>Đối tác:</strong> {viewOrder.orderType === 'PO' ? viewOrder.seller : (viewOrder.customerName || 'Khách lẻ')}</p>
+                  <p><strong>Đối tác:</strong> {viewOrder.orderType === 'PO' ? (rootState.suppliers?.find(s => s.id === viewOrder.supplierId)?.name || viewOrder.seller || 'N/A') : (viewOrder.customerName || 'Khách lẻ')}</p>
                   <p><strong>Trạng thái:</strong> {viewOrder.orderType === 'PO' ? viewOrder.status : viewOrder.paymentStatus}</p>
                </div>
                <table className="table">
@@ -568,7 +653,19 @@ export default function AccountingUI({ manager }) {
                  <p style={{ margin: 0, fontSize: '0.8rem' }}>Ngày lập: {new Date(viewVoucher.date).toLocaleString('vi-VN')}</p>
               </div>
               <div style={{ display: 'grid', gap: '12px', fontSize: '1rem' }}>
-                 <p><strong>Người {viewVoucher.type === 'Thu' ? 'nộp' : 'nhận'}:</strong> {viewVoucher.type === 'Thu' ? viewVoucher.payer : viewVoucher.collector}</p>
+                 <p><strong>Người {viewVoucher.type === 'Thu' ? 'nộp' : 'nhận'}:</strong> {(()=>{
+                     let targetName = viewVoucher.type === 'Thu' ? (viewVoucher.payer || '') : (viewVoucher.collector || '');
+                     if (!targetName && viewVoucher.relatedId) {
+                         if (viewVoucher.relatedId.startsWith('PO-')) {
+                             const po = rootState.purchaseOrders?.find(p => p.id === viewVoucher.relatedId);
+                             if (po) targetName = rootState.suppliers?.find(s => s.id === po.supplierId)?.name || po.seller;
+                         } else if (viewVoucher.relatedId.startsWith('ORD-') || viewVoucher.relatedId.startsWith('POS-')) {
+                             const o = rootState.posOrders?.find(p => p.id === viewVoucher.relatedId);
+                             if (o) targetName = o.customerName || 'Khách lẻ';
+                         }
+                     }
+                     return targetName || '...........................................';
+                 })()}</p>
                  <p><strong>Nội dung:</strong> {viewVoucher.note}</p>
                  <p><strong>Số tiền:</strong> <span style={{ fontSize: '1.2rem', fontWeight: 800 }}>{viewVoucher.amount.toLocaleString()} đ</span></p>
                  <p><strong>Bằng chữ:</strong> ....................................................................</p>

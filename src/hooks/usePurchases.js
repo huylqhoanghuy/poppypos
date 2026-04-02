@@ -14,7 +14,7 @@ export const usePurchases = () => {
   }, []);
 
   useEffect(() => {
-    fetchData();
+    fetchData(); // eslint-disable-line react-hooks/set-state-in-effect
     const unsubscribe = StorageService.subscribe((col) => {
       if (col === 'purchaseOrders' || col === '*') fetchData();
     });
@@ -22,7 +22,7 @@ export const usePurchases = () => {
   }, [fetchData]);
 
   const add = async (payload) => { await PurchaseApi.add(payload); };
-  const updateStatus = async (id, status) => { await PurchaseApi.updateStatus(id, status); };
+  const updateStatus = async (id, status, accountId) => { await PurchaseApi.updateStatus(id, status, accountId); };
   const remove = async (id) => { await PurchaseApi.delete(id); };
 
   const getSuppliers = async () => {

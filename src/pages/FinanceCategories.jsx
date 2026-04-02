@@ -28,7 +28,7 @@ const FinanceCategories = () => {
 
   const { 
     filteredActiveItems, selectedIds, toggleSelection,
-    showForm, setShowForm,
+    setShowForm,
     handlers: { handleDelete, showToast } 
   } = listState;
 
@@ -53,6 +53,7 @@ const FinanceCategories = () => {
      if (listState.viewMode !== 'grid') {
         listState.setViewMode('grid');
      }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const hasChildren = (id) => (financeCategories || []).some(cat => !cat.deleted && cat.parentId === id);

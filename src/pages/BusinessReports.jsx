@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { FileText, TrendingUp, TrendingDown, DollarSign, PieChart as PieIcon, BarChart3, Calendar, Download, Globe, Info, Filter } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, LineElement, PointElement, ArcElement } from 'chart.js';
@@ -84,7 +84,7 @@ const BusinessReports = () => {
   const channelCols = [
       { key: 'name', label: 'Tên Kênh', sortable: true, render: (v) => <div style={{fontWeight: 600}}>{v}</div> },
       { key: 'orders', label: 'Số Đơn (Thành công)', sortable: true, align: 'center', sum: true, render: (v) => <div style={{fontWeight: 800}}>{v}</div> },
-      { key: 'revenue', label: 'Doanh Thu Thuần', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', render: (v, o) => (
+      { key: 'revenue', label: 'Doanh Thu Thuần', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', render: (v) => (
           <div><span style={{fontWeight: 700}}>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px', color:'var(--text-secondary)'}}>{reportData.totalRevenue ? (v/reportData.totalRevenue*100).toFixed(1) : 0}% DTT Tổng</span></div>
       )},
       { key: 'cogs', label: 'Giá Vốn (COGS)', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', render: (v) => (
@@ -169,7 +169,7 @@ const BusinessReports = () => {
              Dữ liệu tổng hợp hệ thống, không chia tách. Để xem chi tiết theo kênh, sang tính năng Báo Cáo Kênh Phân Rã.
           </p>
         </div>
-        <button className="btn btn-primary" onClick={() => window.print()}><Download size={18}/> Xuất Báo Cáo</button>
+        <button className="btn btn-primary table-feature-btn" onClick={() => window.print()}><Download size={16}/> Xuất Báo Cáo</button>
       </div>
 
       <div className="glass-panel" style={{ padding: '16px 24px', display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', background: 'var(--surface-color)' }}>
@@ -182,7 +182,7 @@ const BusinessReports = () => {
                  return (
                     <button key={pt} onClick={() => handlePresetChange(pt)} 
                             style={{ 
-                                padding: '6px 16px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px',
+                                padding: '0 16px', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px', display: 'flex', alignItems: 'center',
                                 background: datePreset === pt ? 'white' : 'transparent',
                                 color: datePreset === pt ? 'var(--primary)' : 'var(--text-secondary)',
                                 boxShadow: datePreset === pt ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
@@ -191,9 +191,9 @@ const BusinessReports = () => {
                     </button>
                  );
              })}
-             <button onClick={() => setDatePreset('custom')}
+             <button onClick={() => handlePresetChange('custom')}
                  style={{ 
-                    padding: '6px 16px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px',
+                    padding: '0 16px', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px', display: 'flex', alignItems: 'center',
                     background: datePreset === 'custom' ? 'white' : 'transparent',
                     color: datePreset === 'custom' ? 'var(--primary)' : 'var(--text-secondary)',
                     boxShadow: datePreset === 'custom' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'

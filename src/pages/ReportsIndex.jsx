@@ -97,8 +97,8 @@ export default function ReportsIndex() {
                <span>Dữ liệu thời gian thực: {formatDateTime(currentTime)}</span>
             </div>
          </div>
-         <button className="btn btn-primary" onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', fontWeight: 600 }}>
-            <BarChart3 size={18} /> Quay về Dashboard Tổng
+         <button className="btn btn-primary table-feature-btn" onClick={() => navigate('/')}>
+            <BarChart3 size={16} /> Quay về Dashboard Tổng
          </button>
       </div>
 

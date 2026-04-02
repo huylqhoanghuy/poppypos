@@ -5,7 +5,7 @@ import { useData } from '../context/DataContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { StorageService } from '../services/api/storage';
 
-export const useSettingsManager = () => {
+export const useBackupSync = () => {
   const { dispatch } = useData();
   const { confirm } = useConfirm();
   const { settings, updateSettings } = useSettings();
@@ -13,15 +13,25 @@ export const useSettingsManager = () => {
 
   const [localBackupInt, setLocalBackupInt] = useState('none');
   const [localCloudInt, setLocalCloudInt] = useState('none');
+  const [localCloudTime, setLocalCloudTime] = useState(''); // Thêm state cho thời gian hẹn giờ HH:MM
   const [localWebhookUrl, setLocalWebhookUrl] = useState('');
+  
+  const [localTitle1, setLocalTitle1] = useState('');
+  const [localTitle2, setLocalTitle2] = useState('');
+  const [localTitle3, setLocalTitle3] = useState('');
+  
   const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (settings) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocalBackupInt(settings.autoBackupInterval || 'none');
       setLocalCloudInt(settings.autoCloudSyncInterval || 'none');
+      setLocalCloudTime(settings.autoCloudSyncTime || '');
       setLocalWebhookUrl(settings.webhookUrl || '');
+      
+      setLocalTitle1(settings.customBackupTitle1 || 'Đồng Bộ Cloud API Dự Phòng');
+      setLocalTitle2(settings.customBackupTitle2 || 'Tự Động Đẩy Dữ Liệu Lên Đám Mây (Make.com)');
+      setLocalTitle3(settings.customBackupTitle3 || 'Tải File Cứng (Dữ Liệu Nội Bộ JSON)');
     }
   }, [settings]);
 
@@ -33,7 +43,7 @@ export const useSettingsManager = () => {
     const payload = { autoBackupInterval: localBackupInt };
     await updateSettings(payload);
     dispatch({ type: 'UPDATE_SETTINGS', payload });
-    showToast(`Đã lưu cài đặt tự động Backup JSON: ${localBackupInt}`);
+    showToast(`Đã lưu cài đặt tự động tải Backup JSON: ${localBackupInt}`);
   };
 
   const applyAutoCloud = async () => {
@@ -41,6 +51,23 @@ export const useSettingsManager = () => {
     await updateSettings(payload);
     dispatch({ type: 'UPDATE_SETTINGS', payload });
     showToast(`Đã lưu cài đặt tự động Đẩy Cloud: ${localCloudInt}`);
+  };
+
+  const applyAutoCloudTime = async () => {
+    const payload = { autoCloudSyncTime: localCloudTime };
+    await updateSettings(payload);
+    dispatch({ type: 'UPDATE_SETTINGS', payload });
+    if(localCloudTime) {
+       showToast(`Đã hẹn giờ tự động đẩy Webhook lên Đám Mây vào lúc: ${localCloudTime} hằng ngày`);
+    } else {
+       showToast(`Đã tắt hẹn giờ tự động đẩy Cloud`);
+    }
+  };
+
+  const applyCustomTitle = async (key, value) => {
+    const payload = { [key]: value };
+    await updateSettings(payload);
+    dispatch({ type: 'UPDATE_SETTINGS', payload });
   };
 
   const manualSync = async () => {
@@ -57,8 +84,6 @@ export const useSettingsManager = () => {
       showToast(result.message, 'error');
     }
   };
-
-
 
   const applyWebhookUrl = async () => {
     const trimmedUrl = localWebhookUrl ? localWebhookUrl.trim() : '';
@@ -166,15 +191,25 @@ export const useSettingsManager = () => {
       syncing,
       localBackupInt,
       localCloudInt,
+      localCloudTime,
       localWebhookUrl,
+      localTitle1,
+      localTitle2,
+      localTitle3,
       fileInputRef
     },
     actions: {
       setLocalBackupInt,
       setLocalCloudInt,
+      setLocalCloudTime,
       setLocalWebhookUrl,
+      setLocalTitle1,
+      setLocalTitle2,
+      setLocalTitle3,
       applyAutoBackup,
       applyAutoCloud,
+      applyAutoCloudTime,
+      applyCustomTitle,
       applyWebhookUrl,
       testWebhook,
       manualSync,

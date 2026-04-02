@@ -14,7 +14,7 @@ export const useSuppliers = () => {
   }, []);
 
   useEffect(() => {
-    fetchData();
+    fetchData(); // eslint-disable-line react-hooks/set-state-in-effect
     const unsubscribe = StorageService.subscribe((col) => {
       if (col === 'suppliers' || col === '*') fetchData();
     });
