@@ -97,6 +97,11 @@ export const useBackupSync = () => {
   };
 
   const testWebhook = async () => {
+    if (import.meta.env.DEV) {
+       showToast('Đang chạy ở môi trường Máy Bộ (DEV). Tạm thời Khóa gửi Webhook để tránh đẩy dữ liệu nháp vào luồng thực!', 'warning');
+       return;
+    }
+  
     const hookUrl = settings.webhookUrl ? settings.webhookUrl.trim() : '';
     if (!hookUrl) {
       showToast('Vui lòng nhập và lưu Webhook URL trước!', 'error');

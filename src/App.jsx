@@ -262,6 +262,8 @@ const AppContent = () => {
 
   // BACKGROUND WORKER: Auto Cloud Webhook Sync
   React.useEffect(() => {
+    if (import.meta.env.DEV) return; // Vững chắc tách biệt: Ngăn chặn gửi dữ liệu Test lên luồng Webhook của Prod!
+    
     const webhookUrl = state?.settings?.webhookUrl;
     const intervalStr = state?.settings?.autoCloudSyncTime; // e.g. "1h", "3h", "4h", "12h"
     
