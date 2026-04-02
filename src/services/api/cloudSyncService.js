@@ -23,25 +23,32 @@ export const CloudSyncService = {
                  if (newLen === 0) {
                      // 1. CHỐNG XÓA TRẮNG DỮ LIỆU CỐT LÕI (Zero-Tolerance Guard)
                      try {
-                        const u = JSON.parse(localStorage.getItem('poppy_user'));
+                        const sessStr = localStorage.getItem('omnipos_session');
+                        const sess = sessStr ? JSON.parse(sessStr) : null;
+                        const u = sess ? sess.user : null;
                         if (u?.role !== 'ADMIN') {
-                           alert(`🚫 [TRẠM KIỂM DUYỆT BẢO MẬT]\n\nĐã CHẶN đứng lệnh Xóa Sạch toàn bộ phân vùng [${key}].\n\nChỉ QUẢN TRỊ TỐI CAO (Admin) mới có thẩm quyền xóa toàn bộ. Hệ thống sẽ bỏ qua bản lưu rác này và nạp lại Dữ Liệu Gốc từ Mây!`);
+                           alert(`🚫 [TRẠM KIỂM DUYỆT BẢO MẬT]\n\nĐã CHẶN đứng lệnh Xóa Sạch toàn bộ phân vùng [${key}].\n\nChỉ QUẢN TRỊ TỐI CAO (Admin) mới có thẩm quyền xóa toàn bộ! Hệ thống sáp nạp lại Dữ Liệu Gốc từ Mây!`);
                            blockedByGuard = true;
                         } else {
-                           const ok = window.confirm(`⚠️ [KHẨN CẤP DOANH NGHIỆP] - QUYỀN ADMIN\n\nPhát hiện lệnh XÓA TRẮNG (0 phần tử) đâm vào vùng [${key}] trên Mây.\n\n- Nếu bạn chủ đích Reset: Bấm [OK] để ghi đè!\n- Nếu là do lỗi hệ thống/chạm nhầm: Bấm [CANCEL] để HỦY lệnh và Tải lại gốc!`);
-                           if (!ok) blockedByGuard = true;
+                           const userInput = window.prompt(`🔒 [KHÓA BẢO MẬT ADMIN] - QUYỀN TỐI CAO\n\nPhát hiện lệnh XÓA TRẮNG (0 phần tử) đâm vào vùng [${key}] trên Mây.\nKhởi chạy quy trình Dọn Dẹp Reset toàn bộ cơ sở dữ liệu.\n\nVui lòng nhập Mã PIN Bảo Mật để xác nhận xóa sạch:`);
+                           if (userInput !== '1004') {
+                               alert("❌ Mã PIN không chính xác! Ngừng lệnh xóa rác.");
+                               blockedByGuard = true;
+                           }
                         }
-                     } catch { blockedByGuard = true; } // Bọc try-catch lỗi parse
+                     } catch { blockedByGuard = true; }
                  } 
                  else if (diff > 0 && (diff / oldLen > 0.1 || diff >= 5)) {
                      // 2. CHỐNG HAO HỤT MẢNG ĐỘT BIẾN (Anomaly Decrease Guard) - Tụt 10% hoặc tụt > 5 món
                      try {
-                        const u = JSON.parse(localStorage.getItem('poppy_user'));
+                        const sessStr = localStorage.getItem('omnipos_session');
+                        const sess = sessStr ? JSON.parse(sessStr) : null;
+                        const u = sess ? sess.user : null;
                         if (u?.role !== 'ADMIN') {
                            alert(`🚫 [TRẠM KIỂM DUYỆT BẢO MẬT]\n\nHệ thống phát hiện Dữ liệu [${key}] sụt giảm quá bất thường (Bay màu ${diff} mục cùng lúc).\n\nĐể ngăn chặn phá hoại hoặc đồng bộ rác, thao tác lưu rủi ro cao này bị TỪ CHỐI. Hệ thống sẽ Tải Lại Gốc!`);
                            blockedByGuard = true;
                         } else {
-                           const ok = window.confirm(`⚠️ [CẢNH BÁO QUẢN TRỊ]\n\nDữ liệu [${key}] hụt mất ${diff} mục so với Bản Trên Mây.\n\n- Nếu bạn vừa Dọn Dẹp hệ thống: Bấm OK.\n- Nếu thấy lạ/Nhân viên lỡ tay: Bấm CANCEL để chặn đứng và nạp lại gốc.`);
+                           const ok = window.confirm(`⚠️ [CẢNH BÁO QUẢN TRỊ]\n\nDữ liệu [${key}] hụt mất ${diff} mục so với Bản Cũ.\n\n- Nếu bạn vừa Dọn Dẹp hệ thống: Bấm OK để Xóa.\n- Nếu thấy lạ/Nhân viên lỡ tay: Bấm CANCEL để chặn đứng và phục hồi.`);
                            if (!ok) blockedByGuard = true;
                         }
                      } catch { blockedByGuard = true; }
