@@ -4,7 +4,7 @@ import { useProducts } from '../hooks/useProducts';
 import { useInventory } from '../hooks/useInventory';
 import { useSalesChannels } from '../hooks/useSalesChannels';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Pie } from 'react-chartjs-2';
+import { Doughnut, Pie } from 'react-chartjs-2';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { formatMoney } from '../utils/formatter';
 
@@ -224,13 +224,14 @@ const PriceStructure = () => {
                     return (
                         <div key={p.id} style={{ background: 'var(--surface-color)', padding: '20px', borderRadius: '16px', border: '1px solid var(--surface-border)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
                            <h5 style={{ margin: '0 0 16px 0', fontSize: '15px', textAlign: 'center', color: 'var(--text-primary)' }}>{p.name}</h5>
-                           <div style={{ position: 'relative', height: '220px', marginBottom: '20px' }}>
-                              <Pie 
+                           <div style={{ position: 'relative', height: '280px', marginBottom: '20px' }}>
+                              <Doughnut 
                                  data={chartData} 
                                  options={{ 
                                     maintainAspectRatio: false, 
+                                    cutout: '50%',
                                     plugins: { 
-                                       legend: { display: false },
+                                       legend: { display: true, position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { size: 10 } } },
                                        datalabels: {
                                           color: '#ffffff',
                                           font: { weight: 'bold', size: 10, family: 'Inter, sans-serif' },
@@ -240,8 +241,8 @@ const PriceStructure = () => {
                                              if (value <= 0) return null;
                                              const total = context.chart.data.datasets[0].data.reduce((a,b) => a + Math.max(0, b), 0);
                                              if (total === 0) return null;
-                                             const percentage = (value / total * 100).toFixed(0);
-                                             if (percentage < 3) return null; // Hide labels for tiny slices
+                                             const percentage = (value / total * 100).toFixed(1);
+                                             if (percentage < 4) return null; // Hide labels for tiny slices
                                              
                                              const rawLabel = context.chart.data.labels[context.dataIndex];
                                              let shortLabel = rawLabel;
@@ -253,14 +254,18 @@ const PriceStructure = () => {
                                              
                                              return `${shortLabel}\n${percentage}%`;
                                           },
-                                          textAlign: 'center',
                                        }
                                     } 
                                  }} 
                               />
-                              {!hasProfit && (
-                                  <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(239, 68, 68, 0.95)', color: 'white', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 800, whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(239,68,68,0.4)' }}>
-                                      LỖ / HÒA VỐN
+                              {!hasProfit ? (
+                                  <div style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(239, 68, 68, 0.95)', color: 'white', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 800, whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(239,68,68,0.4)' }}>
+                                      LỖ/HÒA
+                                  </div>
+                              ) : (
+                                  <div style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
+                                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>Biên Lãi</div>
+                                      <div style={{ fontSize: '15px', color: 'var(--success)', fontWeight: 800 }}>{cm.netMargin.toFixed(1)}%</div>
                                   </div>
                               )}
                            </div>
