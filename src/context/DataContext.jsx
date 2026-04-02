@@ -767,7 +767,7 @@ export const DataProvider = ({ children }) => {
   useEffect(() => {
     console.log("[DataContext] Khởi động Kiến trúc Realtime...");
     
-    // 1. Phục hồi khung dữ liệu Local lập tức để sẵn sàng hiển thị (nhưng vẫn chặn UI)
+    // 1. Phục hồi khung dữ liệu Local lập tức để hiển thị khung nền (chưa cho thao tác)
     const hasLocalData = !!localStorage.getItem('omnipos_gaumuoi_v3');
     if (hasLocalData) {
       StorageService.getAll().then(data => {
@@ -775,26 +775,34 @@ export const DataProvider = ({ children }) => {
       });
     }
 
-    // 2. Timeout 3.5 giây đếm ngược nếu Firebase tịt ngòi (mất kết nối)
-    const networkTimeoutId = setTimeout(() => {
-       console.warn("[Network] Quá thời gian chờ Cloud (3.5s). Khởi động chế độ Offline!");
-       setLoading(false); // Gỡ block Loading
-    }, 3500);
-
-    // 3. Kết nối Firebase
-    const unsubscribeCloud = CloudSyncService.startRealtimeListener((mergedState) => {
-        // Mạng đã trả về nhanh hơn 3.5s -> Hủy timeout
-        clearTimeout(networkTimeoutId);
+    // 2. Chặn đứng giao diện, ép kéo Data mới nhất từ Mây đè xuống Local trước khi làm việc! (Đồng bộ đầu ca)
+    CloudSyncService.pullFromCloud().then(res => {
+        if (res.success && res.newState) {
+           rawDispatch({ type: 'HYDRATE_STATE', payload: res.newState });
+        }
         
-        rawDispatch({ type: 'HYDRATE_STATE', payload: mergedState });
-        setLoading(false); // Gỡ block Loading chính thức
+        // 3. Kết nối Firebase Realtime Listener sau khi đã làm sạch nền Local
+        const unsubscribeCloud = CloudSyncService.startRealtimeListener((mergedState) => {
+            rawDispatch({ type: 'HYDRATE_STATE', payload: mergedState });
+        });
+        
+        window.__poppyUnsubscribeCloud = unsubscribeCloud;
+        setLoading(false); // Chính thức gỡ Block UI cho nhân viên thao tác
+    }).catch(err => {
+        console.error(err);
+        setLoading(false); // Lỗi mạng thì đành mở khóa offline
     });
-      
-    // 4. Cleanup Memory
+
+    // Timeout 4.5 giây đếm ngược quá tải mạng
+    const networkTimeoutId = setTimeout(() => {
+       console.warn("[Network] Quá thời gian chờ Cloud (4.5s). Khởi động chế độ Offline!");
+       setLoading(false);
+    }, 4500);
+
     return () => {
        clearTimeout(networkTimeoutId);
-       if (typeof unsubscribeCloud === 'function') {
-           unsubscribeCloud();
+       if (typeof window.__poppyUnsubscribeCloud === 'function') {
+           window.__poppyUnsubscribeCloud();
        }
     };
   }, []);
