@@ -40,22 +40,21 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (username, password) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(async () => {
+    return new Promise(async (resolve, reject) => {
         const defaultUsers = [
           { id: 'U1', username: 'admin', password: 'admin', name: 'Quản Trị Tối Cao', role: 'ADMIN', status: 'active' },
           { id: 'U2', username: 'quanly', password: '123', name: 'Quản Lý Cửa Hàng', role: 'MANAGER', status: 'active' },
           { id: 'U3', username: 'thungan', password: '123', name: 'Thu Ngân', role: 'CASHIER', status: 'active' }
         ];
         
-        let MOCK_USERS = (state?.users && state.users.length > 0) ? state.users : defaultUsers;
+        let SYSTEM_DEFAULT_USERS = (state?.users && state.users.length > 0) ? state.users : defaultUsers;
         
         const safeUsername = username?.trim().toLowerCase();
         const safePassword = password?.trim();
         
         // Support both hashed and plaintext passwords for backward compatibility
         let foundUser = null;
-        for (const u of MOCK_USERS) {
+        for (const u of SYSTEM_DEFAULT_USERS) {
           if (u.username.trim().toLowerCase() !== safeUsername || u.deleted) continue;
           
           // Admin account always uses hardcoded password
@@ -87,7 +86,6 @@ export const AuthProvider = ({ children }) => {
         } else {
           reject('Sai tên đăng nhập hoặc mật khẩu!');
         }
-      }, 500);
     });
   };
 

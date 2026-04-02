@@ -67,7 +67,7 @@ export const StorageService = {
         } else {
           resolve(getInitialState());
         }
-      }, 50); // MOCK 50ms latency (API simulation)
+      }, 0); // Độ trễ bằng 0ms cho Production
     });
   },
 
@@ -82,7 +82,7 @@ export const StorageService = {
         localStorage.setItem(DB_KEY, JSON.stringify(dataObj));
         notifyListeners('*');
         resolve(true);
-      }, 50);
+      }, 0);
     });
   },
 
