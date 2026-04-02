@@ -3,7 +3,7 @@ import { FileText, TrendingUp, TrendingDown, DollarSign, PieChart as PieIcon, Ba
 import { useData } from '../context/DataContext';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, LineElement, PointElement, ArcElement } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import { Bar, Line, Pie } from 'react-chartjs-2';
+import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import { formatMoney } from '../utils/formatter';
 import { useBusinessReport } from '../hooks/useBusinessReport';
 import SmartTable from '../components/SmartTable';
@@ -295,18 +295,20 @@ const BusinessReports = () => {
               <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-secondary)', alignSelf: 'flex-start' }}>CƠ CẤU DOANH THU KÊNH</h4>
               <div style={{ height: '220px', width: '100%', maxWidth: '280px', margin: 'auto' }}>
                   {reportData.channels.length > 0 ? (
-                     <Pie data={pieChartData} options={{ 
+                     <Doughnut data={pieChartData} options={{ 
                          maintainAspectRatio: false, 
+                         cutout: '50%',
                          layout: { padding: 20 },
                          plugins: { 
-                             legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                             legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } },
                              datalabels: {
                                  color: '#ffffff',
                                  font: { weight: 'bold', size: 11 },
                                  formatter: (value, ctx) => {
                                       const total = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
-                                      const p = (value/total*100).toFixed(0);
-                                      return p > 5 ? p + '%' : '';
+                                      if(total === 0) return '';
+                                      const p = (value/total*100).toFixed(1);
+                                      return p > 3 ? `${p}%` : '';
                                  }
                              }
                          } 

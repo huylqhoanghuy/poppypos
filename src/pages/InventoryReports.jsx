@@ -5,6 +5,7 @@ import { formatMoney } from '../utils/formatter';
 import SmartTable from '../components/SmartTable';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, LineElement, PointElement, ArcElement } from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 ChartJS.register(
   CategoryScale,
@@ -15,7 +16,8 @@ ChartJS.register(
   ArcElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  ChartDataLabels
 );
 
 const InventoryReports = () => {
@@ -406,7 +408,24 @@ const InventoryReports = () => {
               <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-secondary)' }}>CƠ CẤU VỐN TỒN KHO THEO NHÓM</h4>
               <div style={{ height: '300px', position: 'relative' }}>
                  {Object.keys(reportData.categoryValueMap).length > 0 ? (
-                    <Doughnut data={categoryChartData} options={{ maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 6, font: { size: 11 } } }, tooltip: { callbacks: { label: (ctx) => ` ${formatMoney(ctx.parsed)}` } } } }} />
+                     <Doughnut data={categoryChartData} options={{ 
+                         maintainAspectRatio: false, 
+                         cutout: '50%', 
+                         plugins: { 
+                             legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, padding: 12, font: { size: 11 } } }, 
+                             tooltip: { callbacks: { label: (ctx) => ` ${formatMoney(ctx.parsed)}` } },
+                             datalabels: {
+                                 color: '#ffffff',
+                                 font: { weight: 'bold', size: 11 },
+                                 formatter: (value, ctx) => {
+                                      const total = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
+                                      if(total === 0) return '';
+                                      const p = (value/total*100).toFixed(1);
+                                      return p > 3 ? `${p}%` : '';
+                                 }
+                             }
+                         } 
+                     }} />
                  ) : (
                     <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1', fontSize: '13px' }}>Chưa có dữ liệu định giá</div>
                  )}

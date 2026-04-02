@@ -428,7 +428,24 @@ const Dashboard = () => {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '16px' }}>
           <ChartPanel title="Tỷ trọng kênh bán" accentColor="#ea580c" height={200}>
             {channelData.labels.length > 0
-              ? <Pie data={channelData} options={{ ...baseChartOptions, plugins: { ...baseChartOptions.plugins, legend: { ...baseChartOptions.plugins.legend, position: 'right' } } }} />
+              ? <Doughnut data={channelData} options={{ 
+                  ...baseChartOptions, 
+                  cutout: '50%',
+                  plugins: { 
+                     ...baseChartOptions.plugins, 
+                     legend: { ...baseChartOptions.plugins.legend, position: 'right' },
+                     datalabels: {
+                         color: '#ffffff',
+                         font: { weight: 'bold', size: 10 },
+                         formatter: (value, ctx) => {
+                              const total = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
+                              if(total === 0) return '';
+                              const p = (value/total*100).toFixed(1);
+                              return p > 3 ? `${p}%` : '';
+                         }
+                     }
+                  } 
+                }} />
               : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1', fontSize: '13px' }}>Chưa có dữ liệu</div>
             }
           </ChartPanel>
