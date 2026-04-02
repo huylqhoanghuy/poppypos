@@ -766,24 +766,33 @@ export const DataProvider = ({ children }) => {
   // Realtime Cloud Listener (Online-first Architecture)
   useEffect(() => {
     console.log("[DataContext] Khởi động Kiến trúc Realtime...");
-    const unsubscribeCloud = CloudSyncService.startRealtimeListener((mergedState) => {
-        // Chỉ hydrate nếu nhận nhánh data mới
-        rawDispatch({ type: 'HYDRATE_STATE', payload: mergedState });
-        setLoading(false);
-    });
-
+    
+    // 1. Phục hồi khung dữ liệu Local lập tức để sẵn sàng hiển thị (nhưng vẫn chặn UI)
     const hasLocalData = !!localStorage.getItem('omnipos_gaumuoi_v3');
     if (hasLocalData) {
       StorageService.getAll().then(data => {
         rawDispatch({ type: 'HYDRATE_STATE', payload: data });
-        setLoading(false);
       });
-    } else {
-      // Khi load máy trần (chưa có localData), Đợi Firestore onSnapshot kích hoạt (khoảng vài giây)
-      // nên không set loading false ngay lập tức. Cứ để loading screen cho đến khi mây trả về.
     }
-    
+
+    // 2. Timeout 3.5 giây đếm ngược nếu Firebase tịt ngòi (mất kết nối)
+    const networkTimeoutId = setTimeout(() => {
+       console.warn("[Network] Quá thời gian chờ Cloud (3.5s). Khởi động chế độ Offline!");
+       setLoading(false); // Gỡ block Loading
+    }, 3500);
+
+    // 3. Kết nối Firebase
+    const unsubscribeCloud = CloudSyncService.startRealtimeListener((mergedState) => {
+        // Mạng đã trả về nhanh hơn 3.5s -> Hủy timeout
+        clearTimeout(networkTimeoutId);
+        
+        rawDispatch({ type: 'HYDRATE_STATE', payload: mergedState });
+        setLoading(false); // Gỡ block Loading chính thức
+    });
+      
+    // 4. Cleanup Memory
     return () => {
+       clearTimeout(networkTimeoutId);
        if (typeof unsubscribeCloud === 'function') {
            unsubscribeCloud();
        }
