@@ -4,7 +4,7 @@ import { useData } from './DataContext';
 const AuthContext = createContext();
 
 const SESSION_KEY = 'omnipos_session';
-const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8 hours
 
 // Simple SHA-256 hash for client-side password comparison
 const hashPassword = async (password) => {

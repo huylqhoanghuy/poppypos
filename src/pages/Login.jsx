@@ -301,12 +301,7 @@ export default function Login() {
               </button>
             </form>
 
-            {/* Quick hint */}
-            <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'center', gap: '16px' }}>
-              {['admin / admin', 'quanly / 123', 'thungan / 123'].map((hint, i) => (
-                <span key={i} style={{ fontSize: '10px', color: 'rgba(255,160,60,0.3)', fontFamily: 'monospace' }}>{hint}</span>
-              ))}
-            </div>
+            {/* Đã gỡ bỏ Quick Hint chứa các tài khoản mặc định để bảo mật hệ thống */}
           </div>
 
           {/* Footer block */}
