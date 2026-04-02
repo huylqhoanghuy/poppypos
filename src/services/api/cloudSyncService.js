@@ -11,7 +11,58 @@ export const CloudSyncService = {
       const keys = Object.keys(state);
       for (const key of keys) {
         if (key !== 'toast' && key !== 'notifications') {
+          // [ENTERPRISE SANITY CHECK INTERCEPTOR]
+          if (Array.isArray(state[key]) && ['products', 'categories', 'posOrders', 'purchases'].includes(key)) {
+             const newLen = state[key].length;
+             const oldLen = window.__CLOUD_LENGTHS__ ? window.__CLOUD_LENGTHS__[key] : 0;
+             
+             if (oldLen > 0) {
+                 const diff = oldLen - newLen;
+                 let blockedByGuard = false;
+
+                 if (newLen === 0) {
+                     // 1. CHỐNG XÓA TRẮNG DỮ LIỆU CỐT LÕI (Zero-Tolerance Guard)
+                     try {
+                        const u = JSON.parse(localStorage.getItem('poppy_user'));
+                        if (u?.role !== 'ADMIN') {
+                           alert(`🚫 [TRẠM KIỂM DUYỆT BẢO MẬT]\n\nĐã CHẶN đứng lệnh Xóa Sạch toàn bộ phân vùng [${key}].\n\nChỉ QUẢN TRỊ TỐI CAO (Admin) mới có thẩm quyền xóa toàn bộ. Hệ thống sẽ bỏ qua bản lưu rác này và nạp lại Dữ Liệu Gốc từ Mây!`);
+                           blockedByGuard = true;
+                        } else {
+                           const ok = window.confirm(`⚠️ [KHẨN CẤP DOANH NGHIỆP] - QUYỀN ADMIN\n\nPhát hiện lệnh XÓA TRẮNG (0 phần tử) đâm vào vùng [${key}] trên Mây.\n\n- Nếu bạn chủ đích Reset: Bấm [OK] để ghi đè!\n- Nếu là do lỗi hệ thống/chạm nhầm: Bấm [CANCEL] để HỦY lệnh và Tải lại gốc!`);
+                           if (!ok) blockedByGuard = true;
+                        }
+                     } catch { blockedByGuard = true; } // Bọc try-catch lỗi parse
+                 } 
+                 else if (diff > 0 && (diff / oldLen > 0.1 || diff >= 5)) {
+                     // 2. CHỐNG HAO HỤT MẢNG ĐỘT BIẾN (Anomaly Decrease Guard) - Tụt 10% hoặc tụt > 5 món
+                     try {
+                        const u = JSON.parse(localStorage.getItem('poppy_user'));
+                        if (u?.role !== 'ADMIN') {
+                           alert(`🚫 [TRẠM KIỂM DUYỆT BẢO MẬT]\n\nHệ thống phát hiện Dữ liệu [${key}] sụt giảm quá bất thường (Bay màu ${diff} mục cùng lúc).\n\nĐể ngăn chặn phá hoại hoặc đồng bộ rác, thao tác lưu rủi ro cao này bị TỪ CHỐI. Hệ thống sẽ Tải Lại Gốc!`);
+                           blockedByGuard = true;
+                        } else {
+                           const ok = window.confirm(`⚠️ [CẢNH BÁO QUẢN TRỊ]\n\nDữ liệu [${key}] hụt mất ${diff} mục so với Bản Trên Mây.\n\n- Nếu bạn vừa Dọn Dẹp hệ thống: Bấm OK.\n- Nếu thấy lạ/Nhân viên lỡ tay: Bấm CANCEL để chặn đứng và nạp lại gốc.`);
+                           if (!ok) blockedByGuard = true;
+                        }
+                     } catch { blockedByGuard = true; }
+                 }
+
+                 // Nếu dính gác chắn -> Quét lại local bằng file Cloud gốc để tẩy rửa sạch sẽ Data Lỗi
+                 if (blockedByGuard) {
+                    window.location.reload(); 
+                    return { success: false, message: 'Bị chặn bởi Anomaly Guard.' };
+                 }
+             }
+          }
+
+          // [VƯỢT QUA KIỂM DUYỆT] - Bắt đầu đẩy lên Mây
           await setDoc(doc(db, 'store_data', key), { data: state[key] });
+
+          // Cập nhật lại mốc neo Tracking
+          if (Array.isArray(state[key])) {
+             if (!window.__CLOUD_LENGTHS__) window.__CLOUD_LENGTHS__ = {};
+             window.__CLOUD_LENGTHS__[key] = state[key].length;
+          }
         }
       }
       return { success: true, message: 'Đã lưu trữ dữ liệu lên Đám mây an toàn!' };
@@ -78,12 +129,17 @@ export const CloudSyncService = {
          // metadata.hasPendingWrites = true nghĩa là dữ liệu này do CHÍNH THE MÁY NÀY vừa ghi (chưa lên mây kịp)
          // Lúc này ta bỏ qua để hệ thống không tự kéo về ghi đè chính mình.
          // Chỉ nhận dữ liệu từ các máy khác (hasPendingWrites = false).
-         if (!change.doc.metadata.hasPendingWrites && change.type !== 'removed') {
-            const dataObj = change.doc.data();
-            if (dataObj && dataObj.data !== undefined) {
-               newState[change.doc.id] = dataObj.data;
-               needsMerge = true;
-            }
+
+         const dataObj = change.doc.data();
+         if (dataObj && dataObj.data !== undefined) {
+             // Luôn duy trì một biến Động tracking độ dài mọi mảng trên Mây để Trạm Kiểm Duyệt có cơ sở so sánh
+             if (!window.__CLOUD_LENGTHS__) window.__CLOUD_LENGTHS__ = {};
+             window.__CLOUD_LENGTHS__[change.doc.id] = Array.isArray(dataObj.data) ? dataObj.data.length : 0;
+
+             if (!change.doc.metadata.hasPendingWrites && change.type !== 'removed') {
+                newState[change.doc.id] = dataObj.data;
+                needsMerge = true;
+             }
          }
       });
       
