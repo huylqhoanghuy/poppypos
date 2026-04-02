@@ -172,15 +172,21 @@ const POS = () => {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px', overflow: 'hidden' }}>
 
         <div className="glass-panel" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--surface-variant)', padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--surface-border)' }}>
-            <Search size={20} color="var(--text-secondary)" />
-            <input 
-              type="text" 
-              placeholder="Tìm tên món / sản phẩm..." 
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none', width: '100%', fontSize: '1rem' }}
-            />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--surface-variant)', padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--surface-border)' }}>
+              <Search size={20} color="var(--text-secondary)" />
+              <input 
+                type="text" 
+                placeholder="Tìm tên món / sản phẩm..." 
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none', width: '100%', fontSize: '1rem' }}
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', color: 'var(--primary)', fontWeight: 700, whiteSpace: 'nowrap' }}>
+              <Flame size={18} />
+              <span style={{ fontSize: '14px' }}>{filteredProducts.length} Món</span>
+            </div>
           </div>
           <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '4px' }}>
             {categories.map(cat => (
