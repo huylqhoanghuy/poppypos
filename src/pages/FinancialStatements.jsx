@@ -30,7 +30,7 @@ export default function FinancialStatements() {
 
   const {
     totalCash, totalInventoryValue, totalAssets, totalLiabilities, ownersEquity,
-    totalRevenue, totalCOGS, grossProfit, operatingExpenses, netProfit,
+    totalRevenue, totalCOGS, cogsByCategory, grossProfit, operatingExpenses, netProfit,
     cashInflows, cashOutflows, netCashFlow, filteredTransactions = []
   } = statements;
 
@@ -186,6 +186,19 @@ export default function FinancialStatements() {
                      <span style={{ fontSize: '16px', fontWeight: 700 }}>3. Giá Vốn Hàng Bán (COGS)</span>
                      <span style={{ fontSize: '16px', fontWeight: 700, color: '#ef4444' }}>- {formatVND(totalCOGS)}</span>
                   </div>
+                  {cogsByCategory && Object.keys(cogsByCategory).length > 0 && (
+                     <div style={{ paddingBottom: '8px', background: '#f8fafc', borderRadius: '4px', margin: '4px 0 12px 0' }}>
+                        {Object.entries(cogsByCategory).map(([cat, amount]) => (
+                           <div key={cat} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 16px 4px 24px', color: 'var(--text-secondary)', fontSize: '14px' }}>
+                              <span style={{ display: 'flex', alignItems: 'center' }}>
+                                 <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#94a3b8', marginRight: '8px' }}/>
+                                 {cat}
+                              </span>
+                              <span style={{ fontFamily: 'monospace' }}>{formatVND(amount)}</span>
+                           </div>
+                        ))}
+                     </div>
+                  )}
                   
                   {/* LỢI NHUẬN GỘP */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '20px 0', borderBottom: '2px solid var(--surface-border)' }}>

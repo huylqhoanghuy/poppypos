@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, TrendingUp, TrendingDown, DollarSign, PieChart as PieIcon, BarChart3, Calendar, Download, Globe, Info, Filter } from 'lucide-react';
+import { FileText, TrendingUp, TrendingDown, DollarSign, PieChart as PieIcon, BarChart3, Calendar, Download, Globe, Info, Filter, Layers } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, LineElement, PointElement, ArcElement } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
@@ -155,6 +155,37 @@ const BusinessReports = () => {
           const itemProfit = o.attributedRevenue - o.totalCost - totalAttachedFees;
           const roi = o.totalCost > 0 ? (itemProfit / o.totalCost) * 100 : 0;
           return <span style={{color: roi >= 0 ? 'var(--success)' : 'var(--danger)', fontWeight: 600}}>{roi > 0 ? '+' : ''}{roi.toFixed(0)}%</span>;
+      }}
+  ];
+
+  const categoryAgg = reportData.totalIngredientsList.reduce((acc, ing) => {
+    const cat = ing.category || 'Khác';
+    if (!acc[cat]) acc[cat] = { id: cat, name: cat, qty: 0, totalCost: 0, attributedRevenue: 0, fee: 0, opex: 0 };
+    acc[cat].qty += ing.qty;
+    acc[cat].totalCost += ing.totalCost;
+    acc[cat].attributedRevenue += ing.attributedRevenue;
+    acc[cat].fee += ing.fee;
+    acc[cat].opex += ing.opex;
+    return acc;
+  }, {});
+
+  const categoryList = Object.values(categoryAgg).sort((a,b) => b.totalCost - a.totalCost);
+
+  const categoryCols = [
+      { key: 'name', label: 'Nhóm Nguyên Liệu', sortable: true, render: (v) => <div style={{fontWeight: 800, color: 'var(--primary)'}}>{v}</div> },
+      { key: 'totalCost', label: 'Tổng Tiêu Hao Vốn', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', render: (v, o) => (
+          <div style={{color:'var(--danger)', fontWeight:800}}>
+             {formatMoney(v)} đ<br/>
+             <span style={{fontSize:'11px'}}>{reportData.totalCOGS ? (v / reportData.totalCOGS * 100).toFixed(1) : 0}% Tổng COGS</span>
+          </div>
+      )},
+      { key: 'attributedRevenue', label: 'Doanh Thu Vị Trí Nhóm', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', render: (v) => <div style={{color:'var(--text-primary)', fontWeight:600}}>{formatMoney(v)} đ</div> },
+      { key: 'profit', label: 'Biên LN Tích Lũy Nhóm', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', sumFunc: (row) => row.attributedRevenue - row.totalCost - (row.fee + row.opex), render: (_, o) => {
+          const itemProfit = o.attributedRevenue - o.totalCost - (o.fee + o.opex);
+          return <div style={{color:'var(--success)', fontWeight:800}}>
+              {formatMoney(itemProfit)} đ<br/>
+              <span style={{fontSize:'11px'}}>{o.attributedRevenue ? (itemProfit / o.attributedRevenue * 100).toFixed(1) : 0}%</span>
+          </div>
       }}
   ];
 
@@ -365,7 +396,7 @@ const BusinessReports = () => {
                  <TrendingDown size={18} color="var(--primary)" /> BÁO CÁO TỔNG HỢP: TIÊU HAO & THẶNG DƯ NGUYÊN LIỆU KHÁI QUÁT
              </h4>
           </div>
-              <SmartTable
+               <SmartTable
                  columns={ingredientCols}
                  data={reportData.totalIngredientsList}
                  idKey="id"
@@ -374,6 +405,22 @@ const BusinessReports = () => {
                  tableMinWidth="1000px"
                  onView={(row) => handleOpenDetailModal(row, 'ingredient')}
               />
+      </div>
+
+      <div className="glass-panel" style={{ padding: '24px', borderTop: '4px solid #f59e0b', background: 'linear-gradient(to right, rgba(245, 158, 11, 0.05), transparent)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+             <h4 style={{ margin: 0, fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                 <Layers size={18} color="#f59e0b" /> PHÂN TÍCH HIỆU QUẢ CƠ CẤU VỐN THEO NHÓM NGUYÊN LIỆU
+             </h4>
+          </div>
+          <SmartTable
+             columns={categoryCols}
+             data={categoryList}
+             idKey="id"
+             storageKey="report_categories"
+             defaultItemsPerPage={10}
+             tableMinWidth="800px"
+          />
       </div>
 
       <ReportDetailModal 

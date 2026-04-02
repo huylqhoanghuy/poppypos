@@ -10,6 +10,7 @@ const InventoryUI = ({
   ingredients,
   suppliers,
   purchaseOrders,
+  categories = [],
   onSaveIngredient,
   onDeleteIngredient,
   onSaveSupplier,
@@ -226,11 +227,9 @@ const InventoryUI = ({
               <label style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom:'6px', display:'block', fontWeight: 600 }}>Nhóm Phân Loại:</label>
               <select required className="form-input" value={ingForm.category || ''} onChange={e => setIngForm({...ingForm, category: e.target.value})}>
                 <option value="">-- Chọn nhóm phân loại --</option>
-                <option value="Thịt & Thành Phần Chính">Thịt & Thành Phần Chính</option>
-                <option value="Gia Vị & Đồ Khô">Gia Vị & Đồ Khô</option>
-                <option value="Đồ Tươi Sống">Đồ Tươi Sống</option>
-                <option value="Đồ Uống & Pha Chế">Đồ Uống & Pha Chế</option>
-                <option value="Bao Bì & Vật Tư">Bao Bì & Vật Tư</option>
+                {categories.map(c => (
+                   <option key={c.id} value={c.name}>{c.name}</option>
+                ))}
               </select>
             </div>
           </div>

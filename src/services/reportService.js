@@ -69,7 +69,7 @@ export const ReportService = {
 
                 if (!ingredientsByChannel[ch]) ingredientsByChannel[ch] = {};
                 if (!ingredientsByChannel[ch][ing.id]) {
-                    ingredientsByChannel[ch][ing.id] = { id: ing.id, name: ing.name, attributedRevenue: 0, totalCost: 0, qty: 0, unit: ing.unit, fee: 0, dailyLogs: {} };
+                    ingredientsByChannel[ch][ing.id] = { id: ing.id, category: ing.category || 'Khác', name: ing.name, attributedRevenue: 0, totalCost: 0, qty: 0, unit: ing.unit, fee: 0, dailyLogs: {} };
                 }
                 const ingObj = ingredientsByChannel[ch][ing.id];
                 ingObj.attributedRevenue += itemAttributedRevenue;

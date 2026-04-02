@@ -37,6 +37,7 @@ export const FinancialService = {
     // ============================================
     const totalRevenue = filteredOrders.reduce((sum, o) => sum + o.netAmount, 0) || 0;
     
+    const cogsByCategory = {};
     const totalCOGS = filteredOrders.reduce((sum, o) => {
       const orderItems = o.items || (o.cart ? o.cart.map(c => ({ product: c, quantity: c.qty })) : []);
       const orderCOGS = orderItems.reduce((cartSum, item) => {
@@ -50,7 +51,12 @@ export const FinancialService = {
                       let qty = r.qty;
                       if (r.unitMode === 'divide') qty = 1 / r.qty;
                       if (r.unitMode === 'buy') qty = r.qty * (ing.conversionRate || 1);
-                      unitCost += qty * ing.cost;
+                      const cost = qty * ing.cost;
+                      unitCost += cost;
+                      
+                      const cat = ing.category || 'Khác';
+                      const itemCatCogs = cost * item.quantity;
+                      cogsByCategory[cat] = (cogsByCategory[cat] || 0) + itemCatCogs;
                   }
               });
           }
@@ -81,6 +87,7 @@ export const FinancialService = {
       ownersEquity,
       totalRevenue,
       totalCOGS,
+      cogsByCategory,
       grossProfit,
       operatingExpenses,
       ebitda,

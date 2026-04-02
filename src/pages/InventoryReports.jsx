@@ -3,8 +3,8 @@ import { Package, AlertTriangle, TrendingUp, BarChart3, Download, Filter, Calend
 import { useData } from '../context/DataContext';
 import { formatMoney } from '../utils/formatter';
 import SmartTable from '../components/SmartTable';
-import { Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, LineElement, PointElement } from 'chart.js';
+import { Bar, Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, LineElement, PointElement, ArcElement } from 'chart.js';
 
 ChartJS.register(
   CategoryScale,
@@ -12,6 +12,7 @@ ChartJS.register(
   BarElement,
   LineElement,
   PointElement,
+  ArcElement,
   Title,
   Tooltip,
   Legend
@@ -68,6 +69,7 @@ const InventoryReports = () => {
       let totalStockValue = 0;
       const lowStockItems = [];
       const highValueItems = [];
+      const categoryValueMap = {};
 
       const lastPurchaseMap = {};
       
@@ -96,6 +98,9 @@ const InventoryReports = () => {
         const lastPurchaseDate = lastPurchaseMap[item.id] || null;
         
         totalStockValue += (itemValue || 0);
+
+        const cat = item.category || 'Khác';
+        categoryValueMap[cat] = (categoryValueMap[cat] || 0) + (itemValue || 0);
 
         if (item.stock <= item.minStock) {
           lowStockItems.push({ ...item, itemValue, costPerBuyUnit, lastPurchaseDate });
@@ -188,7 +193,8 @@ const InventoryReports = () => {
             purchase: sortedTrendLabels.map(d => dailyTrend[d].purchase)
         },
         totalConsumption,
-        totalPurchases
+        totalPurchases,
+        categoryValueMap
       };
     } catch (err) {
       console.log(err);
@@ -223,10 +229,20 @@ const InventoryReports = () => {
       ]
   };
 
+  const categoryChartData = {
+      labels: Object.keys(reportData.categoryValueMap),
+      datasets: [{
+          data: Object.values(reportData.categoryValueMap),
+          backgroundColor: ['#F75300', '#0ea5e9', '#059669', '#d97706', '#dc2626', '#8b5cf6', '#64748b'],
+          borderWidth: 0, hoverOffset: 4
+      }]
+  };
+
   const inventoryCols = [
       { key: 'name', label: 'Tên Nguyên Liệu / Vật Tư', sortable: true, render: (v, item) => (
           <div>
               <div style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{v}</div>
+              {item.category && <div style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: 600, marginTop: '2px' }}>{item.category}</div>}
               {item.buyUnit && item.buyUnit !== item.unit && (
                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 500, marginTop: '4px', background: 'rgba(59, 130, 246, 0.05)', padding: '2px 6px', borderRadius: '4px', display: 'inline-block' }}>
                      1 {item.buyUnit} = {item.conversionRate || 1} {item.unit}
@@ -385,14 +401,26 @@ const InventoryReports = () => {
         </div>
       </div>
 
-      <div className="glass-panel" style={{ padding: '24px' }}>
-          <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-secondary)' }}>BIỂU ĐỒ BÙ TRỪ VẬT TƯ: TỐC ĐỘ TIÊU HAO (XUẤT) VÀ NHẬP HÀNG</h4>
-          <div style={{ height: '300px' }}>
-              <Bar data={chartData} options={{ 
-                  maintainAspectRatio: false, 
-                  interaction: { mode: 'index', intersect: false },
-                  scales: { y: { beginAtZero: true } }
-              }} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px' }}>
+          <div className="glass-panel" style={{ padding: '24px' }}>
+              <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-secondary)' }}>CƠ CẤU VỐN TỒN KHO THEO NHÓM</h4>
+              <div style={{ height: '300px', position: 'relative' }}>
+                 {Object.keys(reportData.categoryValueMap).length > 0 ? (
+                    <Doughnut data={categoryChartData} options={{ maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 6, font: { size: 11 } } }, tooltip: { callbacks: { label: (ctx) => ` ${formatMoney(ctx.parsed)}` } } } }} />
+                 ) : (
+                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1', fontSize: '13px' }}>Chưa có dữ liệu định giá</div>
+                 )}
+              </div>
+          </div>
+          <div className="glass-panel" style={{ padding: '24px' }}>
+              <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-secondary)' }}>BIỂU ĐỒ BÙ TRỪ VẬT TƯ: TỐC ĐỘ TIÊU HAO (XUẤT) VÀ NHẬP HÀNG</h4>
+              <div style={{ height: '300px' }}>
+                  <Bar data={chartData} options={{ 
+                      maintainAspectRatio: false, 
+                      interaction: { mode: 'index', intersect: false },
+                      scales: { y: { beginAtZero: true } }
+                  }} />
+              </div>
           </div>
       </div>
 

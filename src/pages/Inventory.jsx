@@ -4,6 +4,7 @@ import InventoryUI from '../components/InventoryUI';
 import { useInventory } from '../hooks/useInventory';
 import { useSuppliers } from '../hooks/useSuppliers';
 import { usePurchases } from '../hooks/usePurchases';
+import { useCategories } from '../hooks/useCategories';
 
 const Inventory = () => {
   const { 
@@ -23,8 +24,9 @@ const Inventory = () => {
   } = useSuppliers();
 
   const { purchases, loading: purLoading } = usePurchases();
+  const { categories, loading: catLoading } = useCategories();
 
-  const loading = ingLoading || supLoading || purLoading;
+  const loading = ingLoading || supLoading || purLoading || catLoading;
 
   const handleSaveIngredient = async (ingData) => {
     if (ingData.id) {
@@ -49,6 +51,7 @@ const Inventory = () => {
       ingredients={inventory}
       suppliers={activeSuppliers}
       purchaseOrders={purchases}
+      categories={(categories || []).filter(c => !c.deleted)}
       onSaveIngredient={handleSaveIngredient}
       onDeleteIngredient={deleteIngredient}
       onSaveSupplier={handleSaveSupplier}
