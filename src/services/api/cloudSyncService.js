@@ -10,6 +10,11 @@ export const CloudSyncService = {
     try {
       const state = await StorageService.getAll();
       const keys = Object.keys(state);
+      
+      // Memoize guard validations per sync cycle so we don't annoy the admin with 4 consecutive PIN prompts!
+      let pinAlreadyVerified = false;
+      let anomalyAlreadyVerified = false;
+
       for (const key of keys) {
         if (key !== 'toast' && key !== 'notifications') {
           // [ENTERPRISE SANITY CHECK INTERCEPTOR]
@@ -23,93 +28,104 @@ export const CloudSyncService = {
 
                  if (newLen === 0) {
                      // 1. CHỐNG XÓA TRẮNG DỮ LIỆU CỐT LÕI (Zero-Tolerance Guard)
-                     try {
-                        const sessStr = localStorage.getItem('omnipos_session');
-                        const sess = sessStr ? JSON.parse(sessStr) : null;
-                        const u = sess ? sess.user : null;
-                        if (u?.role !== 'ADMIN') {
-                           if (GlobalConfirm.current) {
-                               await GlobalConfirm.current({
-                                  title: 'TRẠM KIỂM DUYỆT BẢO MẬT',
-                                  message: `Đã CHẶN đứng lệnh Xóa Sạch toàn bộ phân vùng [${key}].\n\nChỉ QUẢN TRỊ TỐI CAO (Admin) mới có thẩm quyền xóa toàn bộ! Hệ thống sẽ nạp lại Dữ Liệu Gốc từ Mây!`,
-                                  type: 'danger',
-                                  cancelText: 'Đóng'
-                               });
-                           } else {
-                               alert(`🚫 [TRẠM KIỂM DUYỆT BẢO MẬT]\n\nĐã CHẶN đứng lệnh Xóa Sạch toàn bộ phân vùng [${key}].\n\nChỉ QUẢN TRỊ TỐI CAO (Admin) mới có thẩm quyền xóa toàn bộ! Hệ thống sáp nạp lại Dữ Liệu Gốc từ Mây!`);
-                           }
-                           blockedByGuard = true;
-                        } else {
-                           let pinValue = null;
-                           if (GlobalConfirm.current) {
-                               const res = await GlobalConfirm.current({
-                                   title: 'KHÓA BẢO MẬT ADMIN - QUYỀN TỐI CAO',
-                                   message: `Phát hiện lệnh XÓA TRẮNG (0 phần tử) đâm vào vùng [${key}] trên Mây.\nKhởi chạy quy trình Dọn Dẹp Reset toàn bộ cơ sở dữ liệu.\n\nVui lòng nhập Mã PIN Bảo Mật để xác nhận xóa sạch:`,
-                                   type: 'danger',
-                                   confirmText: 'XÓA SẠCH DỮ LIỆU',
-                                   withInput: true
-                               });
-                               if (res.confirmed) pinValue = res.value;
-                           } else {
-                               pinValue = window.prompt(`🔒 [KHÓA BẢO MẬT ADMIN] - QUYỀN TỐI CAO\n\nPhát hiện lệnh XÓA TRẮNG (0 phần tử) đâm vào vùng [${key}] trên Mây.\nKhởi chạy quy trình Dọn Dẹp Reset toàn bộ cơ sở dữ liệu.\n\nVui lòng nhập Mã PIN Bảo Mật để xác nhận xóa sạch:`);
-                           }
-                           
-                           if (pinValue !== '1004') {
+                     if (!pinAlreadyVerified) {
+                         try {
+                            const sessStr = localStorage.getItem('omnipos_session');
+                            const sess = sessStr ? JSON.parse(sessStr) : null;
+                            const u = sess ? sess.user : null;
+                            if (u?.role !== 'ADMIN') {
                                if (GlobalConfirm.current) {
                                    await GlobalConfirm.current({
-                                      title: 'ĐÃ HUỶ',
-                                      message: "❌ Mã PIN không chính xác hoặc đã hủy! Ngừng lệnh xóa rác.",
-                                      type: 'warning',
+                                      title: 'TRẠM KIỂM DUYỆT BẢO MẬT',
+                                      message: `Đã CHẶN đứng lệnh Xóa Sạch toàn bộ phân vùng [${key}].\n\nChỉ QUẢN TRỊ TỐI CAO (Admin) mới có thẩm quyền xóa toàn bộ! Hệ thống sẽ nạp lại Dữ Liệu Gốc từ Mây!`,
+                                      type: 'danger',
                                       cancelText: 'Đóng'
                                    });
                                } else {
-                                   alert("❌ Mã PIN không chính xác! Ngừng lệnh xóa rác.");
+                                   alert(`🚫 [TRẠM KIỂM DUYỆT BẢO MẬT]\n\nĐã CHẶN đứng lệnh Xóa Sạch toàn bộ phân vùng [${key}].\n\nChỉ QUẢN TRỊ TỐI CAO (Admin) mới có thẩm quyền xóa toàn bộ! Hệ thống sáp nạp lại Dữ Liệu Gốc từ Mây!`);
                                }
                                blockedByGuard = true;
-                           }
-                        }
-                     } catch (e) { 
-                         console.error(e);
-                         blockedByGuard = true; 
+                            } else {
+                               let pinValue = null;
+                               if (GlobalConfirm.current) {
+                                   const res = await GlobalConfirm.current({
+                                       title: 'KHÓA BẢO MẬT ADMIN - QUYỀN TỐI CAO',
+                                       message: `Phát hiện lệnh XÓA TRẮNG (0 phần tử) đâm vào vùng [${key}] trên Mây.\nKhởi chạy quy trình Dọn Dẹp Reset toàn bộ cơ sở dữ liệu.\n\nVui lòng nhập Mã PIN Bảo Mật để xác nhận xóa sạch:`,
+                                       type: 'danger',
+                                       confirmText: 'XÓA SẠCH DỮ LIỆU',
+                                       withInput: true
+                                   });
+                                   if (res.confirmed) pinValue = res.value;
+                               } else {
+                                   pinValue = window.prompt(`🔒 [KHÓA BẢO MẬT ADMIN] - QUYỀN TỐI CAO\n\nPhát hiện lệnh XÓA TRẮNG (0 phần tử) đâm vào vùng [${key}] trên Mây.\nKhởi chạy quy trình Dọn Dẹp Reset toàn bộ cơ sở dữ liệu.\n\nVui lòng nhập Mã PIN Bảo Mật để xác nhận xóa sạch:`);
+                               }
+                               
+                               if (pinValue === '1004') {
+                                   pinAlreadyVerified = true;
+                               } else {
+                                   if (GlobalConfirm.current) {
+                                       await GlobalConfirm.current({
+                                          title: 'ĐÃ HUỶ',
+                                          message: "❌ Mã PIN không chính xác hoặc đã hủy! Ngừng lệnh xóa rác.",
+                                          type: 'warning',
+                                          cancelText: 'Đóng'
+                                       });
+                                   } else {
+                                       alert("❌ Mã PIN không chính xác! Ngừng lệnh xóa rác.");
+                                   }
+                                   blockedByGuard = true;
+                               }
+                            }
+                         } catch (e) { 
+                             console.error(e);
+                             blockedByGuard = true; 
+                         }
                      }
                  } 
                  else if (diff > 0 && (diff / oldLen > 0.1 || diff >= 5)) {
                      // 2. CHỐNG HAO HỤT MẢNG ĐỘT BIẾN (Anomaly Decrease Guard) - Tụt 10% hoặc tụt > 5 món
-                     try {
-                        const sessStr = localStorage.getItem('omnipos_session');
-                        const sess = sessStr ? JSON.parse(sessStr) : null;
-                        const u = sess ? sess.user : null;
-                        if (u?.role !== 'ADMIN') {
-                           if (GlobalConfirm.current) {
-                               await GlobalConfirm.current({
-                                   title: 'TRẠM KIỂM DUYỆT BẢO MẬT',
-                                   message: `Hệ thống phát hiện Dữ liệu [${key}] sụt giảm quá bất thường (Bay màu ${diff} mục cùng lúc).\n\nĐể ngăn chặn phá hoại hoặc đồng bộ rác, thao tác lưu rủi ro cao này bị TỪ CHỐI. Hệ thống sẽ Tải Lại Gốc!`,
-                                   type: 'danger',
-                                   cancelText: 'Đóng'
-                               });
-                           } else {
-                               alert(`🚫 [TRẠM KIỂM DUYỆT BẢO MẬT]\n\nHệ thống phát hiện Dữ liệu [${key}] sụt giảm quá bất thường (Bay màu ${diff} mục cùng lúc).\n\nĐể ngăn chặn phá hoại hoặc đồng bộ rác, thao tác lưu rủi ro cao này bị TỪ CHỐI. Hệ thống sẽ Tải Lại Gốc!`);
-                           }
-                           blockedByGuard = true;
-                        } else {
-                           let ok = false;
-                           if (GlobalConfirm.current) {
-                               const res = await GlobalConfirm.current({
-                                   title: 'CẢNH BÁO QUẢN TRỊ',
-                                   message: `Dữ liệu [${key}] hụt mất ${diff} mục so với Bản Cũ.\n\n- Nếu bạn vừa Dọn Dẹp hệ thống: Chọn XÁC NHẬN.\n- Nếu thấy lạ/Nhân viên lỡ tay: Chọn HUỶ để phục hồi.`,
-                                   type: 'warning',
-                                   confirmText: 'XÁC NHẬN XÓA',
-                                   cancelText: 'HUỶ BỎ'
-                               });
-                               ok = res.confirmed;
-                           } else {
-                               ok = window.confirm(`⚠️ [CẢNH BÁO QUẢN TRỊ]\n\nDữ liệu [${key}] hụt mất ${diff} mục so với Bản Cũ.\n\n- Nếu bạn vừa Dọn Dẹp hệ thống: Bấm OK để Xóa.\n- Nếu thấy lạ/Nhân viên lỡ tay: Bấm CANCEL để chặn đứng và phục hồi.`);
-                           }
-                           if (!ok) blockedByGuard = true;
-                        }
-                     } catch (e) {
-                         console.error(e);
-                         blockedByGuard = true; 
+                     if (!anomalyAlreadyVerified) {
+                         try {
+                            const sessStr = localStorage.getItem('omnipos_session');
+                            const sess = sessStr ? JSON.parse(sessStr) : null;
+                            const u = sess ? sess.user : null;
+                            if (u?.role !== 'ADMIN') {
+                               if (GlobalConfirm.current) {
+                                   await GlobalConfirm.current({
+                                       title: 'TRẠM KIỂM DUYỆT BẢO MẬT',
+                                       message: `Hệ thống phát hiện Dữ liệu [${key}] sụt giảm quá bất thường (Bay màu ${diff} mục cùng lúc).\n\nĐể ngăn chặn phá hoại hoặc đồng bộ rác, thao tác lưu rủi ro cao này bị TỪ CHỐI. Hệ thống sẽ Tải Lại Gốc!`,
+                                       type: 'danger',
+                                       cancelText: 'Đóng'
+                                   });
+                               } else {
+                                   alert(`🚫 [TRẠM KIỂM DUYỆT BẢO MẬT]\n\nHệ thống phát hiện Dữ liệu [${key}] sụt giảm quá bất thường (Bay màu ${diff} mục cùng lúc).\n\nĐể ngăn chặn phá hoại hoặc đồng bộ rác, thao tác lưu rủi ro cao này bị TỪ CHỐI. Hệ thống sẽ Tải Lại Gốc!`);
+                               }
+                               blockedByGuard = true;
+                            } else {
+                               let ok = false;
+                               if (GlobalConfirm.current) {
+                                   const res = await GlobalConfirm.current({
+                                       title: 'CẢNH BÁO QUẢN TRỊ',
+                                       message: `Dữ liệu [${key}] hụt mất ${diff} mục so với Bản Cũ.\n\n- Nếu bạn vừa Dọn Dẹp hệ thống: Chọn XÁC NHẬN.\n- Nếu thấy lạ/Nhân viên lỡ tay: Chọn HUỶ để phục hồi.`,
+                                       type: 'warning',
+                                       confirmText: 'XÁC NHẬN XÓA',
+                                       cancelText: 'HUỶ BỎ'
+                                   });
+                                   ok = res.confirmed;
+                               } else {
+                                   ok = window.confirm(`⚠️ [CẢNH BÁO QUẢN TRỊ]\n\nDữ liệu [${key}] hụt mất ${diff} mục so với Bản Cũ.\n\n- Nếu bạn vừa Dọn Dẹp hệ thống: Bấm OK để Xóa.\n- Nếu thấy lạ/Nhân viên lỡ tay: Bấm CANCEL để chặn đứng và phục hồi.`);
+                               }
+                               
+                               if (ok) {
+                                   anomalyAlreadyVerified = true;
+                               } else {
+                                   blockedByGuard = true;
+                               }
+                            }
+                         } catch (e) {
+                             console.error(e);
+                             blockedByGuard = true; 
+                         }
                      }
                  }
 
