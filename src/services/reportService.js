@@ -12,15 +12,19 @@ export const ReportService = {
       const ingredients = state.ingredients || [];
 
       const dailyTrend = {}; 
-      const channelStats = {};
       const productsByChannel = {}; 
       const ingredientsByChannel = {}; 
 
       let totalSuccessOrders = 0;
       let totalCancelledOrders = 0;
 
-      salesChannels.forEach(c => { channelStats[c.name] = { name: c.name, revenue: 0, cogs: 0, fee: 0, opex: 0, orders: 0, dailyLogs: {} }; });
-
+      const channelStats = {};
+      salesChannels.forEach(c => {
+         channelStats[c.name] = { 
+            name: c.name, orders: 0, revenue: 0, cogs: 0, fee: 0, tax: 0, opex: 0, dailyLogs: {} 
+         };
+      }); 
+      
       const getDateStr = (d) => {
         const date = new Date(d);
         return `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')}`;
@@ -45,13 +49,14 @@ export const ReportService = {
         }, 0);
       };
 
-      const explodeIngredients = (recipe, portionsNeeded = 1, productRevPerPortion = 0, totalRecipeCost = 0, ch = 'Tại Quầy', feeRate = 0, dateStr = 'unknown') => {
-        if (!recipe || !Array.isArray(recipe) || totalRecipeCost === 0) return;
+      // Đệ quy phá vỡ công thức (Tính Doanh thu & Phí phân bổ cho KHỐI LƯỢNG MÓN CHÍNH = qty)
+      const explodeIngredients = (recipe, portionsNeeded, productRevPerPortion, totalRecipeCost, ch, feePerPortion, dateStr) => {
+        if (!recipe || totalRecipeCost <= 0) return;
         recipe.forEach(item => {
             const sub = products.find(p => p.id === item.ingredientId);
             if (sub) {
                 const subQty = item.unitMode === 'divide' ? (1/item.qty) : item.qty;
-                explodeIngredients(sub.recipe, portionsNeeded * subQty, productRevPerPortion, totalRecipeCost, ch, feeRate, dateStr);
+                explodeIngredients(sub.recipe, portionsNeeded * subQty, productRevPerPortion, totalRecipeCost, ch, feePerPortion, dateStr);
                 return;
             }
             const ing = ingredients.find(i => i.id === item.ingredientId);
@@ -61,23 +66,28 @@ export const ReportService = {
                 if (item.unitMode === 'divide') bQty = 1 / (item.qty || 1);
                 
                 const ingCostInRecipe = (bQty * (ing.cost || 0));
-                let revAttribution = (productRevPerPortion * (ingCostInRecipe / totalRecipeCost)) || 0;
+                
+                const costWeight = (ingCostInRecipe / totalRecipeCost) || 0;
+                let revAttribution = productRevPerPortion * costWeight;
+                const feeAttribution = feePerPortion * costWeight;
+                
                 const actualCost = ingCostInRecipe * portionsNeeded;
                 const actualBaseQty = bQty * portionsNeeded;
                 const itemAttributedRevenue = revAttribution * portionsNeeded;
-                const itemFee = itemAttributedRevenue * (feeRate / 100);
+                const itemFee = feeAttribution * portionsNeeded;
 
                 if (!ingredientsByChannel[ch]) ingredientsByChannel[ch] = {};
                 if (!ingredientsByChannel[ch][ing.id]) {
-                    ingredientsByChannel[ch][ing.id] = { id: ing.id, category: ing.category || 'Khác', name: ing.name, attributedRevenue: 0, totalCost: 0, qty: 0, unit: ing.unit, fee: 0, dailyLogs: {} };
+                    ingredientsByChannel[ch][ing.id] = { id: ing.id, category: ing.category || 'Khác', name: ing.name, attributedRevenue: 0, totalCost: 0, qty: 0, unit: ing.unit, fee: 0, tax: 0, dailyLogs: {} };
                 }
                 const ingObj = ingredientsByChannel[ch][ing.id];
                 ingObj.attributedRevenue += itemAttributedRevenue;
                 ingObj.totalCost += actualCost;
                 ingObj.qty += actualBaseQty;
                 ingObj.fee += itemFee;
+                // Currently ingredients do not track tax distribution deeply since it's just a top-level deduction, but initializing to avoid NaN.
 
-                if (!ingObj.dailyLogs[dateStr]) ingObj.dailyLogs[dateStr] = { date: dateStr, qty: 0, attributedRevenue: 0, totalCost: 0, fee: 0, opex: 0 };
+                if (!ingObj.dailyLogs[dateStr]) ingObj.dailyLogs[dateStr] = { date: dateStr, qty: 0, attributedRevenue: 0, totalCost: 0, fee: 0, tax: 0, opex: 0 };
                 ingObj.dailyLogs[dateStr].qty += actualBaseQty;
                 ingObj.dailyLogs[dateStr].attributedRevenue += itemAttributedRevenue;
                 ingObj.dailyLogs[dateStr].totalCost += actualCost;
@@ -99,33 +109,52 @@ export const ReportService = {
 
                 const dateStr = getDateStr(o.date);
                 const net = Number(o.netAmount) || 0;
-
+                const gross = Number(o.totalAmount) || net;
+                const isImported = o.paymentMethod === 'Imported';
                 const commissionRate = Number(matchedChannelObj.commission ?? matchedChannelObj.discountRate ?? 0);
-                const orderCommissionCost = net * (commissionRate / 100);
+                
+                // FIX: Doanh thu luôn là Gross (Không dùng net làm doanh thu nữa để tránh trừ 2 lần)
+                const effectiveRev = gross; 
+                
+                let orderCommissionCost = 0;
+                let orderTaxCost = 0;
 
-                channelStats[ch].revenue += net;
+                if (gross > net && net > 0) {
+                    // Lấy phí sàn trừ thẳng từ khác biệt giữa Giá bán và Tiền nhận về
+                    orderCommissionCost = gross - net;
+                } else {
+                    // Nếu đơn POS tạo tay (gross = net), trích phí sàn theo cài đặt
+                    orderCommissionCost = gross * (commissionRate / 100);
+                }
+
+                channelStats[ch].revenue += effectiveRev;
                 channelStats[ch].orders += 1;
                 channelStats[ch].fee += orderCommissionCost;
+                channelStats[ch].tax += orderTaxCost;
 
-                if (!channelStats[ch].dailyLogs[dateStr]) channelStats[ch].dailyLogs[dateStr] = { date: dateStr, revenue: 0, orders: 0, fee: 0, cogs: 0, opex: 0 };
-                channelStats[ch].dailyLogs[dateStr].revenue += net;
+                if (!channelStats[ch].dailyLogs[dateStr]) channelStats[ch].dailyLogs[dateStr] = { date: dateStr, revenue: 0, orders: 0, fee: 0, tax: 0, cogs: 0, opex: 0 };
+                channelStats[ch].dailyLogs[dateStr].revenue += effectiveRev;
                 channelStats[ch].dailyLogs[dateStr].orders += 1;
                 channelStats[ch].dailyLogs[dateStr].fee += orderCommissionCost;
+                channelStats[ch].dailyLogs[dateStr].tax += orderTaxCost;
 
-                if (!dailyTrend[dateStr]) dailyTrend[dateStr] = { revenue: 0, profit: 0, orders: 0 };
-                dailyTrend[dateStr].revenue += net;
+                if (!dailyTrend[dateStr]) dailyTrend[dateStr] = { revenue: 0, profit: 0, orders: 0, tax: 0 };
+                dailyTrend[dateStr].revenue += effectiveRev;
                 dailyTrend[dateStr].orders += 1;
+                dailyTrend[dateStr].tax = (dailyTrend[dateStr].tax || 0) + orderTaxCost;
 
                 if (!productsByChannel[ch]) productsByChannel[ch] = {};
 
                 let orderCOGS = 0;
                 const orderItems = o.items || (o.cart ? o.cart.map(c => ({ product: c, quantity: c.qty })) : []);
-                const discountRatio = (o.totalAmount > 0) ? (o.netAmount / o.totalAmount) : 1;
+                
+                // Tính Trọng Số Đơn Hàng để Phân Bổ Tiền/ Phí Sàn chính xác theo Tỷ trọng Giá Trị Món Hàng:
+                const orderBaseTotal = orderItems.reduce((sum, item) => sum + (item.itemTotal ?? ((item.product?.price || 0) * (item.quantity || item.qty || 1))), 0);
 
                 orderItems.forEach(cartItem => {
                     if (!cartItem.product) return;
                     const pid = cartItem.product.id;
-                    const qty = cartItem.quantity || 1;
+                    const qty = cartItem.quantity || cartItem.qty || 1;
                     
                     let latestProduct = products.find(p => p.id === pid);
                     if (!latestProduct && cartItem.product.name) {
@@ -138,35 +167,41 @@ export const ReportService = {
                     const itemCOGS = unitCost * qty;
                     orderCOGS += itemCOGS;
 
-                    const finalItemRev = ((cartItem.product.price || 0) * qty) * discountRatio;
-                    const finalItemFee = finalItemRev * (commissionRate / 100);
+                    const basePrice = cartItem.product.price || (latestProduct ? latestProduct.price : 0);
+                    const itemValueGross = cartItem.itemTotal ?? (basePrice * qty);
+                    const itemWeight = orderBaseTotal > 0 ? (itemValueGross / orderBaseTotal) : 0;
+                    
+                    const finalItemRev = effectiveRev * itemWeight;
+                    const finalItemFee = orderCommissionCost * itemWeight;
+                    const finalItemTax = orderTaxCost * itemWeight;
                     
                     const finalPid = latestProduct ? latestProduct.id : (pid || cartItem.product.name);
                     const finalName = latestProduct ? latestProduct.name : cartItem.product.name;
 
-                    const basePrice = cartItem.product.price || (latestProduct ? latestProduct.price : 0);
-
                     if (!productsByChannel[ch][finalPid]) {
-                        productsByChannel[ch][finalPid] = { id: finalPid, name: finalName, qty: 0, revenue: 0, cogs: 0, fee: 0, unitCost, basePrice, dailyLogs: {} };
+                        productsByChannel[ch][finalPid] = { id: finalPid, name: finalName, qty: 0, revenue: 0, cogs: 0, fee: 0, tax: 0, unitCost, basePrice, dailyLogs: {} };
                     }
                     const pObj = productsByChannel[ch][finalPid];
                     pObj.qty += qty;
                     pObj.revenue += finalItemRev;
                     pObj.cogs += itemCOGS;
                     pObj.fee += finalItemFee;
+                    pObj.tax = (pObj.tax || 0) + finalItemTax;
 
-                    if (!pObj.dailyLogs[dateStr]) pObj.dailyLogs[dateStr] = { date: dateStr, qty: 0, revenue: 0, cogs: 0, fee: 0, opex: 0 };
+                    if (!pObj.dailyLogs[dateStr]) pObj.dailyLogs[dateStr] = { date: dateStr, qty: 0, revenue: 0, cogs: 0, fee: 0, tax: 0, opex: 0 };
                     pObj.dailyLogs[dateStr].qty += qty;
                     pObj.dailyLogs[dateStr].revenue += finalItemRev;
                     pObj.dailyLogs[dateStr].cogs += itemCOGS;
                     pObj.dailyLogs[dateStr].fee += finalItemFee;
+                    pObj.dailyLogs[dateStr].tax = (pObj.dailyLogs[dateStr].tax || 0) + finalItemTax;
 
-                    explodeIngredients(recipeToUse, qty, finalItemRev / qty, unitCost, ch, commissionRate, dateStr);
+                    const feePerPortion = qty > 0 ? (finalItemFee / qty) : 0;
+                    explodeIngredients(recipeToUse, qty, finalItemRev / qty, unitCost, ch, feePerPortion, dateStr);
                 });
 
                 channelStats[ch].cogs += orderCOGS;
                 channelStats[ch].dailyLogs[dateStr].cogs += orderCOGS;
-                dailyTrend[dateStr].profit += (net - orderCOGS - orderCommissionCost); 
+                dailyTrend[dateStr].profit += (net - orderCOGS - orderCommissionCost - orderTaxCost); 
             }
         }
       });
@@ -182,30 +217,30 @@ export const ReportService = {
             if (matchedChannel && channelStats[matchedChannel]) {
                 const amt = Number(t.amount) || 0;
                 const dateStr = getDateStr(t.date);
-                if (!channelStats[matchedChannel].dailyLogs[dateStr]) channelStats[matchedChannel].dailyLogs[dateStr] = { date: dateStr, revenue: 0, orders: 0, fee: 0, cogs: 0, opex: 0 };
+                if (!channelStats[matchedChannel].dailyLogs[dateStr]) channelStats[matchedChannel].dailyLogs[dateStr] = { date: dateStr, revenue: 0, orders: 0, fee: 0, tax: 0, cogs: 0, opex: 0 };
 
                 if (t.type === 'Thu' && t.categoryId !== 'FC1') {
                     channelStats[matchedChannel].revenue += amt;
                     channelStats[matchedChannel].dailyLogs[dateStr].revenue += amt;
-                    if (!dailyTrend[dateStr]) dailyTrend[dateStr] = { revenue: 0, profit: 0, orders: 0 };
+                    if (!dailyTrend[dateStr]) dailyTrend[dateStr] = { revenue: 0, profit: 0, orders: 0, tax: 0 };
                     dailyTrend[dateStr].revenue += amt;
                     dailyTrend[dateStr].profit += amt;
                 } 
                 else if (t.type === 'Chi' && t.categoryId !== 'FC4') {
                     channelStats[matchedChannel].opex += amt;
                     channelStats[matchedChannel].dailyLogs[dateStr].opex += amt;
-                    if (!dailyTrend[dateStr]) dailyTrend[dateStr] = { revenue: 0, profit: 0, orders: 0 };
+                    if (!dailyTrend[dateStr]) dailyTrend[dateStr] = { revenue: 0, profit: 0, orders: 0, tax: 0 };
                     dailyTrend[dateStr].profit -= amt;
                 }
             }
         }
       });
 
-      let totalRevenue = 0, totalCOGS = 0, totalFee = 0, totalOPEX = 0;
+      let totalRevenue = 0, totalCOGS = 0, totalFee = 0, totalTax = 0, totalOPEX = 0;
       const channelArray = [];
       Object.values(channelStats).forEach(ch => {
-          if (ch.revenue > 0 || ch.cogs > 0 || ch.opex > 0 || ch.fee > 0 || ch.orders > 0) {
-              const profit = ch.revenue - ch.cogs - ch.fee - ch.opex;
+          if (ch.revenue > 0 || ch.cogs > 0 || ch.opex > 0 || ch.fee > 0 || ch.tax > 0 || ch.orders > 0) {
+              const profit = ch.revenue - ch.cogs - ch.fee - ch.tax - ch.opex;
               ch.profit = profit;
               ch.margin = ch.revenue > 0 ? (profit / ch.revenue) * 100 : 0;
               channelArray.push(ch);
@@ -213,11 +248,12 @@ export const ReportService = {
               totalRevenue += ch.revenue;
               totalCOGS += ch.cogs;
               totalFee += ch.fee;
+              totalTax += ch.tax;
               totalOPEX += ch.opex;
           }
       });
 
-      const totalProfit = totalRevenue - totalCOGS - totalFee - totalOPEX;
+      const totalProfit = totalRevenue - totalCOGS - totalFee - totalTax - totalOPEX;
       
       const sortedTrendLabels = Object.keys(dailyTrend).sort((a,b) => a.localeCompare(b));
 

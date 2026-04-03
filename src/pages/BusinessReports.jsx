@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, TrendingUp, TrendingDown, DollarSign, PieChart as PieIcon, BarChart3, Calendar, Download, Globe, Info, Filter, Layers } from 'lucide-react';
+import { FileText, TrendingUp, TrendingDown, DollarSign, PieChart as PieIcon, BarChart3, Calendar, Download, Globe, Info, Filter, Layers, FileSpreadsheet } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, LineElement, PointElement, ArcElement } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
@@ -8,6 +8,7 @@ import { formatMoney } from '../utils/formatter';
 import { useBusinessReport } from '../hooks/useBusinessReport';
 import SmartTable from '../components/SmartTable';
 import ReportDetailModal from '../components/ReportDetailModal';
+import CSVViewerModal from '../components/CSVViewerModal';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, LineElement, PointElement, ArcElement, ChartDataLabels);
 
@@ -17,6 +18,7 @@ const BusinessReports = () => {
   
   const [detailModalItem, setDetailModalItem] = useState(null);
   const [detailModalTitle, setDetailModalTitle] = useState('');
+  const [isCSVViewerOpen, setIsCSVViewerOpen] = useState(false);
 
   if (!reportData) return <div style={{ padding: '40px', textAlign: 'center' }}>Đang tải dữ liệu báo cáo...</div>;
 
@@ -84,19 +86,34 @@ const BusinessReports = () => {
   const channelCols = [
       { key: 'name', label: 'Tên Kênh', sortable: true, render: (v) => <div style={{fontWeight: 600}}>{v}</div> },
       { key: 'orders', label: 'Số Đơn (Thành công)', sortable: true, align: 'center', sum: true, render: (v) => <div style={{fontWeight: 800}}>{v}</div> },
-      { key: 'revenue', label: 'Doanh Thu Thuần', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', render: (v) => (
+      { key: 'revenue', label: 'Doanh Thu Thuần', sortable: true, align: 'right', sum: true, sumRender: (v) => (
+          <div><span style={{fontWeight: 700}}>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px', color:'var(--text-secondary)'}}>100% Tổng DTT</span></div>
+      ), render: (v) => (
           <div><span style={{fontWeight: 700}}>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px', color:'var(--text-secondary)'}}>{reportData.totalRevenue ? (v/reportData.totalRevenue*100).toFixed(1) : 0}% DTT Tổng</span></div>
       )},
-      { key: 'cogs', label: 'Giá Vốn (COGS)', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', render: (v) => (
+      { key: 'cogs', label: 'Giá Vốn (COGS)', sortable: true, align: 'right', sum: true, sumRender: (v, totals) => (
+          <div style={{color:'var(--danger)'}}><span>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px'}}>{totals.revenue ? (v/totals.revenue*100).toFixed(1) : 0}% DTT</span></div>
+      ), render: (v) => (
           <div style={{color:'var(--danger)'}}><span>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px'}}>{reportData.totalCOGS ? (v/reportData.totalCOGS*100).toFixed(1) : 0}% COGS Tổng</span></div>
       )},
-      { key: 'fee', label: 'Phí Sàn (App)', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', render: (v) => (
+      { key: 'fee', label: 'Phí Sàn (Thuần)', sortable: true, align: 'right', sum: true, sumRender: (v, totals) => (
+          <div style={{color:'var(--warning)'}}><span>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px'}}>{totals.revenue ? (v/totals.revenue*100).toFixed(1) : 0}% DTT</span></div>
+      ), render: (v) => (
           <div style={{color:'var(--warning)'}}><span>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px'}}>{reportData.totalFee ? (v/reportData.totalFee*100).toFixed(1) : 0}% Phí Tổng</span></div>
       )},
-      { key: 'opex', label: 'Phí Vận Hành', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', render: (v) => (
+      { key: 'tax', label: 'Thuế/Phí Khác', sortable: true, align: 'right', sum: true, sumRender: (v, totals) => (
+          <div style={{color:'#EC4899'}}><span>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px'}}>{totals.revenue ? (v/totals.revenue*100).toFixed(1) : 0}% DTT</span></div>
+      ), render: (v, o) => (
+          <div style={{color:'#EC4899'}}><span>{formatMoney(v || 0)} đ</span><br/><span style={{fontSize:'11px'}}>{o.revenue ? (v/o.revenue*100).toFixed(1) : 0}% DTT</span></div>
+      )},
+      { key: 'opex', label: 'Phí Vận Hành', sortable: true, align: 'right', sum: true, sumRender: (v, totals) => (
+          <div style={{color:'var(--warning)'}}><span>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px'}}>{totals.revenue ? (v/totals.revenue*100).toFixed(1) : 0}% DTT</span></div>
+      ), render: (v) => (
           <div style={{color:'var(--warning)'}}><span>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px'}}>{reportData.totalOPEX ? (v/reportData.totalOPEX*100).toFixed(1) : 0}% VH Tổng</span></div>
       )},
-      { key: 'profit', label: 'Lợi Nhuận Ròng', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', render: (v, o) => (
+      { key: 'profit', label: 'Lợi Nhuận Ròng', sortable: true, align: 'right', sum: true, sumRender: (v, totals) => (
+          <div style={{color:'var(--success)', fontWeight:800}}><span>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px'}}>{totals.revenue ? (v/totals.revenue*100).toFixed(1) : 0}% Tổng Biên Lãi</span></div>
+      ), render: (v, o) => (
           <div style={{color:'var(--success)'}}><span style={{fontWeight: 800}}>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px', padding:'2px 6px', background:'var(--surface-color)', borderRadius:'4px'}}>{o.margin.toFixed(1)}% Biên Kênh</span></div>
       )}
   ];
@@ -109,23 +126,60 @@ const BusinessReports = () => {
           </div>
       )},
       { key: 'qty', label: 'Số Lượng', sortable: true, align: 'center', sum: true, render: (v) => <div style={{fontWeight: 800, fontSize:'15px'}}>{Math.round(v * 10)/10}</div> },
-      { key: 'revenue', label: 'Doanh Thu', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', render: (v, o) => (
+      { key: 'revenue', label: 'Doanh Thu', sortable: true, align: 'right', sum: true, sumRender: (v) => (
+          <div style={{color:'var(--primary)'}}>
+             <span style={{fontWeight: 700}}>{formatMoney(v)} đ</span><br/>
+             <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>100% Tổng Nhóm</span>
+          </div>
+      ), render: (v, o) => (
           <div style={{color:'var(--primary)'}}>
             <span style={{fontWeight: 700}}>{formatMoney(v)} đ</span><br/>
-            <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>({formatMoney(o.basePrice)} x {Math.round(o.qty * 10)/10})</span>
+            <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{reportData.totalRevenue ? (v / reportData.totalRevenue * 100).toFixed(1) : 0}% DTT Toàn Hệ Thống</span>
           </div>
       )},
-      { key: 'cogs', label: 'Giá Vốn', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', render: (v, o) => (
+      { key: 'cogs', label: 'Giá Vốn', sortable: true, align: 'right', sum: true, sumRender: (v, totals) => (
           <div style={{color:'var(--danger)'}}>
              <span>{formatMoney(v)} đ</span><br/>
-             <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>({formatMoney(o.unitCost)} x {Math.round(o.qty * 10)/10})</span>
+             <span style={{ fontSize: '11px' }}>{totals.revenue ? (v / totals.revenue * 100).toFixed(1) : 0}% Biên Vốn</span>
+          </div>
+      ), render: (v, o) => (
+          <div style={{color:'var(--danger)'}}>
+             <span>{formatMoney(v)} đ</span><br/>
+             <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{o.revenue ? (v / o.revenue * 100).toFixed(1) : 0}% DTT</span>
           </div>
       )},
-      { key: 'feeOpex', label: 'Phí Sàn & VH', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', sumFunc: (row) => row.fee + row.opex, render: (_, o) => (
-          <div style={{color:'var(--warning)'}}>{formatMoney(o.fee + o.opex)} đ</div>
+      { key: 'fee', label: 'Phí Sàn', sortable: true, align: 'right', sum: true, sumRender: (v, totals) => (
+          <div style={{color:'var(--warning)'}}>
+             <span>{formatMoney(v)} đ</span><br/>
+             <span style={{ fontSize: '11px' }}>{totals.revenue ? (v / totals.revenue * 100).toFixed(1) : 0}% DTT</span>
+          </div>
+      ), render: (v, o) => (
+          <div style={{color:'var(--warning)'}}>
+             <span>{formatMoney(v)} đ</span><br/>
+             <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{o.revenue ? (v / o.revenue * 100).toFixed(1) : 0}% DTT</span>
+          </div>
       )},
-      { key: 'profit', label: 'LN Gộp', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', sumFunc: (row) => row.revenue - row.cogs - row.fee - row.opex, render: (_, o) => {
-          const itemProfit = o.revenue - o.cogs - o.fee - o.opex;
+      { key: 'opex', label: 'Thuế & Vận Hành', sortable: true, align: 'right', sum: true, sumFunc: (row) => (row.tax || 0) + row.opex, sumRender: (v, totals) => (
+          <div style={{color:'var(--warning)'}}>
+             <span>{formatMoney(v)} đ</span><br/>
+             <span style={{ fontSize: '11px' }}>{totals.revenue ? (v / totals.revenue * 100).toFixed(1) : 0}% DTT</span>
+          </div>
+      ), render: (_, o) => {
+          const val = (o.tax || 0) + o.opex;
+          return (
+             <div style={{color:'var(--warning)'}}>
+                <span>{formatMoney(val)} đ</span><br/>
+                <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{o.revenue ? (val / o.revenue * 100).toFixed(1) : 0}% DTT</span>
+             </div>
+          )
+      }},
+      { key: 'profit', label: 'LN Gộp', sortable: true, align: 'right', sum: true, sumFunc: (row) => row.revenue - row.cogs - row.fee - (row.tax || 0) - row.opex, sumRender: (v, totals) => (
+          <div style={{color:'var(--success)'}}>
+              <span style={{fontWeight: 800}}>{formatMoney(v)} đ</span><br/>
+              <span style={{fontSize:'11px'}}>{totals.revenue ? (v / totals.revenue * 100).toFixed(1) : 0}% Tổng Biên Nhóm</span>
+          </div>
+      ), render: (_, o) => {
+          const itemProfit = o.revenue - o.cogs - o.fee - (o.tax || 0) - o.opex;
           return <div style={{color:'var(--success)'}}>
               <span style={{fontWeight: 800}}>{formatMoney(itemProfit)} đ</span><br/>
               <span style={{fontSize:'11px'}}>{o.revenue ? (itemProfit / o.revenue * 100).toFixed(1) : 0}% Biên</span>
@@ -136,15 +190,45 @@ const BusinessReports = () => {
   const ingredientCols = [
       { key: 'name', label: 'Tên Nguyên Liệu', sortable: true, render: (v) => <div style={{fontWeight: 600}}>{v}</div> },
       { key: 'qty', label: 'Sử Dụng', sortable: true, align: 'center', sum: true, render: (v, o) => <div><span style={{fontWeight: 800}}>{Math.round(v * 10) / 10}</span> <span style={{fontSize:'12px', color:'var(--text-secondary)'}}>{o.unit}</span></div> },
-      { key: 'attributedRevenue', label: 'Doanh Thu Vị Trí', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', render: (v) => <div style={{color:'var(--primary)', fontWeight:600}}>{formatMoney(v)} đ</div> },
-      { key: 'totalCost', label: 'Chi Phí Vốn', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', render: (v, o) => (
+      { key: 'attributedRevenue', label: 'Doanh Thu Vị Trí', sortable: true, align: 'right', sum: true, sumRender: (v) => <div style={{color:'var(--primary)', fontWeight:600}}>{formatMoney(v)} đ<br/><span style={{fontSize:'11px'}}>100% Tổng DTT Nhóm</span></div>, render: (v) => <div style={{color:'var(--primary)', fontWeight:600}}>{formatMoney(v)} đ<br/><span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{reportData.totalRevenue ? (v / reportData.totalRevenue * 100).toFixed(1) : 0}% DTT Toàn Hệ Thống</span></div> },
+      { key: 'totalCost', label: 'Chi Phí Vốn', sortable: true, align: 'right', sum: true, sumRender: (v, totals) => (
           <div style={{color:'var(--danger)', fontWeight:600}}>
              {formatMoney(v)} đ<br/>
-             <span style={{fontSize:'11px'}}>{o.attributedRevenue ? (v / o.attributedRevenue * 100).toFixed(1) : 0}%</span>
+             <span style={{fontSize:'11px'}}>{totals.attributedRevenue ? (v / totals.attributedRevenue * 100).toFixed(1) : 0}% DTT</span>
+          </div>
+      ), render: (v, o) => (
+          <div style={{color:'var(--danger)', fontWeight:600}}>
+             {formatMoney(v)} đ<br/>
+             <span style={{fontSize:'11px'}}>{o.attributedRevenue ? (v / o.attributedRevenue * 100).toFixed(1) : 0}% DTT</span>
           </div>
       )},
-      { key: 'profit', label: 'Biên Tích Lũy', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', sumFunc: (row) => row.attributedRevenue - row.totalCost - (row.fee + row.opex), render: (_, o) => {
-          const itemProfit = o.attributedRevenue - o.totalCost - (o.fee + o.opex);
+      { key: 'fee', label: 'Phí Sàn', sortable: true, align: 'right', sum: true, sumRender: (v, totals) => (
+          <div style={{color:'var(--warning)'}}>
+             <span>{formatMoney(v)} đ</span><br/>
+             <span style={{ fontSize: '11px' }}>{totals.attributedRevenue ? (v / totals.attributedRevenue * 100).toFixed(1) : 0}% DTT</span>
+          </div>
+      ), render: (v, o) => (
+          <div style={{color:'var(--warning)'}}>
+             <span>{formatMoney(v)} đ</span><br/>
+             <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{o.attributedRevenue ? (v / o.attributedRevenue * 100).toFixed(1) : 0}% DTT</span>
+          </div>
+      )},
+      { key: 'opex', label: 'Thuế & Vận Hành', sortable: true, align: 'right', sum: true, sumFunc: (row) => (row.tax || 0) + row.opex, sumRender: (v, totals) => (
+          <div style={{color:'var(--warning)'}}>
+             <span>{formatMoney(v)} đ</span><br/>
+             <span style={{ fontSize: '11px' }}>{totals.attributedRevenue ? (v / totals.attributedRevenue * 100).toFixed(1) : 0}% DTT</span>
+          </div>
+      ), render: (_, o) => {
+          const val = (o.tax || 0) + o.opex;
+          return (
+             <div style={{color:'var(--warning)'}}>
+                <span>{formatMoney(val)} đ</span><br/>
+                <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{o.attributedRevenue ? (val / o.attributedRevenue * 100).toFixed(1) : 0}% DTT</span>
+             </div>
+          )
+      }},
+      { key: 'profit', label: 'Biên Tích Lũy', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', sumFunc: (row) => row.attributedRevenue - row.totalCost - (row.fee + (row.tax||0) + row.opex), render: (_, o) => {
+          const itemProfit = o.attributedRevenue - o.totalCost - (o.fee + (o.tax||0) + o.opex);
           return <div style={{color:'var(--success)', fontWeight:800}}>
               {formatMoney(itemProfit)} đ<br/>
               <span style={{fontSize:'11px'}}>{o.attributedRevenue ? (itemProfit / o.attributedRevenue * 100).toFixed(1) : 0}%</span>
@@ -179,7 +263,32 @@ const BusinessReports = () => {
              <span style={{fontSize:'11px'}}>{reportData.totalCOGS ? (v / reportData.totalCOGS * 100).toFixed(1) : 0}% Tổng COGS</span>
           </div>
       )},
-      { key: 'attributedRevenue', label: 'Doanh Thu Vị Trí Nhóm', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', render: (v) => <div style={{color:'var(--text-primary)', fontWeight:600}}>{formatMoney(v)} đ</div> },
+      { key: 'attributedRevenue', label: 'Doanh Thu Vị Trí Nhóm', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', sumRender: (v) => <div style={{color:'var(--primary)', fontWeight:600}}>{formatMoney(v)} đ<br/><span style={{fontSize:'11px'}}>100% Tổng DTT</span></div>, render: (v) => <div style={{color:'var(--text-primary)', fontWeight:600}}>{formatMoney(v)} đ<br/><span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{reportData.totalRevenue ? (v / reportData.totalRevenue * 100).toFixed(1) : 0}% DTT Toàn Hệ Thống</span></div> },
+      { key: 'fee', label: 'Phí Sàn', sortable: true, align: 'right', sum: true, sumRender: (v, totals) => (
+          <div style={{color:'var(--warning)'}}>
+             <span>{formatMoney(v)} đ</span><br/>
+             <span style={{ fontSize: '11px' }}>{totals.attributedRevenue ? (v / totals.attributedRevenue * 100).toFixed(1) : 0}% DTT</span>
+          </div>
+      ), render: (v, o) => (
+          <div style={{color:'var(--warning)'}}>
+             <span>{formatMoney(v)} đ</span><br/>
+             <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{o.attributedRevenue ? (v / o.attributedRevenue * 100).toFixed(1) : 0}% DTT</span>
+          </div>
+      )},
+      { key: 'opex', label: 'Thuế & Vận Hành', sortable: true, align: 'right', sum: true, sumFunc: (row) => (row.tax || 0) + row.opex, sumRender: (v, totals) => (
+          <div style={{color:'var(--warning)'}}>
+             <span>{formatMoney(v)} đ</span><br/>
+             <span style={{ fontSize: '11px' }}>{totals.attributedRevenue ? (v / totals.attributedRevenue * 100).toFixed(1) : 0}% DTT</span>
+          </div>
+      ), render: (_, o) => {
+          const val = (o.tax || 0) + o.opex;
+          return (
+             <div style={{color:'var(--warning)'}}>
+                <span>{formatMoney(val)} đ</span><br/>
+                <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{o.attributedRevenue ? (val / o.attributedRevenue * 100).toFixed(1) : 0}% DTT</span>
+             </div>
+          )
+      }},
       { key: 'profit', label: 'Biên LN Tích Lũy Nhóm', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', sumFunc: (row) => row.attributedRevenue - row.totalCost - (row.fee + row.opex), render: (_, o) => {
           const itemProfit = o.attributedRevenue - o.totalCost - (o.fee + o.opex);
           return <div style={{color:'var(--success)', fontWeight:800}}>
@@ -200,7 +309,16 @@ const BusinessReports = () => {
              Dữ liệu tổng hợp hệ thống, không chia tách. Để xem chi tiết theo kênh, sang tính năng Báo Cáo Kênh Phân Rã.
           </p>
         </div>
-        <button className="btn btn-primary table-feature-btn" onClick={() => window.print()}><Download size={16}/> Xuất Báo Cáo</button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button 
+             className="btn btn-secondary table-feature-btn" 
+             onClick={() => setIsCSVViewerOpen(true)}
+             style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-color)', border: '1px solid var(--primary)', color: 'var(--primary)' }}
+          >
+             <FileSpreadsheet size={16}/> Đọc file Báo Cáo App
+          </button>
+          <button className="btn btn-primary table-feature-btn" onClick={() => window.print()}><Download size={16}/> Xuất Báo Cáo</button>
+        </div>
       </div>
 
       <div className="glass-panel" style={{ padding: '16px 24px', display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', background: 'var(--surface-color)' }}>
@@ -256,10 +374,11 @@ const BusinessReports = () => {
           </div>
           <div className="glass-panel" style={{ padding: '24px', borderLeft: '4px solid var(--danger)' }}>
               <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: '8px' }}>TỔNG CHI PHÍ HOẠT ĐỘNG</div>
-              <div style={{ fontSize: '26px', fontWeight: 800, color: 'var(--danger)' }}>{formatMoney(reportData.totalCOGS + reportData.totalFee + reportData.totalOPEX)} đ</div>
+              <div style={{ fontSize: '26px', fontWeight: 800, color: 'var(--danger)' }}>{formatMoney(reportData.totalCOGS + reportData.totalFee + (reportData.totalTax || 0) + reportData.totalOPEX)} đ</div>
               <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '8px' }}>
                  Vốn ({reportData.totalRevenue ? ((reportData.totalCOGS/reportData.totalRevenue)*100).toFixed(1) : 0}%) 
                  + Sàn ({reportData.totalRevenue ? ((reportData.totalFee/reportData.totalRevenue)*100).toFixed(1) : 0}%) 
+                 + Thuế ({reportData.totalRevenue ? ((reportData.totalTax/reportData.totalRevenue)*100).toFixed(1) : 0}%)
                  + Vận hành ({reportData.totalRevenue ? ((reportData.totalOPEX/reportData.totalRevenue)*100).toFixed(1) : 0}%)</div>
           </div>
           <div className="glass-panel" style={{ padding: '24px', borderLeft: '4px solid var(--success)', background: 'linear-gradient(to right, rgba(16, 185, 129, 0.05), transparent)' }}>
@@ -431,6 +550,8 @@ const BusinessReports = () => {
          data={detailModalItem} 
          contextTitle={detailModalTitle} 
       />
+
+      <CSVViewerModal isOpen={isCSVViewerOpen} onClose={() => setIsCSVViewerOpen(false)} />
     </div>
   );
 };

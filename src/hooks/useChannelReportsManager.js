@@ -54,7 +54,7 @@ export const useChannelReportsManager = () => {
       const productsByChannel = {}; 
       const ingredientsByChannel = {}; 
 
-      salesChannels.forEach(c => { channelStats[c.name] = { name: c.name, revenue: 0, cogs: 0, fee: 0, opex: 0, orders: 0 }; });
+      salesChannels.forEach(c => { channelStats[c.name] = { name: c.name, revenue: 0, cogs: 0, fee: 0, tax: 0, opex: 0, orders: 0, configRate: Number(c.commission ?? c.discountRate ?? 0) }; });
 
       const getProductCost = (recipe) => {
         if (!recipe || !Array.isArray(recipe)) return 0;
@@ -75,13 +75,13 @@ export const useChannelReportsManager = () => {
         }, 0);
       };
 
-      const explodeIngredients = (recipe, portionsNeeded = 1, productRevPerPortion = 0, totalRecipeCost = 0, ch = 'Tại Quầy', feeRate = 0) => {
+      const explodeIngredients = (recipe, portionsNeeded = 1, productRevPerPortion = 0, totalRecipeCost = 0, ch = 'Tại Quầy', productFeePerPortion = 0, productTaxPerPortion = 0) => {
         if (!recipe || !Array.isArray(recipe) || totalRecipeCost === 0) return;
         recipe.forEach(item => {
             const sub = products.find(p => p.id === item.ingredientId);
             if (sub) {
                 const subQty = item.unitMode === 'divide' ? (1/item.qty) : item.qty;
-                explodeIngredients(sub.recipe, portionsNeeded * subQty, productRevPerPortion, totalRecipeCost, ch, feeRate);
+                explodeIngredients(sub.recipe, portionsNeeded * subQty, productRevPerPortion, totalRecipeCost, ch, productFeePerPortion, productTaxPerPortion);
                 return;
             }
             const ing = ingredients.find(i => i.id === item.ingredientId);
@@ -91,20 +91,26 @@ export const useChannelReportsManager = () => {
                 if (item.unitMode === 'divide') bQty = 1 / (item.qty || 1);
                 
                 const ingCostInRecipe = (bQty * (ing.cost || 0));
-                let revAttribution = (productRevPerPortion * (ingCostInRecipe / totalRecipeCost)) || 0;
+                const proportion = (ingCostInRecipe / totalRecipeCost) || 0;
+                
+                let revAttribution = productRevPerPortion * proportion;
                 const actualCost = ingCostInRecipe * portionsNeeded;
                 const actualBaseQty = bQty * portionsNeeded;
                 const itemAttributedRevenue = revAttribution * portionsNeeded;
-                const itemFee = itemAttributedRevenue * (feeRate / 100);
+                
+                // Fix: productFeePerPortion and productTaxPerPortion are absolute values in VNĐ, not percentages!
+                const itemFee = (productFeePerPortion * portionsNeeded) * proportion;
+                const itemTax = (productTaxPerPortion * portionsNeeded) * proportion;
 
                 if (!ingredientsByChannel[ch]) ingredientsByChannel[ch] = {};
                 if (!ingredientsByChannel[ch][ing.id]) {
-                    ingredientsByChannel[ch][ing.id] = { id: ing.id, name: ing.name, attributedRevenue: 0, totalCost: 0, qty: 0, unit: ing.unit, fee: 0 };
+                    ingredientsByChannel[ch][ing.id] = { id: ing.id, name: ing.name, attributedRevenue: 0, totalCost: 0, qty: 0, unit: ing.unit, fee: 0, tax: 0, opex: 0, category: ing.categoryId ? (state.categories?.find(c=>c.id === ing.categoryId)?.name || 'Khác') : 'Khác' };
                 }
                 ingredientsByChannel[ch][ing.id].attributedRevenue += itemAttributedRevenue;
                 ingredientsByChannel[ch][ing.id].totalCost += actualCost;
                 ingredientsByChannel[ch][ing.id].qty += actualBaseQty;
                 ingredientsByChannel[ch][ing.id].fee += itemFee;
+                ingredientsByChannel[ch][ing.id].tax += itemTax;
             }
         });
       };
@@ -132,36 +138,53 @@ export const useChannelReportsManager = () => {
             if (!matchedChannelObj) return;
 
             const net = Number(o.netAmount) || 0;
+            const gross = Number(o.totalAmount) || net;
 
             const commissionRate = Number(matchedChannelObj.commission ?? matchedChannelObj.discountRate ?? 0);
-            const orderCommissionCost = net * (commissionRate / 100);
+            const isImported = o.paymentMethod === 'Imported';
+            
+            // FIX: Revenue is ALWAYS Gross (tiền gốc của món ăn). 
+            // This prevents double deduction where 'net' already had fee deducted in DB.
+            const effectiveRev = gross; 
+            
+            let orderCommissionCost = 0;
+            let orderTaxCost = 0;
 
-            channelStats[ch].revenue += net;
+            if (gross > net && net > 0) {
+                orderCommissionCost = gross - net;
+            } else {
+                orderCommissionCost = gross * (commissionRate / 100);
+            }
+
+            channelStats[ch].revenue += effectiveRev;
             channelStats[ch].orders += 1;
             channelStats[ch].fee += orderCommissionCost;
+            channelStats[ch].tax += orderTaxCost;
 
             ['day', 'week', 'month', 'year'].forEach(type => {
                  const key = getBucketKey(tTime, type);
                  if (!timeSeries[type][key]) {
-                     timeSeries[type][key] = { label: key, total: { orders: 0, revenue: 0, cogs: 0, fee: 0, opex: 0, profit: 0 }, channels: {} };
+                     timeSeries[type][key] = { label: key, total: { orders: 0, revenue: 0, cogs: 0, fee: 0, tax: 0, opex: 0, profit: 0 }, channels: {} };
                  }
                  if (!timeSeries[type][key].channels[ch]) {
-                     timeSeries[type][key].channels[ch] = { orders: 0, revenue: 0, cogs: 0, fee: 0, opex: 0, profit: 0 };
+                     timeSeries[type][key].channels[ch] = { orders: 0, revenue: 0, cogs: 0, fee: 0, tax: 0, opex: 0, profit: 0, configRate: commissionRate };
                  }
                  timeSeries[type][key].total.orders += 1;
-                 timeSeries[type][key].total.revenue += net;
+                 timeSeries[type][key].total.revenue += effectiveRev;
                  timeSeries[type][key].total.fee += orderCommissionCost;
+                 timeSeries[type][key].total.tax += orderTaxCost;
                  
                  timeSeries[type][key].channels[ch].orders += 1;
-                 timeSeries[type][key].channels[ch].revenue += net;
+                 timeSeries[type][key].channels[ch].revenue += effectiveRev;
                  timeSeries[type][key].channels[ch].fee += orderCommissionCost;
+                 timeSeries[type][key].channels[ch].tax += orderTaxCost;
             });
 
             if (!productsByChannel[ch]) productsByChannel[ch] = {};
 
             let orderCOGS = 0;
             const orderItems = o.items || (o.cart ? o.cart.map(c => ({ product: c, quantity: c.qty })) : []);
-            const discountRatio = (o.totalAmount > 0) ? (o.netAmount / o.totalAmount) : 1;
+            const discountRatio = (gross > 0) ? (effectiveRev / gross) : 1;
 
             orderItems.forEach(cartItem => {
                 if (!cartItem.product) return;
@@ -180,21 +203,30 @@ export const useChannelReportsManager = () => {
                 orderCOGS += itemCOGS;
 
                 const basePrice = cartItem.product.price || (latestProduct ? latestProduct.price : 0);
-                const finalItemRev = (basePrice * qty) * discountRatio;
-                const finalItemFee = finalItemRev * (commissionRate / 100);
+                const itemValueGross = cartItem.itemTotal ?? (basePrice * qty);
+                
+                const orderBaseTotal = orderItems.reduce((sum, item) => sum + (item.itemTotal ?? ((item.product?.price || 0) * (item.quantity || item.qty || 1))), 0);
+                const itemWeight = orderBaseTotal > 0 ? (itemValueGross / orderBaseTotal) : 0;
+                
+                const finalItemRev = effectiveRev * itemWeight;
+                const finalItemFee = orderCommissionCost * itemWeight;
+                const finalItemTax = orderTaxCost * itemWeight;
 
                 const finalPid = latestProduct ? latestProduct.id : (pid || cartItem.product.name);
                 const finalName = latestProduct ? latestProduct.name : cartItem.product.name;
 
                 if (!productsByChannel[ch][finalPid]) {
-                    productsByChannel[ch][finalPid] = { id: finalPid, name: finalName, qty: 0, revenue: 0, cogs: 0, fee: 0, unitCost, basePrice };
+                    productsByChannel[ch][finalPid] = { id: finalPid, name: finalName, qty: 0, revenue: 0, cogs: 0, fee: 0, tax: 0, unitCost, basePrice };
                 }
                 productsByChannel[ch][finalPid].qty += qty;
                 productsByChannel[ch][finalPid].revenue += finalItemRev;
                 productsByChannel[ch][finalPid].cogs += itemCOGS;
                 productsByChannel[ch][finalPid].fee += finalItemFee;
+                productsByChannel[ch][finalPid].tax += finalItemTax;
 
-                explodeIngredients(recipeToUse, qty, finalItemRev / qty, unitCost, ch, commissionRate);
+                const feePerPortion = qty > 0 ? (finalItemFee / qty) : 0;
+                const taxPerPortion = qty > 0 ? (finalItemTax / qty) : 0;
+                explodeIngredients(recipeToUse, qty, finalItemRev / qty, unitCost, ch, feePerPortion, taxPerPortion);
             });
 
             channelStats[ch].cogs += orderCOGS;
@@ -238,11 +270,11 @@ export const useChannelReportsManager = () => {
                   const distributedOpex = (bucketChRev / chStatRev) * chStatOpex;
                   
                   bucket.channels[ch].opex += distributedOpex;
-                  bucket.channels[ch].profit = bucketChRev - bucket.channels[ch].cogs - bucket.channels[ch].fee - distributedOpex;
+                  bucket.channels[ch].profit = bucketChRev - bucket.channels[ch].cogs - bucket.channels[ch].fee - (bucket.channels[ch].tax || 0) - distributedOpex;
                   
                   bucket.total.opex += distributedOpex;
               });
-              bucket.total.profit = bucket.total.revenue - bucket.total.cogs - bucket.total.fee - bucket.total.opex;
+              bucket.total.profit = bucket.total.revenue - bucket.total.cogs - bucket.total.fee - (bucket.total.tax || 0) - bucket.total.opex;
           });
       });
 
@@ -273,11 +305,11 @@ export const useChannelReportsManager = () => {
           year: Object.values(timeSeries.year).sort((a,b) => parseDateLabelToValue(b.label, 'year') - parseDateLabelToValue(a.label, 'year')),
       };
 
-      let totalRevenue = 0, totalCOGS = 0, totalFee = 0, totalOPEX = 0;
+      let totalRevenue = 0, totalCOGS = 0, totalFee = 0, totalTax = 0, totalOPEX = 0;
       const channelArray = [];
       Object.values(channelStats).forEach(ch => {
-          if (ch.revenue > 0 || ch.cogs > 0 || ch.opex > 0 || ch.fee > 0 || ch.orders > 0) {
-              const profit = ch.revenue - ch.cogs - ch.fee - ch.opex;
+          if (ch.revenue > 0 || ch.cogs > 0 || ch.opex > 0 || ch.fee > 0 || ch.tax > 0 || ch.orders > 0) {
+              const profit = ch.revenue - ch.cogs - ch.fee - ch.tax - ch.opex;
               ch.profit = profit;
               ch.margin = ch.revenue > 0 ? (profit / ch.revenue) * 100 : 0;
               channelArray.push(ch);
@@ -285,6 +317,7 @@ export const useChannelReportsManager = () => {
               totalRevenue += ch.revenue;
               totalCOGS += ch.cogs;
               totalFee += ch.fee;
+              totalTax += ch.tax;
               totalOPEX += ch.opex;
           }
       });
@@ -304,21 +337,27 @@ export const useChannelReportsManager = () => {
                   const itemProfit = p.revenue - p.cogs - p.fee - p.opex;
                   
                   if (!pivotProducts[p.id]) {
-                      pivotProducts[p.id] = { id: p.id, name: p.name, basePrice: p.basePrice, unitCost: p.unitCost, total: { qty: 0, revenue: 0, cogs: 0, profit: 0 }, channels: {} };
+                      pivotProducts[p.id] = { id: p.id, name: p.name, basePrice: p.basePrice, unitCost: p.unitCost, total: { qty: 0, revenue: 0, cogs: 0, fee: 0, tax: 0, opex: 0, profit: 0 }, channels: {} };
                   }
                   if (!pivotProducts[p.id].channels[ch]) {
-                      pivotProducts[p.id].channels[ch] = { qty: 0, revenue: 0, cogs: 0, profit: 0 };
+                      pivotProducts[p.id].channels[ch] = { qty: 0, revenue: 0, cogs: 0, fee: 0, tax: 0, opex: 0, profit: 0 };
                   }
                   
-                  pivotProducts[p.id].total.qty += p.qty;
-                  pivotProducts[p.id].total.revenue += p.revenue;
-                  pivotProducts[p.id].total.cogs += p.cogs;
-                  pivotProducts[p.id].total.profit += itemProfit;
+                  pivotProducts[p.id].total.qty += p.qty || 0;
+                  pivotProducts[p.id].total.revenue += p.revenue || 0;
+                  pivotProducts[p.id].total.cogs += p.cogs || 0;
+                  pivotProducts[p.id].total.fee += p.fee || 0;
+                  pivotProducts[p.id].total.tax += p.tax || 0;
+                  pivotProducts[p.id].total.opex += p.opex || 0;
+                  pivotProducts[p.id].total.profit += itemProfit || 0;
                   
-                  pivotProducts[p.id].channels[ch].qty += p.qty;
-                  pivotProducts[p.id].channels[ch].revenue += p.revenue;
-                  pivotProducts[p.id].channels[ch].cogs += p.cogs;
-                  pivotProducts[p.id].channels[ch].profit += itemProfit;
+                  pivotProducts[p.id].channels[ch].qty += p.qty || 0;
+                  pivotProducts[p.id].channels[ch].revenue += p.revenue || 0;
+                  pivotProducts[p.id].channels[ch].cogs += p.cogs || 0;
+                  pivotProducts[p.id].channels[ch].fee += p.fee || 0;
+                  pivotProducts[p.id].channels[ch].tax += p.tax || 0;
+                  pivotProducts[p.id].channels[ch].opex += p.opex || 0;
+                  pivotProducts[p.id].channels[ch].profit += itemProfit || 0;
               });
 
               finalProductsByChannel[ch] = items.sort((a,b) => b.qty - a.qty);
@@ -343,8 +382,8 @@ export const useChannelReportsManager = () => {
       });
 
       return {
-          totalRevenue, totalCOGS, totalFee, totalOPEX,
-          totalProfit: totalRevenue - totalCOGS - totalFee - totalOPEX,
+          totalRevenue, totalCOGS, totalFee, totalTax, totalOPEX,
+          totalProfit: totalRevenue - totalCOGS - totalFee - totalTax - totalOPEX,
           channels: channelArray.sort((a,b) => b.revenue - a.revenue),
           pivotProductsArray,
           timeSeries: finalTimeSeries,

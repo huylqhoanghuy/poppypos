@@ -1,5 +1,5 @@
 import React from 'react';
-import { ClipboardList, Trash2, CheckCircle, Clock, XCircle, Eye, UploadCloud, CheckCircle2, FileText, X, CheckSquare, Square, AlertTriangle, Edit2, Plus, Minus } from 'lucide-react';
+import { ClipboardList, Trash2, CheckCircle, Clock, XCircle, Eye, UploadCloud, CheckCircle2, FileText, X, CheckSquare, Square, AlertTriangle, Edit2, Plus, Minus, RefreshCw } from 'lucide-react';
 import ModuleLayout from './ModuleLayout';
 
 const OrdersUI = ({ manager }) => {
@@ -103,7 +103,7 @@ const OrdersUI = ({ manager }) => {
       }, 0);
       
       const channelId = targetChannelId !== null ? targetChannelId : currentFormData.channelId;
-      const channel = state.salesChannels?.find(c => c.id === channelId);
+      const channel = state.salesChannels?.find(c => c.id === channelId || (c.name && c.name === currentFormData.channelName));
       const discountRate = channel?.commission ?? channel?.discountRate ?? 0;
       const discountAmount = totalAmount * (discountRate / 100);
       const extraFee = currentFormData.extraFee || 0;
@@ -210,8 +210,14 @@ const OrdersUI = ({ manager }) => {
             <span>Tổng tiền món:</span>
             <span>{(formData.totalAmount || 0).toLocaleString('vi-VN')} đ</span>
          </div>
-         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '12px', color: '#ef4444' }}>
-            <span>Chiết khấu nền tảng:</span>
+         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', marginBottom: '12px', color: '#ef4444' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+               Chiết khấu nền tảng:
+               <button className="btn btn-ghost" onClick={(e) => { e.preventDefault(); setFormData({...formData, ...calculateTotals(formData, null)}); listState.handlers.showToast('Đã tính lại Thực thu theo cấu hình Kênh mới nhất!'); }} style={{ padding: '2px 6px', fontSize: '11px', background: 'var(--surface-color)', border: '1px solid currentColor', color: 'inherit', height: 'auto', borderRadius: '4px' }}>
+                  <RefreshCw size={10} style={{ marginRight: '4px' }}/> 
+                  Gắn % Hiện Tại
+               </button>
+            </span>
             <span>-{(formData.discountAmount || 0).toLocaleString('vi-VN')} đ</span>
          </div>
          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 800, color: '#0f172a', paddingTop: '12px', borderTop: '1px solid #e2e8f0' }}>
@@ -361,8 +367,29 @@ Mã Đơn | Tên Món | Số Lượng | Doanh Thu | Thực Thu | Ngày (Tùy ch�
                      <button className="btn btn-ghost" style={{ flex:1 }} onClick={() => setShowImportModal(false)}>Hủy</button>
                   </div>
                 </div>
-              ) : (
+              ) : (() => {
+                const selectedChannel = importableChannels.find(ch => ch.id === importConfig.channelId);
+                const configuredRate = Number(selectedChannel?.commission ?? selectedChannel?.discountRate ?? 0);
+                const totalGross = previewOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+                const totalNet = previewOrders.reduce((sum, o) => sum + (o.netAmount || 0), 0);
+                const totalDeduction = totalGross > totalNet ? (totalGross - totalNet) : 0;
+                const actualRate = totalGross > 0 ? (totalDeduction / totalGross * 100) : 0;
+                const isRateDeviated = Math.abs(actualRate - configuredRate) > 0.5;
+
+                return (
                 <>
+                  {isRateDeviated && totalGross > 0 && (
+                     <div style={{ background: '#FEF2F2', padding: '16px', borderRadius: '12px', border: '1px solid #FECACA', marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                        <AlertTriangle color="#DC2626" size={24} style={{ flexShrink: 0 }} />
+                        <div style={{ color: '#991B1B' }}>
+                           <h4 style={{ margin: '0 0 4px 0', fontSize: '15px', fontWeight: 800 }}>Phát hiện chênh lệch Phí Sàn!</h4>
+                           <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.5 }}>
+                              Kênh <strong>{selectedChannel?.name}</strong> đang được cấu hình thu phí <strong>{configuredRate}%</strong>. Tuy nhiên, phân tích file CSV cho thấy sàn thực thu tỷ lệ trung bình là <strong style={{color:'#DC2626'}}>{actualRate.toFixed(2)}%</strong>. 
+                              <br/>Hệ thống sẽ <strong>ưu tiên lưu số tiền khấu trừ thực tế từ file</strong> để đảm bảo chuẩn xác dòng tiền. Hãy cân nhắc vào Cấu Hình Kênh cập nhật lại % nếu sàn đã đổi chính sách!
+                           </p>
+                        </div>
+                     </div>
+                  )}
                   <div style={{ flex: 1, overflowY: 'auto', background: '#FFFFFF', borderRadius: '12px', border: '1px solid var(--surface-border)', marginBottom: '24px' }}>
                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                         <thead style={{ position: 'sticky', top: 0, background: 'var(--surface-variant)', zIndex: 1, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
@@ -425,10 +452,11 @@ Mã Đơn | Tên Món | Số Lượng | Doanh Thu | Thực Thu | Ngày (Tùy ch�
                      <button className="btn btn-primary" style={{ padding: '0 32px' }} onClick={confirmImport}><CheckCircle2 size={18}/> Xác Nhận Lưu Dữ Liệu</button>
                   </div>
                 </>
-              )}
-           </div>
-        </div>
-      )}
+                );
+              })()}
+            </div>
+         </div>
+       )}
     </>
   );
 };

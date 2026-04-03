@@ -429,7 +429,10 @@ const SmartTable = ({
                    if (col.sum || col.sumFunc) {
                       return (
                         <td key={idx} style={{ padding: '16px 12px', textAlign: col.align || 'left', fontWeight: 900, fontSize: '15px', color: 'var(--primary)', whiteSpace: 'nowrap' }}>
-                          {footerSums[col.key]?.toLocaleString('vi-VN')} {col.sumSuffix || ''}
+                          {col.sumRender 
+                             ? col.sumRender(footerSums[col.key], footerSums)
+                             : `${Math.round(footerSums[col.key] || 0).toLocaleString('vi-VN')} ${col.sumSuffix || ''}`
+                          }
                         </td>
                       );
                    }

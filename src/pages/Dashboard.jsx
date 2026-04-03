@@ -187,17 +187,26 @@ const Dashboard = () => {
   const totalAccountBalance = (state.accounts || []).reduce((sum, acc) => sum + acc.balance, 0);
 
   // ── P&L ──
-  const totalRevenue = filteredOrders.reduce((s, o) => s + o.netAmount, 0);
+  const totalRevenue = filteredOrders.reduce((s, o) => s + ((o.totalAmount || o.netAmount) || 0), 0);
+
+  const totalFees = filteredOrders.reduce((sum, o) => {
+      const net = Number(o.netAmount) || 0;
+      const gross = Number(o.totalAmount) || net;
+      if (gross > net && net > 0) return sum + (gross - net);
+      const chObj = state.salesChannels?.find(c => c.name === o.channelName);
+      const rate = chObj ? Number(chObj.commission ?? chObj.discountRate ?? 0) : 0;
+      return sum + (gross * (rate / 100));
+  }, 0);
 
   const totalCOGS = filteredOrders.reduce((sum, o) => {
     const items = o.items || (o.cart ? o.cart.map(c => ({ product: c, quantity: c.qty })) : []);
     return sum + items.reduce((cs, item) => {
       if (!item.product) return cs;
-      const product = state.products.find(p => p.id === item.product.id);
+      const product = state.products?.find(p => p.id === item.product.id);
       let unitCost = 0;
       if (product?.recipe) {
         product.recipe.forEach(r => {
-          const ing = state.ingredients.find(i => i.id === r.ingredientId);
+          const ing = state.ingredients?.find(i => i.id === r.ingredientId);
           if (ing) {
             let qty = r.qty;
             if (r.unitMode === 'divide') qty = 1 / r.qty;
@@ -210,7 +219,7 @@ const Dashboard = () => {
     }, 0);
   }, 0);
 
-  const grossProfit = totalRevenue - totalCOGS;
+  const grossProfit = totalRevenue - totalCOGS - totalFees;
   const operatingExpenses = filteredTransactions
     .filter(t => t.type === 'Chi' && !t.note?.toLowerCase().includes('nhập kho') && !t.note?.toLowerCase().includes('nợ'))
     .reduce((s, t) => s + t.amount, 0);
@@ -220,11 +229,14 @@ const Dashboard = () => {
   const pendingPOs = (state.purchases || []).filter(p => p.status === 'Pending').length;
 
   const lowStockCount = (state.ingredients || []).filter(ing => {
-    let warn = 5;
-    if (ing.unit === 'kg') warn = 2;
-    if (ing.unit === 'g') warn = 1000;
-    return ing.quantity !== undefined && ing.quantity <= warn;
+    const warningLimit = ing.minStock !== undefined ? Number(ing.minStock) : (ing.unit === 'kg' ? 2 : (ing.unit === 'g' ? 1000 : 5));
+    return ing.stock !== undefined && ing.stock <= warningLimit;
   }).length;
+
+  const totalInventoryValue = (state.ingredients || []).reduce((sum, ing) => {
+    const buyPrice = Number(ing.buyPrice || (Number(ing.cost || 0) * Number(ing.conversionRate || 1)));
+    return sum + (Number(ing.stock) || 0) * buyPrice;
+  }, 0);
 
   // ── Chart helpers ──
   const last7Days = [...Array(7)].map((_, i) => {
@@ -401,7 +413,15 @@ const Dashboard = () => {
           subtitle="Giám sát kênh bán hàng, tồn kho & đơn nhập kho"
         />
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px' }}>
+          <KpiCard
+            title="Giá Trị Tồn Kho"
+            value={totalInventoryValue >= 1_000_000 ? `${(totalInventoryValue / 1_000_000).toFixed(1)}Tr` : `${(totalInventoryValue / 1000).toFixed(0)}K`}
+            icon={<Layers />}
+            accent="blue"
+            trend={totalInventoryValue > 0 ? 'up' : null}
+            trendLabel="Vốn lưu động"
+          />
           <KpiCard
             title="Tổng Đơn Xuất"
             value={filteredOrders.length.toLocaleString()}
@@ -423,7 +443,7 @@ const Dashboard = () => {
             value={pendingPOs.toLocaleString()}
             icon={<CheckCircle2 />}
             accent="amber"
-            statusText={pendingPOs > 0 ? 'đơn đang chờ xử lý' : 'Không có đơn chờ'}
+            statusText={pendingPOs > 0 ? 'đơn đang chờ' : 'Không có đơn'}
           />
         </div>
 
@@ -533,14 +553,14 @@ const Dashboard = () => {
           subtitle="Doanh thu thuần, lợi nhuận gộp & chi phí vận hành"
         />
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px' }}>
           <KpiCard
             title="Doanh Thu Thuần"
             value={totalRevenue >= 1_000_000 ? `${(totalRevenue / 1_000_000).toFixed(1)}Tr` : `${(totalRevenue / 1000).toFixed(0)}K`}
             icon={<LineChart />}
             accent="orange"
             trend={totalRevenue > 0 ? 'up' : null}
-            trendLabel="Đang tăng"
+            trendLabel="100% Thu"
           />
           <KpiCard
             title="Lợi Nhuận Gộp"
@@ -548,14 +568,23 @@ const Dashboard = () => {
             icon={<TrendingUp />}
             accent={grossProfit >= 0 ? 'green' : 'red'}
             trend={grossProfit > 0 ? 'up' : 'down'}
-            trendLabel={totalRevenue > 0 ? `${((grossProfit / totalRevenue) * 100).toFixed(1)}% Biên` : '0%'}
+            trendLabel={totalRevenue > 0 ? `${((grossProfit / totalRevenue) * 100).toFixed(1)}% DTT` : '0%'}
           />
           <KpiCard
-            title="Chi Phí Outsource"
+            title="Chi Phí Sàn"
+            value={totalFees >= 1_000_000 ? `${(totalFees / 1_000_000).toFixed(1)}Tr` : `${(totalFees / 1000).toFixed(0)}K`}
+            icon={<Package />}
+            accent="amber"
+            trend="down"
+            trendLabel={totalRevenue > 0 ? `${((totalFees / totalRevenue) * 100).toFixed(1)}% DTT` : '0%'}
+          />
+          <KpiCard
+            title="Chi Phí Vận Hành"
             value={operatingExpenses >= 1_000_000 ? `${(operatingExpenses / 1_000_000).toFixed(1)}Tr` : `${(operatingExpenses / 1000).toFixed(0)}K`}
             icon={<ShoppingBag />}
             accent="red"
-            statusText="Mặt bằng, điện, nước..."
+            trend="down"
+            trendLabel={totalRevenue > 0 ? `${((operatingExpenses / totalRevenue) * 100).toFixed(1)}% DTT` : '0%'}
           />
         </div>
 

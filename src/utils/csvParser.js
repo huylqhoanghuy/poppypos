@@ -67,6 +67,25 @@ export const inferItemsFromPrice = (targetPrice, products) => {
     return null; 
 };
 
+export const splitCSVLine = (line, sep) => {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+            inQuotes = !inQuotes;
+        } else if (char === sep && !inQuotes) {
+            result.push(current.trim());
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+    result.push(current.trim());
+    return result;
+};
+
 // --- Universal CSV/TSV Parser ---
 export const parseCSVToOrders = (rawData, channelObj, productsList, targetAccountId) => {
     const exactChannelName = channelObj ? channelObj.name : 'Unknown Channel';
@@ -79,25 +98,6 @@ export const parseCSVToOrders = (rawData, channelObj, productsList, targetAccoun
          const firstLine = lines[0] || '';
          const separator = firstLine.includes('\t') ? '\t' : (firstLine.includes(';') ? ';' : (firstLine.includes(',') ? ',' : '|'));
          
-         const splitCSVLine = (line, sep) => {
-             const result = [];
-             let current = '';
-             let inQuotes = false;
-             for (let i = 0; i < line.length; i++) {
-                 const char = line[i];
-                 if (char === '"') {
-                     inQuotes = !inQuotes;
-                 } else if (char === sep && !inQuotes) {
-                     result.push(current.trim());
-                     current = '';
-                 } else {
-                     current += char;
-                 }
-             }
-             result.push(current.trim());
-             return result;
-         };
-
          const headers = splitCSVLine(firstLine, separator).map(h => h.replace(/"/g, '').toLowerCase());
          
          const findIdx = (keywords) => headers.findIndex(h => keywords.some(k => h.includes(k)));
@@ -107,8 +107,8 @@ export const parseCSVToOrders = (rawData, channelObj, productsList, targetAccoun
          
          let nameIdx = findIdx(['tên món', 'sản phẩm', 'product', 'tên hàng', 'hàng hóa', 'món']);
          let qtyIdx = findIdx(['số lượng', 'qty']);
-         let grossIdx = findIdx(['giá trị', 'số tiền', 'doanh thu', 'tổng tiền', 'gross', 'doanh số', 'tổng cộng', 'tiền món', 'đơn giá', 'tổng']);
-         let netIdx = findIdx(['doanh thu ròng', 'thực thu', 'net', 'thu về', 'tiền nhận về', 'tiền thu', 'phải thu']);
+         let grossIdx = findIdx(['giá trị', 'doanh thu ròng', 'số tiền', 'doanh thu', 'tổng tiền', 'gross', 'doanh số', 'tiền món', 'đơn giá']);
+         let netIdx = findIdx(['tổng cộng', 'thực thu', 'net', 'thu về', 'tiền nhận về', 'tiền thu', 'phải thu']);
          let dateIdx = findIdx(['thời gian hoàn thành', 'ngày tạo', 'ngày', 'thời gian', 'date', 'hoàn thành']);
 
          if (orderIdIdx === -1) orderIdIdx = 0;

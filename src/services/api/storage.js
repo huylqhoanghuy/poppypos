@@ -10,8 +10,8 @@ const getInitialState = () => {
     ],
     salesChannels: [
       { id: 'CH1', name: 'Biên Lai Tiệm (Trực Tiếp)', commission: 0, platform: 'foodapp', allowImport: false },
-      { id: 'CH2', name: 'ShopeeFood', commission: 25, platform: 'foodapp', allowImport: true },
-      { id: 'CH3', name: 'GrabFood', commission: 30, platform: 'foodapp', allowImport: true }
+      { id: 'CH2', name: 'ShopeeFood', commission: 29, platform: 'foodapp', allowImport: true },
+      { id: 'CH3', name: 'GrabFood', commission: 29, platform: 'foodapp', allowImport: true }
     ],
     ingredients: [],
     products: [],

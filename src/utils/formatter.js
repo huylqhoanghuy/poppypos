@@ -3,8 +3,9 @@ export const formatMoney = (val) => {
     const n = Number(val);
     if (n === 0) return '0';
     
-    // Làm tròn đến hàng nghìn (ví dụ: 125,450 -> 125,000)
-    const rounded = Math.round(n / 1000) * 1000;
-    
-    return rounded.toLocaleString('vi-VN');
+    // Đảm bảo không bao giờ hiện số thập phân phẩy phẩy (.000) gây hiểu nhầm thành tiền Tỷ
+    return Math.round(n).toLocaleString('vi-VN', { 
+        minimumFractionDigits: 0, 
+        maximumFractionDigits: 0 
+    });
 };

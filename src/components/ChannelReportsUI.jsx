@@ -15,21 +15,36 @@ const ChannelReportsUI = ({
   if (!reportData) return <div style={{ padding: '40px', textAlign: 'center' }}>Đang tải dữ liệu báo cáo...</div>;
 
   const channelCols = [
-      { key: 'name', label: 'Tên Kênh', sortable: true, render: (v) => <div style={{fontWeight: 600}}>{v}</div> },
+      { key: 'name', label: 'Tên Kênh', sortable: true, render: (v, o) => <div style={{fontWeight: 600}}>{v} <span style={{fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'normal'}}>({o.configRate || 0}% gốc)</span></div> },
       { key: 'orders', label: 'Số Đơn', sortable: true, align: 'center', sum: true, render: (v) => <div style={{fontWeight: 800}}>{v}</div> },
-      { key: 'revenue', label: 'Doanh Thu Thuần', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', render: (v) => (
+      { key: 'revenue', label: 'Doanh Thu Thuần', sortable: true, align: 'right', sum: true, sumRender: (v) => (
+          <div><span style={{fontWeight: 700}}>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px', color:'var(--text-secondary)'}}>100% Doanh Thu</span></div>
+      ), render: (v) => (
           <div><span style={{fontWeight: 700}}>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px', color:'var(--text-secondary)'}}>100% Doanh Thu</span></div>
       )},
-      { key: 'cogs', label: 'Giá Vốn (COGS)', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', render: (v, o) => (
+      { key: 'cogs', label: 'Giá Vốn (COGS)', sortable: true, align: 'right', sum: true, sumRender: (v, totals) => (
+          <div style={{color:'var(--danger)'}}><span>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px'}}>{totals.revenue ? (v/totals.revenue*100).toFixed(1) : 0}%</span></div>
+      ), render: (v, o) => (
           <div style={{color:'var(--danger)'}}><span>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px'}}>{o.revenue ? (v/o.revenue*100).toFixed(1) : 0}%</span></div>
       )},
-      { key: 'fee', label: 'Phí Sàn (App)', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', render: (v, o) => (
+      { key: 'fee', label: 'Phí Sàn (Thuần)', sortable: true, align: 'right', sum: true, sumRender: (v, totals) => (
+          <div style={{color:'var(--warning)'}}><span>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px'}}>{totals.revenue ? (v/totals.revenue*100).toFixed(1) : 0}%</span></div>
+      ), render: (v, o) => (
           <div style={{color:'var(--warning)'}}><span>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px'}}>{o.revenue ? (v/o.revenue*100).toFixed(1) : 0}%</span></div>
       )},
-      { key: 'opex', label: 'Phí Vận Hành', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', render: (v, o) => (
+      { key: 'tax', label: 'Thuế/Phí Khác', sortable: true, align: 'right', sum: true, sumRender: (v, totals) => (
+          <div style={{color:'#EC4899'}}><span>{formatMoney(v || 0)} đ</span><br/><span style={{fontSize:'11px'}}>{totals.revenue && v ? (v/totals.revenue*100).toFixed(1) : 0}%</span></div>
+      ), render: (v, o) => (
+          <div style={{color:'#EC4899'}}><span>{formatMoney(v || 0)} đ</span><br/><span style={{fontSize:'11px'}}>{o.revenue && v ? (v/o.revenue*100).toFixed(1) : 0}%</span></div>
+      )},
+      { key: 'opex', label: 'Phí Vận Hành', sortable: true, align: 'right', sum: true, sumRender: (v, totals) => (
+          <div style={{color:'var(--warning)'}}><span>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px'}}>{totals.revenue ? (v/totals.revenue*100).toFixed(1) : 0}%</span></div>
+      ), render: (v, o) => (
           <div style={{color:'var(--warning)'}}><span>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px'}}>{o.revenue ? (v/o.revenue*100).toFixed(1) : 0}%</span></div>
       )},
-      { key: 'profit', label: 'Lợi Nhuận Ròng', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', render: (v, o) => (
+      { key: 'profit', label: 'Lợi Nhuận Ròng', sortable: true, align: 'right', sum: true, sumRender: (v, totals) => (
+          <div style={{color:'var(--success)'}}><span style={{fontWeight: 800}}>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px', padding:'2px 6px', background:'var(--surface-color)', borderRadius:'4px'}}>{totals.revenue ? (v/totals.revenue*100).toFixed(1) : 0}% Tổng Biên</span></div>
+      ), render: (v, o) => (
           <div style={{color:'var(--success)'}}><span style={{fontWeight: 800}}>{formatMoney(v)} đ</span><br/><span style={{fontSize:'11px', padding:'2px 6px', background:'var(--surface-color)', borderRadius:'4px'}}>{o.margin.toFixed(1)}% Biên</span></div>
       )}
   ];
@@ -37,24 +52,50 @@ const ChannelReportsUI = ({
   const timeSeriesCols = [
       { key: 'label', label: 'Mốc T.Gian', sortable: true, width: '130px', render: (v) => <div style={{fontWeight: 600}}>{v}</div> },
       { key: 'tot_orders', label: 'Đơn (TỔNG)', align: 'center', sum: true, sumFunc: (row) => row.total.orders, render: (_, o) => <div style={{fontWeight: 800}}>{o.total.orders}</div> },
-      { key: 'tot_revenue', label: 'D.Thu (TỔNG)', align: 'right', sum: true, sumSuffix: ' đ', sumFunc: (row) => row.total.revenue, render: (_, o) => (
-          <div style={{color:'var(--primary)', fontWeight:600}}>{formatMoney(o.total.revenue)} đ</div>
+      { key: 'tot_revenue', label: 'D.Thu (TỔNG)', align: 'right', sum: true, sumFunc: (row) => row.total.revenue, sumRender: (v) => (
+          <div style={{color:'var(--primary)', fontWeight:600}}>{formatMoney(v)} đ<br/><span style={{fontSize:'10px'}}>100% Tổng DTT</span></div>
+      ), render: (_, o) => (
+          <div style={{color:'var(--primary)', fontWeight:600}}>{formatMoney(o.total.revenue)} đ<br/><span style={{fontSize:'10px', color:'var(--text-secondary)'}}>{reportData.totalRevenue ? (o.total.revenue/reportData.totalRevenue*100).toFixed(1):0}% Tổng DTT</span></div>
       )},
-      { key: 'tot_profit', label: 'L.Nhuận (TỔNG)', align: 'right', sum: true, sumSuffix: ' đ', sumFunc: (row) => row.total.profit, render: (_, o) => (
+      { key: 'tot_fee', label: 'Phí Sàn (TỔNG)', align: 'right', sum: true, sumFunc: (row) => row.total.fee, sumRender: (v, totals) => (
+          <div style={{color:'var(--warning)'}}>{formatMoney(v)} đ<br/><span style={{fontSize:'10px', color:'var(--text-secondary)'}}>{totals.tot_revenue ? (v/totals.tot_revenue*100).toFixed(0):0}% DTT</span></div>
+      ), render: (_, o) => (
+          <div style={{color:'var(--warning)'}}>{formatMoney(o.total.fee)} đ<br/><span style={{fontSize:'10px', color:'var(--text-secondary)'}}>{o.total.revenue ? (o.total.fee/o.total.revenue*100).toFixed(0):0}% DTT</span></div>
+      )},
+      { key: 'tot_opex', label: 'Chi Phí VH (TỔNG)', align: 'right', sum: true, sumFunc: (row) => (row.total.tax || 0) + (row.total.opex || 0), sumRender: (v, totals) => (
+          <div style={{color:'var(--warning)'}}>{formatMoney(v)} đ<br/><span style={{fontSize:'10px', color:'var(--text-secondary)'}}>{totals.tot_revenue ? (v/totals.tot_revenue*100).toFixed(0):0}% DTT</span></div>
+      ), render: (_, o) => {
+          const val = (o.total.tax || 0) + (o.total.opex || 0);
+          return <div style={{color:'var(--warning)'}}>{formatMoney(val)} đ<br/><span style={{fontSize:'10px', color:'var(--text-secondary)'}}>{o.total.revenue ? (val/o.total.revenue*100).toFixed(0):0}% DTT</span></div>;
+      }},
+      { key: 'tot_profit', label: 'L.Nhuận (TỔNG)', align: 'right', sum: true, sumFunc: (row) => row.total.profit, sumRender: (v, totals) => (
+          <div style={{color:'var(--success)', fontWeight:700}}>{formatMoney(v)} đ<br/><span style={{fontSize:'10px', color:'var(--text-secondary)'}}>{totals.tot_revenue ? (v/totals.tot_revenue*100).toFixed(0):0}% Biên</span></div>
+      ), render: (_, o) => (
           <div style={{color:'var(--success)', fontWeight:700}}>{formatMoney(o.total.profit)} đ<br/><span style={{fontSize:'10px', color:'var(--text-secondary)'}}>{o.total.revenue ? (o.total.profit/o.total.revenue*100).toFixed(0):0}% Biên</span></div>
       )},
       ...reportData.channels.flatMap(ch => [
-          { key: `ch_${ch.name}_orders`, label: `Đơn (${ch.name})`, align: 'center', sum: true, sumFunc: (row) => row.channels[ch.name]?.orders || 0, render: (_, o) => {
+          { key: `ch_${ch.name}_orders`, label: `Đơn (${ch.name})`, align: 'center', sum: true, sumFunc: (row) => row.channels[ch.name]?.orders || 0, sumRender: (v) => <div style={{fontWeight: 'bold'}}>{v}</div>, render: (_, o) => {
               const chData = o.channels[ch.name];
               if (!chData) return <div style={{color:'var(--text-secondary)'}}>-</div>;
               return <div style={{fontWeight: 'bold'}}>{chData.orders}</div>;
           }},
-          { key: `ch_${ch.name}_revenue`, label: `D.Thu (${ch.name})`, align: 'right', sum: true, sumSuffix: ' đ', sumFunc: (row) => row.channels[ch.name]?.revenue || 0, render: (_, o) => {
+          { key: `ch_${ch.name}_revenue`, label: `D.Thu (${ch.name})`, align: 'right', sum: true, sumFunc: (row) => row.channels[ch.name]?.revenue || 0, sumRender: (v, totals) => <div style={{fontWeight: 500}}>{formatMoney(v)} đ<br/><span style={{fontSize:'10px', color:'var(--text-secondary)'}}>{totals.tot_revenue ? (v/totals.tot_revenue*100).toFixed(1):0}% DTT</span></div>, render: (_, o) => {
               const chData = o.channels[ch.name];
               if (!chData) return <div style={{color:'var(--text-secondary)'}}>-</div>;
-              return <div style={{fontWeight: 500}}>{formatMoney(chData.revenue)} đ</div>;
+              return <div style={{fontWeight: 500}}>{formatMoney(chData.revenue)} đ<br/><span style={{fontSize:'10px', color:'var(--text-secondary)'}}>{o.total.revenue ? (chData.revenue/o.total.revenue*100).toFixed(1):0}% DTT</span></div>;
           }},
-          { key: `ch_${ch.name}_profit`, label: `L.Nhuận (${ch.name})`, align: 'right', sum: true, sumSuffix: ' đ', sumFunc: (row) => row.channels[ch.name]?.profit || 0, render: (_, o) => {
+          { key: `ch_${ch.name}_fee`, label: `Phí Sàn (${ch.name})`, align: 'right', sum: true, sumFunc: (row) => row.channels[ch.name]?.fee || 0, sumRender: (v, totals) => <div style={{color:'var(--warning)'}}>{formatMoney(v)} đ<br/><span style={{fontSize:'10px'}}>{totals[`ch_${ch.name}_revenue`] ? (v/totals[`ch_${ch.name}_revenue`]*100).toFixed(0):0}% DTT</span></div>, render: (_, o) => {
+              const chData = o.channels[ch.name];
+              if (!chData) return <div style={{color:'var(--text-secondary)'}}>-</div>;
+              return <div style={{color:'var(--warning)'}}>{formatMoney(chData.fee)} đ<br/><span style={{fontSize:'10px'}}>{chData.revenue ? (chData.fee/chData.revenue*100).toFixed(0):0}% DTT</span></div>;
+          }},
+          { key: `ch_${ch.name}_opex`, label: `VH (${ch.name})`, align: 'right', sum: true, sumFunc: (row) => (row.channels[ch.name]?.tax || 0) + (row.channels[ch.name]?.opex || 0), sumRender: (v, totals) => <div style={{color:'var(--warning)'}}>{formatMoney(v)} đ<br/><span style={{fontSize:'10px'}}>{totals[`ch_${ch.name}_revenue`] ? (v/totals[`ch_${ch.name}_revenue`]*100).toFixed(0):0}% DTT</span></div>, render: (_, o) => {
+              const chData = o.channels[ch.name];
+              if (!chData) return <div style={{color:'var(--text-secondary)'}}>-</div>;
+              const val = (chData.tax || 0) + (chData.opex || 0);
+              return <div style={{color:'var(--warning)'}}>{formatMoney(val)} đ<br/><span style={{fontSize:'10px'}}>{chData.revenue ? (val/chData.revenue*100).toFixed(0):0}% DTT</span></div>;
+          }},
+          { key: `ch_${ch.name}_profit`, label: `L.Nhuận (${ch.name})`, align: 'right', sum: true, sumFunc: (row) => row.channels[ch.name]?.profit || 0, sumRender: (v, totals) => <div style={{color:'var(--success)', fontWeight:700, fontSize:'13px'}}>{formatMoney(v)} đ<br/><span style={{fontSize:'10px', color:'var(--text-secondary)'}}>{totals[`ch_${ch.name}_revenue`] ? (v/totals[`ch_${ch.name}_revenue`]*100).toFixed(0):0}% Biên</span></div>, render: (_, o) => {
               const chData = o.channels[ch.name];
               if (!chData) return <div style={{color:'var(--text-secondary)'}}>-</div>;
               return <div style={{color:'var(--success)', fontWeight:700, fontSize:'13px'}}>{formatMoney(chData.profit)} đ<br/><span style={{fontSize:'10px', color:'var(--text-secondary)'}}>{chData.revenue ? (chData.profit/chData.revenue*100).toFixed(0):0}% Biên</span></div>;
@@ -69,28 +110,56 @@ const ChannelReportsUI = ({
             <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>(Đơn giá: {formatMoney(o.basePrice)} đ | G.V: {formatMoney(o.unitCost)} đ)</span>
           </div>
       )},
-      { key: 'tot_qty', label: 'SL (TỔNG)', align: 'center', sum: true, sumFunc: (row) => row.total.qty, render: (_, o) => <div style={{fontWeight: 800}}>{Math.round(o.total.qty * 10)/10}</div> },
-      { key: 'tot_revenue', label: 'D.Thu (TỔNG)', align: 'right', sum: true, sumSuffix: ' đ', sumFunc: (row) => row.total.revenue, render: (_, o) => (
-          <div style={{color:'var(--primary)', fontWeight:600}}>{formatMoney(o.total.revenue)} đ</div>
+      { key: 'tot_qty', label: 'SL (TỔNG)', align: 'center', sum: true, sumFunc: (row) => row.total.qty, sumRender: (v) => <div style={{fontWeight: 800}}>{Math.round(v * 10)/10}</div>, render: (_, o) => <div style={{fontWeight: 800}}>{Math.round(o.total.qty * 10)/10}</div> },
+      { key: 'tot_revenue', label: 'D.Thu (TỔNG)', align: 'right', sum: true, sumFunc: (row) => row.total.revenue, sumRender: (v) => (
+          <div style={{color:'var(--primary)', fontWeight:600}}>{formatMoney(v)} đ<br/><span style={{fontSize:'10px'}}>100% Tổng DTT</span></div>
+      ), render: (_, o) => (
+          <div style={{color:'var(--primary)', fontWeight:600}}>{formatMoney(o.total.revenue)} đ<br/><span style={{fontSize:'10px', color:'var(--text-secondary)'}}>{reportData.totalRevenue ? (o.total.revenue/reportData.totalRevenue*100).toFixed(1):0}% Tổng DTT</span></div>
       )},
-      { key: 'tot_cogs', label: 'G.Vốn (TỔNG)', align: 'right', sum: true, sumSuffix: ' đ', sumFunc: (row) => row.total.cogs, render: (_, o) => (
-          <div style={{color:'var(--danger)'}}>{formatMoney(o.total.cogs)} đ</div>
+      { key: 'tot_cogs', label: 'G.Vốn (TỔNG)', align: 'right', sum: true, sumFunc: (row) => row.total.cogs, sumRender: (v, totals) => (
+          <div style={{color:'var(--danger)'}}>{formatMoney(v)} đ<br/><span style={{fontSize:'10px'}}>{totals.tot_revenue ? (v/totals.tot_revenue*100).toFixed(1):0}% DTT</span></div>
+      ), render: (_, o) => (
+          <div style={{color:'var(--danger)'}}>{formatMoney(o.total.cogs)} đ<br/><span style={{fontSize:'10px'}}>{o.total.revenue ? (o.total.cogs/o.total.revenue*100).toFixed(1):0}% DTT</span></div>
       )},
-      { key: 'tot_profit', label: 'L.Nhuận (TỔNG)', align: 'right', sum: true, sumSuffix: ' đ', sumFunc: (row) => row.total.profit, render: (_, o) => (
+      { key: 'tot_fee', label: 'Phí Sàn (TỔNG)', align: 'right', sum: true, sumFunc: (row) => row.total.fee, sumRender: (v, totals) => (
+          <div style={{color:'var(--warning)'}}>{formatMoney(v)} đ<br/><span style={{fontSize:'10px'}}>{totals.tot_revenue ? (v/totals.tot_revenue*100).toFixed(0):0}% DTT</span></div>
+      ), render: (_, o) => (
+          <div style={{color:'var(--warning)'}}>{formatMoney(o.total.fee)} đ<br/><span style={{fontSize:'10px'}}>{o.total.revenue ? (o.total.fee/o.total.revenue*100).toFixed(0):0}% DTT</span></div>
+      )},
+      { key: 'tot_opex', label: 'VH (TỔNG)', align: 'right', sum: true, sumFunc: (row) => (row.total.tax || 0) + (row.total.opex || 0), sumRender: (v, totals) => (
+          <div style={{color:'var(--warning)'}}>{formatMoney(v)} đ<br/><span style={{fontSize:'10px'}}>{totals.tot_revenue ? (v/totals.tot_revenue*100).toFixed(0):0}% DTT</span></div>
+      ), render: (_, o) => {
+          const val = (o.total.tax || 0) + (o.total.opex || 0);
+          return <div style={{color:'var(--warning)'}}>{formatMoney(val)} đ<br/><span style={{fontSize:'10px'}}>{o.total.revenue ? (val/o.total.revenue*100).toFixed(0):0}% DTT</span></div>;
+      }},
+      { key: 'tot_profit', label: 'L.Nhuận (TỔNG)', align: 'right', sum: true, sumFunc: (row) => row.total.profit, sumRender: (v, totals) => (
+          <div style={{color:'var(--success)', fontWeight:700}}>{formatMoney(v)} đ<br/><span style={{fontSize:'10px'}}>{totals.tot_revenue ? (v/totals.tot_revenue*100).toFixed(0):0}% Biên</span></div>
+      ), render: (_, o) => (
           <div style={{color:'var(--success)', fontWeight:700}}>{formatMoney(o.total.profit)} đ<br/><span style={{fontSize:'10px'}}>{o.total.revenue ? (o.total.profit/o.total.revenue*100).toFixed(0):0}% Biên</span></div>
       )},
       ...reportData.channels.flatMap(ch => [
-          { key: `ch_${ch.name}_qty`, label: `SL (${ch.name})`, align: 'center', sum: true, sumFunc: (row) => row.channels[ch.name]?.qty || 0, render: (_, o) => {
+          { key: `ch_${ch.name}_qty`, label: `SL (${ch.name})`, align: 'center', sum: true, sumFunc: (row) => row.channels[ch.name]?.qty || 0, sumRender: (v) => <div style={{fontWeight: 'bold'}}>{Math.round(v * 10)/10}</div>, render: (_, o) => {
               const chData = o.channels[ch.name];
               if (!chData) return <div style={{color:'var(--text-secondary)'}}>-</div>;
               return <div style={{fontWeight: 'bold'}}>{Math.round(chData.qty * 10)/10}</div>;
           }},
-          { key: `ch_${ch.name}_revenue`, label: `D.Thu (${ch.name})`, align: 'right', sum: true, sumSuffix: ' đ', sumFunc: (row) => row.channels[ch.name]?.revenue || 0, render: (_, o) => {
+          { key: `ch_${ch.name}_revenue`, label: `D.Thu (${ch.name})`, align: 'right', sum: true, sumFunc: (row) => row.channels[ch.name]?.revenue || 0, sumRender: (v, totals) => <div style={{fontWeight: 500}}>{formatMoney(v)} đ<br/><span style={{fontSize:'10px', color:'var(--text-secondary)'}}>{totals.tot_revenue ? (v/totals.tot_revenue*100).toFixed(1):0}% DTT</span></div>, render: (_, o) => {
               const chData = o.channels[ch.name];
               if (!chData) return <div style={{color:'var(--text-secondary)'}}>-</div>;
-              return <div style={{fontWeight: 500}}>{formatMoney(chData.revenue)} đ</div>;
+              return <div style={{fontWeight: 500}}>{formatMoney(chData.revenue)} đ<br/><span style={{fontSize:'10px', color:'var(--text-secondary)'}}>{o.total.revenue ? (chData.revenue/o.total.revenue*100).toFixed(1):0}% Tổng DTT</span></div>;
           }},
-          { key: `ch_${ch.name}_profit`, label: `L.Nhuận (${ch.name})`, align: 'right', sum: true, sumSuffix: ' đ', sumFunc: (row) => row.channels[ch.name]?.profit || 0, render: (_, o) => {
+          { key: `ch_${ch.name}_fee`, label: `Phí Sàn (${ch.name})`, align: 'right', sum: true, sumFunc: (row) => row.channels[ch.name]?.fee || 0, sumRender: (v, totals) => <div style={{color:'var(--warning)'}}>{formatMoney(v)} đ<br/><span style={{fontSize:'10px'}}>{totals[`ch_${ch.name}_revenue`] ? (v/totals[`ch_${ch.name}_revenue`]*100).toFixed(0):0}% DTT</span></div>, render: (_, o) => {
+              const chData = o.channels[ch.name];
+              if (!chData) return <div style={{color:'var(--text-secondary)'}}>-</div>;
+              return <div style={{color:'var(--warning)'}}>{formatMoney(chData.fee)} đ<br/><span style={{fontSize:'10px'}}>{chData.revenue ? (chData.fee/chData.revenue*100).toFixed(0):0}% DTT</span></div>;
+          }},
+          { key: `ch_${ch.name}_opex`, label: `VH (${ch.name})`, align: 'right', sum: true, sumFunc: (row) => (row.channels[ch.name]?.tax || 0) + (row.channels[ch.name]?.opex || 0), sumRender: (v, totals) => <div style={{color:'var(--warning)'}}>{formatMoney(v)} đ<br/><span style={{fontSize:'10px'}}>{totals[`ch_${ch.name}_revenue`] ? (v/totals[`ch_${ch.name}_revenue`]*100).toFixed(0):0}% DTT</span></div>, render: (_, o) => {
+              const chData = o.channels[ch.name];
+              if (!chData) return <div style={{color:'var(--text-secondary)'}}>-</div>;
+              const val = (chData.tax || 0) + (chData.opex || 0);
+              return <div style={{color:'var(--warning)'}}>{formatMoney(val)} đ<br/><span style={{fontSize:'10px'}}>{chData.revenue ? (val/chData.revenue*100).toFixed(0):0}% DTT</span></div>;
+          }},
+          { key: `ch_${ch.name}_profit`, label: `L.Nhuận (${ch.name})`, align: 'right', sum: true, sumFunc: (row) => row.channels[ch.name]?.profit || 0, sumRender: (v, totals) => <div style={{color:'var(--success)', fontWeight:700, fontSize:'13px'}}>{formatMoney(v)} đ<br/><span style={{fontSize:'10px'}}>{totals[`ch_${ch.name}_revenue`] ? (v/totals[`ch_${ch.name}_revenue`]*100).toFixed(0):0}% Biên</span></div>, render: (_, o) => {
               const chData = o.channels[ch.name];
               if (!chData) return <div style={{color:'var(--text-secondary)'}}>-</div>;
               return <div style={{color:'var(--success)', fontWeight:700, fontSize:'13px'}}>{formatMoney(chData.profit)} đ<br/><span style={{fontSize:'10px'}}>{chData.revenue ? (chData.profit/chData.revenue*100).toFixed(0):0}% Biên</span></div>;
@@ -101,14 +170,17 @@ const ChannelReportsUI = ({
   const getIngredientCols = (chAttrRev) => [
       { key: 'name', label: 'Tên Nguyên Liệu', sortable: true, render: (v) => <div style={{fontWeight: 600}}>{v}</div> },
       { key: 'qty', label: 'Sử Dụng', align: 'center', sum: true, render: (v, o) => <div><span style={{fontWeight: 800}}>{Math.round(v * 10) / 10}</span> <span style={{fontSize:'12px', color:'var(--text-secondary)'}}>{o.unit}</span></div> },
-      { key: 'attributedRevenue', label: 'Doanh Thu', align: 'right', sum: true, sumSuffix: ' đ', render: (v) => <div style={{color:'var(--primary)', fontWeight:600}}>{formatMoney(v)} đ<br/><span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{chAttrRev ? (v / chAttrRev * 100).toFixed(1) : 0}% DTT Kênh</span></div> },
-      { key: 'totalCost', label: 'Chi Phí Vốn', align: 'right', sum: true, sumSuffix: ' đ', render: (v, o) => <div style={{color:'var(--danger)', fontWeight:600}}>{formatMoney(v)} đ<br/><span style={{ fontSize: '11px' }}>{o.attributedRevenue ? (v / o.attributedRevenue * 100).toFixed(1) : 0}%</span></div> },
-      { key: 'totalAttachedFees', label: 'Tổng Phí (Sàn+VH)', align: 'right', sum: true, sumSuffix: ' đ', sumFunc: (row) => row.fee + row.opex, render: (_, o) => {
-          const totalAttachedFees = o.fee + o.opex;
-          return <div style={{color:'var(--warning)', fontWeight:600}}>{formatMoney(totalAttachedFees)} đ<br/><span style={{ fontSize: '11px' }}>{o.attributedRevenue ? (totalAttachedFees / o.attributedRevenue * 100).toFixed(1) : 0}%</span></div>
+      { key: 'attributedRevenue', label: 'Doanh Thu', align: 'right', sum: true, sumRender: (v) => <div style={{color:'var(--primary)', fontWeight:600}}>{formatMoney(v)} đ<br/><span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>100% Tổng DTT</span></div>, render: (v) => <div style={{color:'var(--primary)', fontWeight:600}}>{formatMoney(v)} đ<br/><span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{chAttrRev ? (v / chAttrRev * 100).toFixed(1) : 0}% DTT Kênh</span></div> },
+      { key: 'totalCost', label: 'Chi Phí Vốn', align: 'right', sum: true, sumRender: (v, totals) => <div style={{color:'var(--danger)', fontWeight:600}}>{formatMoney(v)} đ<br/><span style={{ fontSize: '11px' }}>{totals.attributedRevenue ? (v / totals.attributedRevenue * 100).toFixed(1) : 0}%</span></div>, render: (v, o) => <div style={{color:'var(--danger)', fontWeight:600}}>{formatMoney(v)} đ<br/><span style={{ fontSize: '11px' }}>{o.attributedRevenue ? (v / o.attributedRevenue * 100).toFixed(1) : 0}%</span></div> },
+      { key: 'fee', label: 'Phí Sàn', align: 'right', sum: true, sumRender: (v, totals) => <div style={{color:'var(--warning)', fontWeight:600}}>{formatMoney(v)} đ<br/><span style={{ fontSize: '11px' }}>{totals.attributedRevenue ? (v / totals.attributedRevenue * 100).toFixed(1) : 0}% DTT</span></div>, render: (_, o) => {
+          return <div style={{color:'var(--warning)', fontWeight:600}}>{formatMoney(o.fee)} đ<br/><span style={{ fontSize: '11px' }}>{o.attributedRevenue ? (o.fee / o.attributedRevenue * 100).toFixed(1) : 0}% DTT</span></div>
       }},
-      { key: 'profit', label: 'Lợi Nhuận', align: 'right', sum: true, sumSuffix: ' đ', sumFunc: (row) => row.attributedRevenue - row.totalCost - (row.fee + row.opex), render: (_, o) => {
-          const itemProfit = o.attributedRevenue - o.totalCost - (o.fee + o.opex);
+      { key: 'opex', label: 'Thuế & Vận Hành', align: 'right', sum: true, sumFunc: (row) => (row.tax || 0) + row.opex, sumRender: (v, totals) => <div style={{color:'var(--warning)', fontWeight:600}}>{formatMoney(v)} đ<br/><span style={{ fontSize: '11px' }}>{totals.attributedRevenue ? (v / totals.attributedRevenue * 100).toFixed(1) : 0}% DTT</span></div>, render: (_, o) => {
+          const val = (o.tax || 0) + o.opex;
+          return <div style={{color:'var(--warning)', fontWeight:600}}>{formatMoney(val)} đ<br/><span style={{ fontSize: '11px' }}>{o.attributedRevenue ? (val / o.attributedRevenue * 100).toFixed(1) : 0}% DTT</span></div>
+      }},
+      { key: 'profit', label: 'Lợi Nhuận', align: 'right', sum: true, sumFunc: (row) => row.attributedRevenue - row.totalCost - (row.fee + (row.tax||0) + row.opex), sumRender: (v, totals) => <div style={{color:'var(--success)', fontWeight:800}}>{formatMoney(v)} đ<br/><span style={{ fontSize: '11px' }}>{totals.attributedRevenue ? (v / totals.attributedRevenue * 100).toFixed(1) : 0}%</span></div>, render: (_, o) => {
+          const itemProfit = o.attributedRevenue - o.totalCost - (o.fee + (o.tax||0) + o.opex);
           return <div style={{color:'var(--success)', fontWeight:800}}>{formatMoney(itemProfit)} đ<br/><span style={{ fontSize: '11px' }}>{o.attributedRevenue ? (itemProfit / o.attributedRevenue * 100).toFixed(1) : 0}%</span></div>
       }}
   ];
@@ -228,7 +300,7 @@ const ChannelReportsUI = ({
                 {Object.entries(reportData.ingredientsByChannel).map(([chName, items]) => {
                     const chCost = items.reduce((s, i) => s + i.totalCost, 0);
                     const chAttrRev = items.reduce((s, i) => s + i.attributedRevenue, 0);
-                    const chTotalFees = items.reduce((s, i) => s + i.fee + i.opex, 0);
+                    const chTotalFees = items.reduce((s, i) => s + i.fee + (i.tax || 0) + i.opex, 0);
                     const _chProfit = chAttrRev - chCost - chTotalFees;
 
                     return (
