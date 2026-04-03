@@ -41,6 +41,7 @@ const Categories = React.lazy(() => import('./pages/Categories'));
 const Channels = React.lazy(() => import('./pages/Channels'));
 const Accounts = React.lazy(() => import('./pages/Accounts'));
 const Orders = React.lazy(() => import('./pages/Orders'));
+const ProfitSimulator = React.lazy(() => import('./pages/ProfitSimulator'));
 const FinanceCategories = React.lazy(() => import('./pages/FinanceCategories'));
 const Settings = React.lazy(() => import('./pages/Settings'));
 const SystemArchitecture = React.lazy(() => import('./pages/SystemArchitecture'));
@@ -139,6 +140,7 @@ const SidebarMenu = ({ onNavItemClick }) => {
       children: [
         { path: '/pos', name: 'Bán Hàng (POS)' },
         { path: '/orders', name: 'Lịch Sử Đơn Hàng' },
+        ...(role === 'ADMIN' || role === 'MANAGER' ? [{ path: '/profit-simulator', name: 'Tính Thử Lợi Nhuận' }] : []),
         ...(role === 'ADMIN' || role === 'MANAGER' ? [{ path: '/channels', name: 'Kênh Bán (Grab/Shopee)' }] : [])
       ]
     },
@@ -504,6 +506,7 @@ const AppContent = () => {
                 <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
                 
                 {/* Manager / Admin Areas */}
+                <Route path="/profit-simulator" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><ProfitSimulator /></ProtectedRoute>} />
                 <Route path="/channels" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><Channels /></ProtectedRoute>} />
                 <Route path="/products" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><Products /></ProtectedRoute>} />
                 <Route path="/categories" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><Categories /></ProtectedRoute>} />
