@@ -71,7 +71,12 @@ const OrdersUI = ({ manager }) => {
     { key: 'orderCode', label: 'Mã Đơn', sortable: true, render: (val, o) => <span style={{fontWeight:700, color:'var(--text-primary)'}}>{val || o.id}</span> },
     { key: 'customerName', label: 'Khách Hàng', sortable: true, render: (val) => val || 'Khách vãng lai' },
     { key: 'liveChannelName', label: 'Kênh Bán', sortable: true, render: (val) => <span style={{ padding: '4px 8px', background: 'var(--surface-variant)', border: '1px solid var(--surface-border)', borderRadius: '6px', fontSize: '11px', fontWeight: 700, color: 'var(--text-primary)' }}>{val}</span> },
-    { key: 'totalAmount', label: 'Tổng (Gross)', align: 'right', sortable: true, sum: true, render: (val) => `${(val || 0).toLocaleString('vi-VN')} đ` },
+    { key: 'totalAmount', label: 'Tổng (Gross)', align: 'right', sortable: true, sum: true, render: (val) => (
+        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.3}}>
+           <span>{(val || 0).toLocaleString('vi-VN')} đ</span>
+           {val > 0 && <span style={{fontSize: '11px', color: 'var(--text-secondary)'}}>(100%)</span>}
+        </div>
+    ) },
     { key: 'discountAmount', label: 'Tổng Phí Sàn', align: 'right', sumFunc: (o) => { const fee = o.discountAmount != null ? o.discountAmount : (o.totalAmount - o.netAmount); return Math.max(0, fee); }, sumSuffix: 'đ', render: (val, o) => {
         const fee = Math.max(0, o.discountAmount != null ? o.discountAmount : (o.totalAmount - o.netAmount));
         const percent = fee > 0 && o.totalAmount ? Math.round((fee / o.totalAmount) * 100) : 0;
@@ -82,7 +87,16 @@ const OrdersUI = ({ manager }) => {
            </div>
         );
     } },
-    { key: 'netAmount', label: 'Thực Thu (Net)', align: 'right', sortable: true, sum: true, render: (val, o) => <span style={{color:'var(--success)', fontWeight:800}}>{((val || 0) + (Number(o.extraFee) || 0)).toLocaleString('vi-VN')} đ</span> },
+    { key: 'netAmount', label: 'Thực Thu (Net)', align: 'right', sortable: true, sum: true, render: (val, o) => {
+        const net = (val || 0) + (Number(o.extraFee) || 0);
+        const percent = net && o.totalAmount ? Math.round((net / o.totalAmount) * 100) : 0;
+        return (
+            <div style={{color:'var(--success)', fontWeight:800, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.3}}>
+                <span>{net.toLocaleString('vi-VN')} đ</span>
+                {percent > 0 && <span style={{fontSize: '11px', opacity: 0.85}}>({percent}%)</span>}
+            </div>
+        );
+    } },
     { key: 'items', label: 'Chi Tiết Món', render: (val, order) => (
        <div style={{ maxWidth: '250px' }}>
           {order.items?.map((item, idx) => (
@@ -295,7 +309,7 @@ const OrdersUI = ({ manager }) => {
                    <div style={{ background: 'var(--surface-color)', padding: '20px', borderRadius: '12px', border: '1px solid var(--surface-border)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                          <span style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 500 }}>Tổng tiền hàng (Gross):</span>
-                         <span style={{ fontWeight: 700 }}>{selectedOrder.totalAmount?.toLocaleString('vi-VN')} đ</span>
+                         <span style={{ fontWeight: 700 }}>{selectedOrder.totalAmount?.toLocaleString('vi-VN')} đ {selectedOrder.totalAmount > 0 && <span style={{ fontSize: '12px', opacity: 0.8, color: 'var(--text-secondary)' }}>({100}%)</span>}</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                          <span style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 500 }}>Chiết khấu nền tảng:</span>
@@ -312,7 +326,16 @@ const OrdersUI = ({ manager }) => {
                       <div style={{ width: '100%', height: '1px', background: 'var(--surface-border)', margin: '4px 0' }} />
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                          <span style={{ fontSize: '14px', fontWeight: 800 }}>THỰC THU (NET):</span>
-                         <span style={{ color: 'var(--success)', fontSize: '18px', fontWeight: 900 }}>{(selectedOrder.netAmount + (Number(selectedOrder.extraFee) || 0)).toLocaleString('vi-VN')} đ</span>
+                         {(() => {
+                            const net = selectedOrder.netAmount + (Number(selectedOrder.extraFee) || 0);
+                            const pt = net && selectedOrder.totalAmount ? Math.round((net / selectedOrder.totalAmount) * 100) : 0;
+                            return (
+                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                                   <span style={{ color: 'var(--success)', fontSize: '18px', fontWeight: 900 }}>{net.toLocaleString('vi-VN')} đ</span>
+                                   {pt > 0 && <span style={{ color: 'var(--success)', fontSize: '14px', opacity: 0.85, fontWeight: 700 }}>({pt}%)</span>}
+                                </div>
+                            );
+                         })()}
                       </div>
                    </div>
                 </div>
