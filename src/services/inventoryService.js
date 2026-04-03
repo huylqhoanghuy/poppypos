@@ -59,7 +59,7 @@ export const InventoryService = {
 
   getEntityDisplayDetails: (id, ingredients, products) => {
     const ing = ingredients.find(i => i.id === id);
-    if (ing) return { type: 'ingredient', name: ing.name, baseUnit: ing.unit, buyUnit: ing.buyUnit, stock: ing.stock, cost: ing.cost, deleted: ing.deleted };
+    if (ing) return { type: 'ingredient', name: ing.name, category: ing.category, baseUnit: ing.unit, buyUnit: ing.buyUnit, stock: ing.stock, cost: ing.cost, deleted: ing.deleted };
     const prod = products.find(p => p.id === id);
     if (prod) return { type: 'product', name: prod.name, baseUnit: prod.unit || 'Suất', buyUnit: null, stock: InventoryService.calculateMaxPortions(prod.recipe, ingredients, products), cost: InventoryService.calculateTotalCost(prod.recipe, ingredients, products), deleted: prod.deleted };
     return null;
