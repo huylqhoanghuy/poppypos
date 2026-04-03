@@ -113,9 +113,17 @@ const POS = () => {
 
   const removeItem = (id) => setCart(prev => prev.filter(item => item.id !== id));
 
-  const selectedChannel = activeSalesChannels?.find(c => c.id === selectedChannelId) || { discountRate: 0, name: 'Trực tiếp' };
+  const getChannelPrefix = (channelName) => {
+      const lower = (channelName || '').toLowerCase();
+      if (lower.includes('grab')) return 'GF';
+      if (lower.includes('shopee')) return 'SF';
+      return 'POS';
+  };
+
+  const selectedChannel = activeSalesChannels?.find(c => c.id === selectedChannelId) || { commission: 0, name: 'Trực tiếp' };
   const total = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
-  const discountAmount = total * ((selectedChannel?.discountRate||0) / 100);
+  const actualCommissionRate = selectedChannel?.commission ?? selectedChannel?.discountRate ?? 0;
+  const discountAmount = total * (actualCommissionRate / 100);
   const netAmount = total - discountAmount;
 
   const handleCheckout = (paymentStatus = 'Paid') => {
@@ -128,7 +136,8 @@ const POS = () => {
        return;
     }
     const orderItems = cart.map(item => ({ product: item, quantity: item.qty }));
-    const finalOrderCode = orderCode || `POS-${(++orderCounter.current).toString(36).toUpperCase().padStart(5, '0')}`;
+    const prefix = getChannelPrefix(selectedChannel.name);
+    const finalOrderCode = orderCode || `${prefix}-${(++orderCounter.current).toString(36).toUpperCase().padStart(5, '0')}`;
     
     addOrder({
        orderCode: finalOrderCode,
@@ -162,7 +171,8 @@ const POS = () => {
   };
 
   const generateOrderCode = () => {
-    setOrderCode(`POS-${Date.now().toString().slice(-6)}`);
+    const prefix = getChannelPrefix(selectedChannel?.name);
+    setOrderCode(`${prefix}-${Date.now().toString().slice(-6)}`);
   };
 
   return (
@@ -329,8 +339,7 @@ const POS = () => {
             <div>
               <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>Mã Đơn:</label>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <input className="form-input" placeholder="Auto..." value={orderCode} onChange={e => setOrderCode(e.target.value)} />
-                <button className="btn btn-ghost" onClick={generateOrderCode} style={{ padding: '0 12px', background: 'var(--bg-color)', border: '1px solid var(--surface-border)', borderRadius: '8px', fontWeight: 700 }}>Tạo</button>
+                  <input className="input-field" value={orderCode} onChange={e => setOrderCode(e.target.value)} placeholder={`Ví dụ: ${getChannelPrefix(selectedChannel.name)}-0001`} style={{ flex: 1, fontSize: '14px' }}/>        <button className="btn btn-ghost" onClick={generateOrderCode} style={{ padding: '0 12px', background: 'var(--bg-color)', border: '1px solid var(--surface-border)', borderRadius: '8px', fontWeight: 700 }}>Tạo</button>
               </div>
             </div>
             <div>
@@ -352,7 +361,7 @@ const POS = () => {
 
             {discountAmount > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#EA580C' }}>
-                <span style={{ fontSize: '13px', fontWeight: 600 }}>Chiết khấu nền tảng ({selectedChannel?.discountRate}%):</span>
+                <span style={{ fontSize: '13px', fontWeight: 600 }}>Chiết khấu nền tảng ({selectedChannel?.commission ?? selectedChannel?.discountRate ?? 0}%):</span>
                 <span style={{ fontSize: '14px', fontWeight: 800 }}>-{discountAmount.toLocaleString('vi-VN')} đ</span>
               </div>
             )}

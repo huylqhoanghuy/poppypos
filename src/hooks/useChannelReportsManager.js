@@ -133,7 +133,7 @@ export const useChannelReportsManager = () => {
 
             const net = Number(o.netAmount) || 0;
 
-            const commissionRate = Number(matchedChannelObj.commission) || 0;
+            const commissionRate = Number(matchedChannelObj.commission ?? matchedChannelObj.discountRate ?? 0);
             const orderCommissionCost = net * (commissionRate / 100);
 
             channelStats[ch].revenue += net;

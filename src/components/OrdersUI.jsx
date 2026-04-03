@@ -1,5 +1,5 @@
 import React from 'react';
-import { ClipboardList, Trash2, CheckCircle, Clock, XCircle, Eye, UploadCloud, CheckCircle2, FileText, X, CheckSquare, Square, AlertTriangle, Edit2 } from 'lucide-react';
+import { ClipboardList, Trash2, CheckCircle, Clock, XCircle, Eye, UploadCloud, CheckCircle2, FileText, X, CheckSquare, Square, AlertTriangle, Edit2, Plus, Minus } from 'lucide-react';
 import ModuleLayout from './ModuleLayout';
 
 const OrdersUI = ({ manager }) => {
@@ -65,7 +65,7 @@ const OrdersUI = ({ manager }) => {
     { key: 'customerName', label: 'Khách Hàng', sortable: true, render: (val) => val || 'Khách vãng lai' },
     { key: 'liveChannelName', label: 'Kênh Bán', sortable: true, render: (val) => <span style={{ padding: '4px 8px', background: 'var(--surface-variant)', border: '1px solid var(--surface-border)', borderRadius: '6px', fontSize: '11px', fontWeight: 700, color: 'var(--text-primary)' }}>{val}</span> },
     { key: 'totalAmount', label: 'Tổng (Gross)', align: 'right', sortable: true, sum: true, render: (val) => `${(val || 0).toLocaleString('vi-VN')} đ` },
-    { key: 'platformFee', label: 'Tổng Phí Sàn', align: 'right', render: (val, o) => {
+    { key: 'discountAmount', label: 'Tổng Phí Sàn', align: 'right', sumFunc: (o) => { const fee = o.discountAmount != null ? o.discountAmount : (o.totalAmount - o.netAmount); return Math.max(0, fee); }, sumSuffix: 'đ', render: (val, o) => {
         const fee = o.discountAmount != null ? o.discountAmount : (o.totalAmount - o.netAmount);
         return <span style={{color: '#EA580C', fontWeight:600}}>-{Math.max(0, fee).toLocaleString('vi-VN')} đ</span>;
     } },
@@ -94,6 +94,50 @@ const OrdersUI = ({ manager }) => {
     </>
   );
 
+  const calculateTotals = (currentFormData, targetChannelId = null) => {
+      const items = currentFormData.items || [];
+      const totalAmount = items.reduce((sum, it) => {
+         const price = it.product?.price ?? it.price ?? 0;
+         const qty = it.quantity ?? 1;
+         return sum + (price * qty);
+      }, 0);
+      
+      const channelId = targetChannelId !== null ? targetChannelId : currentFormData.channelId;
+      const channel = state.salesChannels?.find(c => c.id === channelId);
+      const discountRate = channel?.commission ?? channel?.discountRate ?? 0;
+      const discountAmount = totalAmount * (discountRate / 100);
+      const extraFee = currentFormData.extraFee || 0;
+      const netAmount = totalAmount - discountAmount + extraFee;
+
+      return { totalAmount, discountAmount, netAmount, channelId: channel?.id || '', channelName: channel?.name || 'Trực tiếp' };
+  };
+
+  const updateCartItem = (index, delta) => {
+      const newItems = [...(formData.items || [])];
+      newItems[index].quantity += delta;
+      if (newItems[index].quantity <= 0) newItems.splice(index, 1);
+      const updatedForm = { ...formData, items: newItems };
+      setFormData({ ...updatedForm, ...calculateTotals(updatedForm) });
+  };
+
+  const addProductToCart = (e) => {
+      const productId = e.target.value;
+      if (!productId) return;
+      const product = state.products?.find(p => p.id === productId);
+      if (!product) return;
+      
+      const newItems = [...(formData.items || [])];
+      const existingIdx = newItems.findIndex(it => (it.product?.id || it.id) === productId);
+      if (existingIdx >= 0) {
+          newItems[existingIdx].quantity += 1;
+      } else {
+          newItems.push({ product, quantity: 1, price: product.price });
+      }
+      const updatedForm = { ...formData, items: newItems };
+      setFormData({ ...updatedForm, ...calculateTotals(updatedForm) });
+      e.target.value = ""; // Reset selector
+  };
+
   const renderForm = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 800 }}>Sửa Thông Tin Đơn Hàng</h3>
@@ -111,23 +155,74 @@ const OrdersUI = ({ manager }) => {
         <div style={{ display: 'flex', gap: '8px' }}>
            <input className="input-field" type="datetime-local" value={formData.date ? formData.date.slice(0, 16) : ''} onChange={e => setFormData({...formData, date: new Date(e.target.value).toISOString()})} style={{ flex: 1 }}/>
            <select className="input-field" value={formData.channelId || formData.channelName || ''} onChange={e => {
-              const ch = state.salesChannels.find(c => c.id === e.target.value);
-              if (ch) setFormData({...formData, channelId: ch.id, channelName: ch.name});
+              const totals = calculateTotals(formData, e.target.value);
+              setFormData({...formData, ...totals});
            }} style={{ flex: 1 }}>
-              <option value="">Trực tiếp</option>
-              {state.salesChannels?.map(ch => <option key={ch.id} value={ch.id}>{ch.name}</option>)}
+              <option value="" disabled>-- Chọn kênh bán --</option>
+              {state.salesChannels?.map(ch => <option key={ch.id} value={ch.id}>{ch.name} (Chiết khấu {ch.commission ?? ch.discountRate ?? 0}%)</option>)}
            </select>
         </div>
       </div>
 
       <div className="form-group">
-         <label style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-secondary)' }}>Thực Thu (Net Amount) VNĐ</label>
-         <input className="input-field" type="number" value={formData.netAmount || 0} onChange={e => setFormData({...formData, netAmount: parseFloat(e.target.value) || 0})}/>
+         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+             <label style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-secondary)', margin: 0 }}>Thực Đơn (Danh Sách Món)</label>
+             <select className="input-field" onChange={addProductToCart} defaultValue="" style={{ padding: '6px 10px', fontSize: '13px', width: 'auto', background: '#f8fafc', boxShadow: 'none' }}>
+                <option value="" disabled>+ Lựa thêm món vào đơn</option>
+                {state.products?.filter(p => p.status !== 'draft').map(p => (
+                   <option key={p.id} value={p.id}>{p.name} - {p.price.toLocaleString('vi-VN')}đ</option>
+                ))}
+             </select>
+         </div>
+         
+         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'var(--surface-color)', padding: '12px', borderRadius: '8px', border: '1px solid var(--surface-border)', maxHeight: '250px', overflowY: 'auto' }}>
+            {(!formData.items || formData.items.length === 0) ? (
+               <div style={{ fontSize: '13px', color: '#94a3b8', textAlign: 'center', padding: '16px 0' }}>Đơn hàng trống</div>
+            ) : (
+               formData.items.map((it, idx) => {
+                  const pName = it.product?.name || it.name || 'Món không xác định';
+                  const pPrice = it.product?.price ?? it.price ?? 0;
+                  return (
+                     <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', borderBottom: '1px dashed #e2e8f0' }}>
+                        <div style={{ flex: 1 }}>
+                           <div style={{ fontSize: '14px', fontWeight: 600, color: '#1e293b' }}>{pName}</div>
+                           <div style={{ fontSize: '12px', color: '#64748b' }}>{pPrice.toLocaleString('vi-VN')}đ</div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f1f5f9', padding: '4px', borderRadius: '6px' }}>
+                              <button className="btn btn-ghost" style={{ padding: '4px', minWidth: '24px' }} onClick={() => updateCartItem(idx, -1)}><Minus size={14}/></button>
+                              <span style={{ fontSize: '14px', fontWeight: 700, minWidth: '20px', textAlign: 'center' }}>{it.quantity}</span>
+                              <button className="btn btn-ghost" style={{ padding: '4px', minWidth: '24px' }} onClick={() => updateCartItem(idx, 1)}><Plus size={14}/></button>
+                           </div>
+                           <span style={{ fontSize: '14px', fontWeight: 800, color: '#ea580c', minWidth: '80px', textAlign: 'right' }}>
+                              {(pPrice * (it.quantity || 1)).toLocaleString('vi-VN')} đ
+                           </span>
+                        </div>
+                     </div>
+                  );
+               })
+            )}
+         </div>
+      </div>
+      
+      <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px', color: '#64748b' }}>
+            <span>Tổng tiền món:</span>
+            <span>{(formData.totalAmount || 0).toLocaleString('vi-VN')} đ</span>
+         </div>
+         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '12px', color: '#ef4444' }}>
+            <span>Chiết khấu nền tảng:</span>
+            <span>-{(formData.discountAmount || 0).toLocaleString('vi-VN')} đ</span>
+         </div>
+         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 800, color: '#0f172a', paddingTop: '12px', borderTop: '1px solid #e2e8f0' }}>
+            <span>Thực Thu (Net Amount):</span>
+            <span style={{ color: '#059669' }}>{(formData.netAmount || 0).toLocaleString('vi-VN')} đ</span>
+         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '16px' }}>
+      <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
         <button className="btn btn-ghost" onClick={() => listState.setShowForm(false)}>Hủy</button>
-        <button className="btn btn-primary" onClick={handleSave} disabled={!formData.date}><CheckCircle2 size={18}/> Lưu Thay Đổi</button>
+        <button className="btn btn-primary" onClick={handleSave} disabled={!formData.date}><CheckCircle2 size={18}/> Lưu Đơn Đã Sửa</button>
       </div>
     </div>
   );

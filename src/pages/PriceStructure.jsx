@@ -71,7 +71,7 @@ const PriceStructure = () => {
       let totalChannels = 0;
 
       activeSalesChannels.forEach(c => {
-         const feeRate = c.commission || 0;
+         const feeRate = c.commission ?? c.discountRate ?? 0;
          const channelFee = p.price * feeRate / 100;
          const netRevenue = p.price - channelFee;
          const grossProfit = netRevenue - cogs;
@@ -126,7 +126,7 @@ const PriceStructure = () => {
                   <tr>
                      {activeSalesChannels.map(c => (
                         <React.Fragment key={`sub-${c.id}`}>
-                           <th style={{ padding: '12px', textAlign: 'right', fontSize: '11px', color: 'var(--warning)', borderBottom: '1px solid var(--surface-border)', background: 'rgba(59, 130, 246, 0.04)' }}>Phí Sàn ({c.discountRate}%)</th>
+                           <th style={{ padding: '12px', textAlign: 'right', fontSize: '11px', color: 'var(--warning)', borderBottom: '1px solid var(--surface-border)', background: 'rgba(59, 130, 246, 0.04)' }}>Phí Sàn ({c.commission ?? c.discountRate ?? 0}%)</th>
                            <th style={{ padding: '12px', textAlign: 'right', fontSize: '11px', color: 'var(--success)', borderRight: '2px solid var(--surface-border)', borderBottom: '1px solid var(--surface-border)', background: 'rgba(34, 197, 94, 0.08)' }}>LỢI NHUẬN RÒNG</th>
                         </React.Fragment>
                      ))}
@@ -312,7 +312,7 @@ const PriceStructure = () => {
                             <th style={{ padding: '16px 12px', textAlign: 'right' }}>Giá Bán Khách Trả</th>
                             <th style={{ padding: '16px 12px', textAlign: 'left', borderLeft: '1px dotted #cbd5e1' }}>Chi Tiết Cấu Thành Giá Vốn (COGS)</th>
                             <th style={{ padding: '16px 12px', textAlign: 'right' }}>Vận Hành (OPEX)</th>
-                            <th style={{ padding: '16px 12px', textAlign: 'right', color: 'var(--primary)' }}>Phí Sàn ({activeSalesChannels.find(c => c.id === selectedChannelId)?.commission || 0}%)</th>
+                            <th style={{ padding: '16px 12px', textAlign: 'right', color: 'var(--primary)' }}>Phí Sàn ({(() => { const ch = activeSalesChannels.find(c => c.id === selectedChannelId); return ch?.commission ?? ch?.discountRate ?? 0; })()}%)</th>
                             <th style={{ padding: '16px 12px', textAlign: 'right', color: 'var(--success)' }}>Lãi Ròng</th>
                          </tr>
                       </thead>
