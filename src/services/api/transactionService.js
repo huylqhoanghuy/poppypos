@@ -10,6 +10,7 @@ export const TransactionApi = {
     const newDoc = { 
       ...transaction, 
       id: StorageService.generateId('TX-'),
+      voucherCode: transaction.voucherCode || (transaction.type === 'Thu' ? StorageService.generateId('PT-') : StorageService.generateId('PC-')),
       amount: Number(transaction.amount || 0)
     };
     list.push(newDoc);

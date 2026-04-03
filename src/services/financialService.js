@@ -1,21 +1,49 @@
 export const FinancialService = {
-  filterByPeriod: (items, dateField, period) => {
+  filterByPeriod: (items, dateField, period, startStr, endStr) => {
     if (!items) return [];
     if (period === 'all') return items;
+    
+    // Custom filter based on start/end
+    if (period === 'custom' && startStr && endStr) {
+      const sDate = new Date(startStr); sDate.setHours(0,0,0,0);
+      const eDate = new Date(endStr); eDate.setHours(23,59,59,999);
+      return items.filter(item => {
+        const itemDate = new Date(item[dateField] || item.date);
+        return itemDate >= sDate && itemDate <= eDate;
+      });
+    }
+
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     return items.filter(item => {
       const itemDate = new Date(item[dateField] || item.date);
       if (period === 'today') return itemDate >= today;
-      if (period === 'month') return itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
-      if (period === 'year') return itemDate.getFullYear() === now.getFullYear();
+      if (period === 'yesterday') {
+         const yDate = new Date(today); yDate.setDate(yDate.getDate() - 1);
+         return itemDate >= yDate && itemDate < today;
+      }
+      if (period === '7days') {
+         const d7 = new Date(today); d7.setDate(d7.getDate() - 6);
+         return itemDate >= d7;
+      }
+      if (period === '30days') {
+         const d30 = new Date(today); d30.setDate(d30.getDate() - 29);
+         return itemDate >= d30;
+      }
+      if (period === 'month' || period === 'this_month') return itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
+      if (period === 'last_month') {
+         const lMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+         const lMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+         return itemDate >= lMonthStart && itemDate <= lMonthEnd;
+      }
+      if (period === 'year' || period === 'this_year') return itemDate.getFullYear() === now.getFullYear();
       return true;
     });
   },
 
-  calculateStatements: (state, period) => {
-    const filteredOrders = FinancialService.filterByPeriod(state.posOrders, 'createdAt', period);
-    const filteredTransactions = FinancialService.filterByPeriod(state.transactions, 'date', period);
+  calculateStatements: (state, period, startStr, endStr) => {
+    const filteredOrders = FinancialService.filterByPeriod(state.posOrders, 'createdAt', period, startStr, endStr);
+    const filteredTransactions = FinancialService.filterByPeriod(state.transactions, 'date', period, startStr, endStr);
 
     // ============================================
     // 1. TÍNH TOÁN (BALANCE SHEET - Bảng cân đối)
@@ -24,7 +52,9 @@ export const FinancialService = {
     
     const totalInventoryValue = state.ingredients?.reduce((sum, ing) => {
         if (ing.deleted) return sum;
-        return sum + ((ing.stock || 0) * (ing.cost || 0));
+        const conv = Number(ing.conversionRate) || 1;
+        const costPerBuyUnit = Number(ing.buyPrice) || (Number(ing.cost) * conv) || 0;
+        return sum + ((ing.stock || 0) * costPerBuyUnit);
     }, 0) || 0;
 
     const totalAssets = totalCash + totalInventoryValue;

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { FileText, TrendingUp, TrendingDown, DollarSign, PieChart as PieIcon, BarChart3, Calendar, Download, Globe, Info, Filter, Layers, FileSpreadsheet } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { FileText, TrendingUp, TrendingDown, DollarSign, PieChart as PieIcon, BarChart3, Calendar, Download, Globe, Info, Filter, Layers, FileSpreadsheet, ChevronDown } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, LineElement, PointElement, ArcElement } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
@@ -9,6 +9,7 @@ import { useBusinessReport } from '../hooks/useBusinessReport';
 import SmartTable from '../components/SmartTable';
 import ReportDetailModal from '../components/ReportDetailModal';
 import CSVViewerModal from '../components/CSVViewerModal';
+import SmartDateFilter from '../components/SmartDateFilter';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, LineElement, PointElement, ArcElement, ChartDataLabels);
 
@@ -19,6 +20,8 @@ const BusinessReports = () => {
   const [detailModalItem, setDetailModalItem] = useState(null);
   const [detailModalTitle, setDetailModalTitle] = useState('');
   const [isCSVViewerOpen, setIsCSVViewerOpen] = useState(false);
+
+
 
   if (!reportData) return <div style={{ padding: '40px', textAlign: 'center' }}>Đang tải dữ liệu báo cáo...</div>;
 
@@ -325,38 +328,14 @@ const BusinessReports = () => {
          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, color: 'var(--text-secondary)' }}>
              <Filter size={18} /> Bộ Lọc Tổng Cục Số Liệu:
          </div>
-         <div style={{ display: 'flex', background: 'rgba(0,0,0,0.05)', borderRadius: '8px', padding: '4px' }}>
-             {['today', 'week', 'month', 'year'].map(pt => {
-                 const names = { today: 'Hôm Nay', week: 'Tuần Này', month: 'Tháng Này', year: 'Năm Nay' };
-                 return (
-                    <button key={pt} onClick={() => handlePresetChange(pt)} 
-                            style={{ 
-                                padding: '0 16px', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px', display: 'flex', alignItems: 'center',
-                                background: datePreset === pt ? 'white' : 'transparent',
-                                color: datePreset === pt ? 'var(--primary)' : 'var(--text-secondary)',
-                                boxShadow: datePreset === pt ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                             }}>
-                        {names[pt]}
-                    </button>
-                 );
-             })}
-             <button onClick={() => handlePresetChange('custom')}
-                 style={{ 
-                    padding: '0 16px', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px', display: 'flex', alignItems: 'center',
-                    background: datePreset === 'custom' ? 'white' : 'transparent',
-                    color: datePreset === 'custom' ? 'var(--primary)' : 'var(--text-secondary)',
-                    boxShadow: datePreset === 'custom' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                 }}>Tùy Chọn</button>
+         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <SmartDateFilter 
+               filterDate={filterDate}
+               setFilterDate={setFilterDate}
+               datePreset={datePreset}
+               handlePresetChange={handlePresetChange}
+            />
          </div>
-
-         {datePreset === 'custom' && (
-             <div style={{ display:'flex', alignItems:'center', gap:'12px', borderLeft: '1px solid var(--surface-border)', paddingLeft: '16px' }}>
-                <Calendar size={18} color="var(--primary)" />
-                <input type="date" className="form-input" style={{ width:'140px', padding: '6px 12px' }} value={filterDate.start} onChange={e => setFilterDate({...filterDate, start: e.target.value})} />
-                <span>đến</span>
-                <input type="date" className="form-input" style={{ width:'140px', padding: '6px 12px' }} value={filterDate.end} onChange={e => setFilterDate({...filterDate, end: e.target.value})} />
-             </div>
-         )}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
@@ -378,8 +357,8 @@ const BusinessReports = () => {
               <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '8px' }}>
                  Vốn ({reportData.totalRevenue ? ((reportData.totalCOGS/reportData.totalRevenue)*100).toFixed(1) : 0}%) 
                  + Sàn ({reportData.totalRevenue ? ((reportData.totalFee/reportData.totalRevenue)*100).toFixed(1) : 0}%) 
-                 + Thuế ({reportData.totalRevenue ? ((reportData.totalTax/reportData.totalRevenue)*100).toFixed(1) : 0}%)
-                 + Vận hành ({reportData.totalRevenue ? ((reportData.totalOPEX/reportData.totalRevenue)*100).toFixed(1) : 0}%)</div>
+                 + Thuế ({reportData.totalRevenue ? (((reportData.totalTax || 0) / reportData.totalRevenue)*100).toFixed(1) : 0}%)
+                 + Vận hành ({reportData.totalRevenue ? (((reportData.totalOPEX || 0) / reportData.totalRevenue)*100).toFixed(1) : 0}%)</div>
           </div>
           <div className="glass-panel" style={{ padding: '24px', borderLeft: '4px solid var(--success)', background: 'linear-gradient(to right, rgba(16, 185, 129, 0.05), transparent)' }}>
               <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: '8px' }}>LỢI NHUẬN RÒNG ĐÃ TRỪ PHÍ</div>

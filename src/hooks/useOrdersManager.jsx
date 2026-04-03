@@ -2,7 +2,6 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { ShoppingBag, TrendingUp, PackageMinus } from 'lucide-react';
 import { useListController } from './useListController';
 import { useData } from '../context/DataContext';
-import { parseCSVToOrders } from '../utils/csvParser';
 import { OrderApi } from '../services/api/orderService';
 
 export const useOrdersManager = () => {
@@ -36,15 +35,9 @@ export const useOrdersManager = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterChannel, setFilterChannel] = useState('all');
   
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [importConfig, setImportConfig] = useState({ channelId: '', content: '', fileName: '' });
-  const [previewOrders, setPreviewOrders] = useState(null);
-
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === 'Escape') {
-        setShowImportModal(false);
-        setPreviewOrders(null);
         setExpandedOrderId(null);
       }
     };
@@ -52,85 +45,17 @@ export const useOrdersManager = () => {
     return () => window.removeEventListener('keydown', handleEsc);
   }, []);
 
-  const importableChannels = state.salesChannels?.filter(ch => ch.allowImport === true || ch.allowImport === 'true') || [];
-
-  const handlePreviewCSV = () => {
-    if (!importConfig.channelId) return showToast('Vui lòng chọn Kênh Bán Hàng!');
-    if (!importConfig.content) return showToast("Vui lòng nhập hoặc copy dữ liệu báo cáo!");
-    
-    const matchedChannel = state.salesChannels.find(c => c.id === importConfig.channelId);
-    if (!matchedChannel) return showToast('Lỗi: Kênh không khả dụng!');
-
-    const parsedArray = parseCSVToOrders(importConfig.content, matchedChannel, state.products, importConfig.accountId);
-    if (!parsedArray || parsedArray.length === 0) {
-        return showToast('Không tìm thấy dữ liệu hợp lệ trong file!');
-    }
-    
-    setPreviewOrders(parsedArray);
-  };
-
   const [formData, setFormData] = useState({ id: '', customerName: '', date: '', netAmount: 0, channelId: '' });
-  
+
   const handleEdit = (order) => {
      setFormData({ ...order, netAmount: order.netAmount || 0, date: new Date(order.date).toISOString().split('T')[0] });
-     listState.setShowForm(true);
+     setShowForm(true);
   };
 
   const handleSave = async () => {
      await OrderApi.update(formData);
-     listState.setShowForm(false);
-     listState.handlers.showToast('Đã lưu thay đổi đơn hàng!');
-  };
-
-  const confirmImport = () => {
-    const totalOrders = previewOrders.length;
-    const totalNet = previewOrders.reduce((sum, o) => sum + o.netAmount, 0);
-    
-    const topProducts = {};
-    previewOrders.forEach(o => o.items.forEach(i => {
-         const name = i.product?.name || 'Sản phẩm khác';
-         topProducts[name] = (topProducts[name] || 0) + i.quantity;
-    }));
-    
-    const topEntries = Object.entries(topProducts).sort((a,b) => b[1] - a[1]);
-    const displayProducts = topEntries.slice(0, 2).map(([k,v]) => `${v} ${k}`).join(', ');
-    const moreCount = topEntries.length > 2 ? ` và ${topEntries.length - 2} món khác` : '';
-
-    const summaryNode = (
-       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <strong style={{ fontSize: '15px' }}>Đồng bộ dữ liệu thành công!</strong>
-          <div style={{ fontSize: '13px', fontWeight: 500, display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px', color: 'var(--text-secondary)' }}>
-             <span style={{ display:'flex', alignItems:'center', gap:'6px' }}><ShoppingBag size={14} color="var(--primary)"/> Ghi nhận <strong>{totalOrders}</strong> đơn mới</span>
-             <span style={{ display:'flex', alignItems:'center', gap:'6px' }}><TrendingUp size={14} color="var(--success)"/> Doanh thu tăng: <strong>{totalNet.toLocaleString('vi-VN')} đ</strong></span>
-             <span style={{ display:'flex', alignItems:'center', gap:'6px' }}><PackageMinus size={14} color="#EA580C"/> Kho vừa giảm: <strong>{displayProducts}{moreCount}</strong></span>
-          </div>
-       </div>
-    );
-
-    dispatch({ 
-        type: 'CONFIRM_IMPORT_ORDERS', 
-        payload: { orders: previewOrders } 
-    });
-    setPreviewOrders(null);
-    setShowImportModal(false);
-    setImportConfig({ channelId: '', content: '', fileName: '', accountId: '' });
-    
-    // Ngăn chặn React state update batching (làm ghi đè cờ _skipSave = false của action trước)
-    setTimeout(() => {
-        showToast(summaryNode);
-        if (syncToCloud) syncToCloud();
-    }, 500);
-  };
-
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setImportConfig({ ...importConfig, content: event.target.result, fileName: file.name });
-    };
-    reader.readAsText(file);
+     setShowForm(false);
+     showToast('Đã lưu thay đổi đơn hàng!');
   };
 
   const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
@@ -217,13 +142,9 @@ export const useOrdersManager = () => {
     expandedOrderId, setExpandedOrderId,
     filterStatus, setFilterStatus,
     filterChannel, setFilterChannel,
-    showImportModal, setShowImportModal,
-    importConfig, setImportConfig,
-    previewOrders, setPreviewOrders,
-    importableChannels,
-    handlePreviewCSV,
     formData, setFormData,
-    handleEdit, handleSave, confirmImport, handleFileUpload,
+    handleEdit, handleSave,
+
     sortConfig, setSortConfig, handleSort,
     displayOrders,
     updateStatus, toggleExpand, selectedOrder,

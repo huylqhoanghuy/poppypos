@@ -1,7 +1,8 @@
-import React from 'react';
-import { Calendar, Download, Globe, Filter } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Calendar, Download, Globe, Filter, ChevronDown } from 'lucide-react';
 import { formatMoney } from '../utils/formatter';
 import SmartTable from '../components/SmartTable';
+import SmartDateFilter from '../components/SmartDateFilter';
 
 const ChannelReportsUI = ({
   filterDate,
@@ -10,8 +11,9 @@ const ChannelReportsUI = ({
   handlePresetChange,
   timeTab,
   setTimeTab,
-  reportData
+    reportData
 }) => {
+
   if (!reportData) return <div style={{ padding: '40px', textAlign: 'center' }}>Đang tải dữ liệu báo cáo...</div>;
 
   const channelCols = [
@@ -203,38 +205,14 @@ const ChannelReportsUI = ({
          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, color: 'var(--text-secondary)' }}>
              <Filter size={18} /> Bộ Lọc Tổng Cục Số Liệu:
          </div>
-         <div style={{ display: 'flex', background: 'rgba(0,0,0,0.05)', borderRadius: '8px', padding: '4px' }}>
-             {['today', 'week', 'month', 'year'].map(pt => {
-                 const names = { today: 'Hôm Nay', week: 'Tuần Này', month: 'Tháng Này', year: 'Năm Nay' };
-                 return (
-                    <button key={pt} onClick={() => handlePresetChange(pt)} 
-                            style={{ 
-                                padding: '0 16px', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px', display: 'flex', alignItems: 'center',
-                                background: datePreset === pt ? 'white' : 'transparent',
-                                color: datePreset === pt ? 'var(--primary)' : 'var(--text-secondary)',
-                                boxShadow: datePreset === pt ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                             }}>
-                        {names[pt]}
-                    </button>
-                 );
-             })}
-             <button onClick={() => handlePresetChange('custom')}
-                 style={{ 
-                    padding: '0 16px', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px',
-                    background: datePreset === 'custom' ? 'white' : 'transparent',
-                    color: datePreset === 'custom' ? 'var(--primary)' : 'var(--text-secondary)',
-                    boxShadow: datePreset === 'custom' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                 }}>Tùy Chọn</button>
+         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <SmartDateFilter 
+               filterDate={filterDate}
+               setFilterDate={setFilterDate}
+               datePreset={datePreset}
+               handlePresetChange={handlePresetChange}
+            />
          </div>
-
-         {datePreset === 'custom' && (
-             <div style={{ display:'flex', alignItems:'center', gap:'12px', borderLeft: '1px solid var(--surface-border)', paddingLeft: '16px' }}>
-                <Calendar size={18} color="var(--primary)" />
-                <input type="date" className="form-input" style={{ width:'140px', padding: '6px 12px' }} value={filterDate.start} onChange={e => setFilterDate({...filterDate, start: e.target.value})} />
-                <span>đến</span>
-                <input type="date" className="form-input" style={{ width:'140px', padding: '6px 12px' }} value={filterDate.end} onChange={e => setFilterDate({...filterDate, end: e.target.value})} />
-             </div>
-         )}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>

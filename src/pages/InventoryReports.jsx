@@ -1,11 +1,12 @@
-import React, { useMemo, useState } from 'react';
-import { Package, AlertTriangle, TrendingUp, BarChart3, Download, Filter, Calendar, Activity } from 'lucide-react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
+import { Package, AlertTriangle, TrendingUp, BarChart3, Download, Filter, Calendar, Activity, ChevronDown } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { formatMoney } from '../utils/formatter';
 import SmartTable from '../components/SmartTable';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, LineElement, PointElement, ArcElement } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import SmartDateFilter from '../components/SmartDateFilter';
 
 ChartJS.register(
   CategoryScale,
@@ -23,31 +24,39 @@ ChartJS.register(
 const InventoryReports = () => {
   const { state } = useData();
   const [filterDate, setFilterDate] = useState({ start: '', end: '' });
-  const [datePreset, setDatePreset] = useState('month'); 
+  const [datePreset, setDatePreset] = useState('this_month'); 
 
   const handlePresetChange = (preset) => {
     setDatePreset(preset);
     const now = new Date();
-    const startObj = new Date(now);
-    const endObj = new Date(now);
+    let startObj = new Date(now);
+    let endObj = new Date(now);
     
     if (preset === 'today') {
-      // today is same day
-    } else if (preset === 'week') {
-      const day = now.getDay();
-      const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-      startObj.setDate(diff);
-    } else if (preset === 'month') {
+      // today
+    } else if (preset === 'yesterday') {
+      startObj.setDate(now.getDate() - 1);
+      endObj.setDate(now.getDate() - 1);
+    } else if (preset === '7days') {
+      startObj.setDate(now.getDate() - 6);
+    } else if (preset === '30days') {
+      startObj.setDate(now.getDate() - 29);
+    } else if (preset === 'this_month') {
       startObj.setDate(1);
-    } else if (preset === 'year') {
+    } else if (preset === 'last_month') {
+      startObj.setMonth(now.getMonth() - 1, 1);
+      endObj.setMonth(now.getMonth(), 0);
+    } else if (preset === 'this_year') {
       startObj.setMonth(0, 1);
+    } else if (preset === 'all') {
+      startObj.setFullYear(2000, 0, 1);
     }
 
     if (preset !== 'custom') {
       const pad = n => n.toString().padStart(2, '0');
       setFilterDate({
-        start: `${startObj.getFullYear()}-${pad(startObj.getMonth()+1)}-${pad(startObj.getDate())}`,
-        end: `${endObj.getFullYear()}-${pad(endObj.getMonth()+1)}-${pad(endObj.getDate())}`
+        start: preset === 'all' ? '' : `${startObj.getFullYear()}-${pad(startObj.getMonth()+1)}-${pad(startObj.getDate())}`,
+        end: preset === 'all' ? '' : `${endObj.getFullYear()}-${pad(endObj.getMonth()+1)}-${pad(endObj.getDate())}`
       });
     }
   };
@@ -337,38 +346,15 @@ const InventoryReports = () => {
          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, color: 'var(--text-secondary)' }}>
              <Filter size={18} /> Bộ Lọc Theo Thời Gian (Dòng chảy):
          </div>
-         <div style={{ display: 'flex', background: 'rgba(0,0,0,0.05)', borderRadius: '8px', padding: '4px' }}>
-             {['today', 'week', 'month', 'year'].map(pt => {
-                 const names = { today: 'Hôm Nay', week: 'Tuần Này', month: 'Tháng Này', year: 'Năm Nay' };
-                 return (
-                    <button key={pt} onClick={() => handlePresetChange(pt)} 
-                            style={{ 
-                                padding: '0 16px', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px', display: 'flex', alignItems: 'center',
-                                background: datePreset === pt ? 'white' : 'transparent',
-                                color: datePreset === pt ? 'var(--primary)' : 'var(--text-secondary)',
-                                boxShadow: datePreset === pt ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                             }}>
-                        {names[pt]}
-                    </button>
-                 );
-             })}
-             <button onClick={() => setDatePreset('custom')}
-                 style={{ 
-                    padding: '0 16px', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px',
-                    background: datePreset === 'custom' ? 'white' : 'transparent',
-                    color: datePreset === 'custom' ? 'var(--primary)' : 'var(--text-secondary)',
-                    boxShadow: datePreset === 'custom' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                 }}>Tùy Chọn</button>
+         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+             <SmartDateFilter 
+                 filterDate={filterDate}
+                 setFilterDate={setFilterDate}
+                 datePreset={datePreset}
+                 setDatePreset={setDatePreset}
+                 handlePresetChange={handlePresetChange}
+             />
          </div>
-
-         {datePreset === 'custom' && (
-             <div style={{ display:'flex', alignItems:'center', gap:'12px', borderLeft: '1px solid var(--surface-border)', paddingLeft: '16px' }}>
-                <Calendar size={18} color="var(--primary)" />
-                <input type="date" className="form-input" style={{ width:'140px', padding: '6px 12px' }} value={filterDate.start} onChange={e => setFilterDate({...filterDate, start: e.target.value})} />
-                <span>đến</span>
-                <input type="date" className="form-input" style={{ width:'140px', padding: '6px 12px' }} value={filterDate.end} onChange={e => setFilterDate({...filterDate, end: e.target.value})} />
-             </div>
-         )}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>

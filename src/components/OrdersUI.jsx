@@ -1,6 +1,9 @@
 import React from 'react';
 import { ClipboardList, Trash2, CheckCircle, Clock, XCircle, Eye, UploadCloud, CheckCircle2, FileText, X, CheckSquare, Square, AlertTriangle, Edit2, Plus, Minus, RefreshCw } from 'lucide-react';
 import ModuleLayout from './ModuleLayout';
+import ImportData from '../pages/ImportData';
+import { useData } from '../context/DataContext';
+import { useImportManager } from '../hooks/useImportManager';
 
 const OrdersUI = ({ manager }) => {
   const {
@@ -9,18 +12,20 @@ const OrdersUI = ({ manager }) => {
     _expandedOrderId, setExpandedOrderId,
     filterStatus, setFilterStatus,
     filterChannel, setFilterChannel,
-    showImportModal, setShowImportModal,
-    importConfig, setImportConfig,
-    previewOrders, setPreviewOrders,
-    importableChannels,
-    handlePreviewCSV,
     formData, setFormData,
-    handleEdit, handleSave, confirmImport, handleFileUpload,
+    handleEdit, handleSave,
     _sortConfig, _handleSort,
     displayOrders,
     updateStatus, toggleExpand, selectedOrder,
     _selectedIds, _toggleSelection,
   } = manager;
+
+  const { dispatch, syncToCloud } = useData();
+  const showToast = (message, type = 'success') => {
+      dispatch({ type: 'SHOW_TOAST', payload: { message, type } });
+  };
+
+
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -46,9 +51,11 @@ const OrdersUI = ({ manager }) => {
     </div>
   );
 
+  const [showImportModal, setShowImportModal] = React.useState(false);
+
   const headerActionsBlock = (
-    <button className="btn btn-primary table-feature-btn" onClick={() => setShowImportModal(true)} style={{ background: 'var(--warning)', borderColor: 'var(--warning)', color: 'black' }}>
-      <UploadCloud size={16} /> Nhập Báo Cáo Sàn
+    <button className="btn btn-primary" onClick={() => setShowImportModal(true)}>
+      <UploadCloud size={18} /> Đồng Bộ Đơn Sàn (Import)
     </button>
   );
 
@@ -301,162 +308,17 @@ const OrdersUI = ({ manager }) => {
       )}
 
       {showImportModal && (
-        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1300, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
-           <div className="glass-panel" style={{ width: previewOrders ? '90vw' : '600px', maxWidth: '1200px', maxHeight: '95vh', display: 'flex', flexDirection: 'column', padding: '32px', background: 'var(--bg-color)', overflow: 'hidden' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                 <h3 style={{ margin: 0, display:'flex', alignItems:'center', gap:'12px', fontSize: '20px', fontWeight: 800 }}>
-                    <UploadCloud color="var(--primary)"/> {previewOrders ? 'Bảng Xem Trước (Preview)' : 'Import doanh thu từ kênh bán'}
-                 </h3>
-                 <button className="btn btn-ghost" onClick={() => { setShowImportModal(false); setPreviewOrders(null); }} style={{ padding: '8px' }}><X size={20}/></button>
+        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1300, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}>
+           <div className="glass-panel" style={{ width: '1000px', maxWidth: '95vw', height: '90vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-color)', overflow: 'hidden', borderRadius: '16px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px 24px 0 24px' }}>
+                 <button className="btn btn-ghost" onClick={() => setShowImportModal(false)} style={{ padding: '8px', zIndex: 10 }}><X size={24} color="var(--text-secondary)"/></button>
               </div>
-
-              {!previewOrders ? (
-                <div style={{ overflowY: 'auto' }}>
-                  <div style={{ background:'var(--surface-variant)', padding:'16px', borderRadius:'12px', border:'1px solid var(--surface-border)', marginBottom:'24px' }}>
-                     <div style={{ display: 'flex', gap: '16px' }}>
-                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>1. Từ Kênh Bán Hàng:</label>
-                            <select className="form-input" style={{ width: '100%', padding: '10px', borderColor: importConfig.channelId ? 'var(--surface-border)' : 'var(--danger)' }} value={importConfig.channelId} onChange={e => setImportConfig({...importConfig, channelId: e.target.value})}>
-                               <option value="">-- Chọn Kênh Khớp Lệnh --</option>
-                               {importableChannels.length === 0 && <option value="" disabled>Chưa có kênh nào được mở quyền Import. Hãy cấu hình ở mục Cài đặt Kênh Bán.</option>}
-                               {importableChannels.map(ch => (
-                                  <option key={ch.id} value={ch.id}>{ch.name}</option>
-                               ))}
-                            </select>
-                         </div>
-                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>2. Chảy vào Tài Khoản (Tiền về):</label>
-                            <select className="form-input" style={{ width: '100%', padding: '10px', borderColor: 'var(--surface-border)' }} value={importConfig.accountId || ''} onChange={e => setImportConfig({...importConfig, accountId: e.target.value})}>
-                               <option value="">-- Tự động theo hệ thống --</option>
-                               {state.accounts?.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
-                            </select>
-                         </div>
-                     </div>
-                  </div>
-                  <div style={{ background:'var(--surface-variant)', padding:'16px', borderRadius:'12px', border:'1px solid var(--surface-border)', marginBottom:'24px' }}>
-                     <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                        <strong>Cơ chế Nhận Diện Thông Minh: </strong>Để thuật toán <strong>trừ Kho nguyên liệu & tính Giá vốn chuẩn 100%</strong>, báo cáo của bạn BẮT BUỘC phải chứa tên món ăn. Kho sẽ không trừ đúng nếu tên món KHÔNG khớp nội bộ.
-                     </p>
-                     <div style={{ background: '#F8FAFC', padding: '12px', borderRadius: '8px', border: '1px solid var(--surface-border)' }}>
-                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>Cấu trúc Cột Khuyên Dùng (Dòng đầu tiên là tiêu đề cột, Excel hoặc CSV):</div>
-                        <pre style={{ margin: 0, fontSize: '12px', color: 'var(--primary)', overflowX: 'auto', background: 'transparent' }}>
-Mã Đơn | Tên Món | Số Lượng | Doanh Thu | Thực Thu | Ngày (Tùy chọn)
-                        </pre>
-                     </div>
-                  </div>
-                  <div style={{ marginBottom:'24px' }}>
-                     <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>1. Chọn File Báo Cáo (.csv, .txt):</label>
-                     <div style={{ position: 'relative', background: '#F8FAFC', padding: '24px', borderRadius: '12px', border: '2px dashed var(--surface-border)', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s', overflow: 'hidden' }}
-                          onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary)'}
-                          onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--surface-border)'}>
-                        <input type="file" accept=".csv, .txt" onChange={handleFileUpload} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }} />
-                        <UploadCloud size={32} color={importConfig.fileName ? 'var(--success)' : 'var(--text-secondary)'} style={{ margin: '0 auto 12px' }} />
-                        <strong style={{ display: 'block', color: importConfig.fileName ? 'var(--success)' : 'var(--text-primary)' }}>
-                           {importConfig.fileName ? `Đã chọn: ${importConfig.fileName}` : 'Bấm vào đây duyệt file từ máy'}
-                        </strong>
-                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>Hỗ trợ định dạng .csv hoặc .txt</span>
-                     </div>
-                  </div>
-                  
-                  <div style={{ marginBottom:'24px' }}>
-                     <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>Hoặc dán trực tiếp dữ liệu thô vào đây:</label>
-                     <textarea className="form-input" style={{ minHeight:'80px', fontFamily:'monospace', resize: 'vertical', width: '100%' }} placeholder="Mã đơn, Doanh thu, Thực thu..." value={importConfig.content} onChange={e => setImportConfig({...importConfig, content: e.target.value})} />
-                  </div>
-                  <div style={{ display:'flex', gap:'8px' }}>
-                     <button className="btn btn-primary" style={{ flex:1 }} onClick={handlePreviewCSV}><FileText size={18}/> Phân tích dữ liệu</button>
-                     <button className="btn btn-ghost" style={{ flex:1 }} onClick={() => setShowImportModal(false)}>Hủy</button>
-                  </div>
-                </div>
-              ) : (() => {
-                const selectedChannel = importableChannels.find(ch => ch.id === importConfig.channelId);
-                const configuredRate = Number(selectedChannel?.commission ?? selectedChannel?.discountRate ?? 0);
-                const totalGross = previewOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
-                const totalNet = previewOrders.reduce((sum, o) => sum + (o.netAmount || 0), 0);
-                const totalDeduction = totalGross > totalNet ? (totalGross - totalNet) : 0;
-                const actualRate = totalGross > 0 ? (totalDeduction / totalGross * 100) : 0;
-                const isRateDeviated = Math.abs(actualRate - configuredRate) > 0.5;
-
-                return (
-                <>
-                  {isRateDeviated && totalGross > 0 && (
-                     <div style={{ background: '#FEF2F2', padding: '16px', borderRadius: '12px', border: '1px solid #FECACA', marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                        <AlertTriangle color="#DC2626" size={24} style={{ flexShrink: 0 }} />
-                        <div style={{ color: '#991B1B' }}>
-                           <h4 style={{ margin: '0 0 4px 0', fontSize: '15px', fontWeight: 800 }}>Phát hiện chênh lệch Phí Sàn!</h4>
-                           <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.5 }}>
-                              Kênh <strong>{selectedChannel?.name}</strong> đang được cấu hình thu phí <strong>{configuredRate}%</strong>. Tuy nhiên, phân tích file CSV cho thấy sàn thực thu tỷ lệ trung bình là <strong style={{color:'#DC2626'}}>{actualRate.toFixed(2)}%</strong>. 
-                              <br/>Hệ thống sẽ <strong>ưu tiên lưu số tiền khấu trừ thực tế từ file</strong> để đảm bảo chuẩn xác dòng tiền. Hãy cân nhắc vào Cấu Hình Kênh cập nhật lại % nếu sàn đã đổi chính sách!
-                           </p>
-                        </div>
-                     </div>
-                  )}
-                  <div style={{ flex: 1, overflowY: 'auto', background: '#FFFFFF', borderRadius: '12px', border: '1px solid var(--surface-border)', marginBottom: '24px' }}>
-                     <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                        <thead style={{ position: 'sticky', top: 0, background: 'var(--surface-variant)', zIndex: 1, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                           <tr>
-                              <th style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 800 }}>Mã Đơn</th>
-                              <th style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 800 }}>Thời Gian</th>
-                              <th style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 800 }}>Khách Hàng</th>
-                              <th style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 800 }}>Sản Phẩm</th>
-                              <th style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 800, textAlign: 'right' }}>Tổng Hàng (Gross)</th>
-                              <th style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 800, textAlign: 'right' }}>Phí Sàn</th>
-                              <th style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 800, textAlign: 'right' }}>Thực Thu (Net)</th>
-                           </tr>
-                        </thead>
-                        <tbody>
-                           {previewOrders.map(order => (
-                              <tr key={order.id} style={{ borderBottom: '1px solid var(--surface-border)' }}>
-                                 <td style={{ padding: '16px', fontWeight: 600 }}>{order.orderCode}</td>
-                                 <td style={{ padding: '16px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                                    {new Date(order.date).toLocaleString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}
-                                 </td>
-                                 <td style={{ padding: '16px' }}>
-                                    <span style={{ display: 'block', fontWeight: 600 }}>{order.customerName}</span>
-                                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{order.channelName}</span>
-                                 </td>
-                                 <td style={{ padding: '16px' }}>
-                                    {order.items.map((item, idx) => (
-                                       <div key={idx} style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px', fontSize: '13px' }}>
-                                          <span style={{ color: 'var(--primary)', fontWeight: 700 }}>x{item.quantity}</span>
-                                          <span style={{ flex: 1, color: order.isFuzzyRecognized ? '#B45309' : 'var(--text-primary)' }}>
-                                              {item.product?.name} 
-                                          </span>
-                                       </div>
-                                    ))}
-                                    {order.isFuzzyRecognized && (
-                                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', background: '#FEF3C7', color: '#92400E', padding: '2px 8px', borderRadius: '12px', marginTop: '4px' }}>
-                                          <AlertTriangle size={12}/> Nội suy từ giá
-                                       </div>
-                                    )}
-                                 </td>
-                                 <td style={{ padding: '16px', textAlign: 'right', fontWeight: 600 }}>
-                                    {order.totalAmount.toLocaleString('vi-VN')} đ
-                                 </td>
-                                 <td style={{ padding: '16px', textAlign: 'right', fontWeight: 600, color: '#EA580C' }}>
-                                    -{Math.max(0, order.totalAmount - order.netAmount).toLocaleString('vi-VN')} đ
-                                 </td>
-                                 <td style={{ padding: '16px', textAlign: 'right', fontWeight: 800, color: 'var(--success)' }}>
-                                    {order.netAmount.toLocaleString('vi-VN')} đ
-                                 </td>
-                              </tr>
-                           ))}
-                        </tbody>
-                     </table>
-                  </div>
-                  <div style={{ display:'flex', gap:'12px', borderTop: '1px solid var(--surface-border)', paddingTop: '20px' }}>
-                     <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Số lượng đơn hợp lệ:</div>
-                        <div style={{ fontSize: '24px', fontWeight: 900, color: 'var(--primary)' }}>{previewOrders.length}</div>
-                     </div>
-                     <button className="btn btn-ghost" style={{ padding: '0 24px' }} onClick={() => setPreviewOrders(null)}>Quay lại</button>
-                     <button className="btn btn-primary" style={{ padding: '0 32px' }} onClick={confirmImport}><CheckCircle2 size={18}/> Xác Nhận Lưu Dữ Liệu</button>
-                  </div>
-                </>
-                );
-              })()}
-            </div>
-         </div>
-       )}
+              <div style={{ flex: 1, padding: '0 24px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                 <ImportData />
+              </div>
+           </div>
+        </div>
+      )}
     </>
   );
 };

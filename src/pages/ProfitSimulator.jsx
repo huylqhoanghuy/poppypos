@@ -6,6 +6,7 @@ import { useCategories } from '../hooks/useCategories';
 import { useSalesChannels } from '../hooks/useSalesChannels';
 import { useInventory } from '../hooks/useInventory';
 import CurrencyInput from '../components/CurrencyInput';
+import { formatMoney } from '../utils/formatter';
 
 const ProfitSimulator = () => {
   const { activeProducts } = useProducts();
@@ -167,7 +168,7 @@ const ProfitSimulator = () => {
                   </div>
                   <div style={{ display: 'flex', flexShrink: 0, justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
                     <p style={{ margin: 0, fontSize: '15px', color: 'var(--primary)', fontWeight: 800 }}>
-                      {product.price.toLocaleString('vi-VN')} đ
+                      {formatMoney(product.price)} đ
                     </p>
                     <div style={{ background: '#F0F9FF', padding: '6px', borderRadius: '10px', display: 'flex' }}>
                        <Plus size={16} color="var(--primary)"/>
@@ -198,7 +199,7 @@ const ProfitSimulator = () => {
                 <div style={{ flex: 1 }}>
                   <h5 style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>{item.name}</h5>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                     <p style={{ margin: 0, fontSize: '13px', color: 'var(--primary)', fontWeight: 800 }}>{(item.price * item.qty).toLocaleString('vi-VN')} đ</p>
+                     <p style={{ margin: 0, fontSize: '13px', color: 'var(--primary)', fontWeight: 800 }}>{formatMoney(item.price * item.qty)} đ</p>
                   </div>
                 </div>
                 
@@ -240,7 +241,7 @@ const ProfitSimulator = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600 }}>Doanh Thu Gốc (Gross):</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)' }}>{analysis.grossRevenue.toLocaleString('vi-VN')} đ</span>
+                <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)' }}>{formatMoney(analysis.grossRevenue)} đ</span>
                 {analysis.grossRevenue > 0 && <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>(100%)</span>}
               </div>
             </div>
@@ -251,7 +252,7 @@ const ProfitSimulator = () => {
               </span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '14px', fontWeight: 800, color: '#EA580C' }}>
-                  -{analysis.channelFee.toLocaleString('vi-VN')} đ
+                  -{formatMoney(analysis.channelFee)} đ
                 </span>
                 {analysis.grossRevenue > 0 && <span style={{ fontSize: '12px', color: '#EA580C', opacity: 0.8 }}>({((analysis.channelFee / analysis.grossRevenue) * 100).toFixed(1)}%)</span>}
               </div>
@@ -263,7 +264,7 @@ const ProfitSimulator = () => {
               </span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '14px', fontWeight: 800, color: '#EA580C' }}>
-                  -{analysis.totalCogs.toLocaleString('vi-VN')} đ
+                  -{formatMoney(analysis.totalCogs)} đ
                 </span>
                 {analysis.grossRevenue > 0 && <span style={{ fontSize: '12px', color: '#EA580C', opacity: 0.8 }}>({((analysis.totalCogs / analysis.grossRevenue) * 100).toFixed(1)}%)</span>}
               </div>
@@ -276,7 +277,7 @@ const ProfitSimulator = () => {
                   </span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '14px', fontWeight: 800, color: '#EA580C' }}>
-                      -{(Number(manualDiscount) || 0).toLocaleString('vi-VN')} đ
+                      -{formatMoney(Number(manualDiscount) || 0)} đ
                     </span>
                     {analysis.grossRevenue > 0 && <span style={{ fontSize: '12px', color: '#EA580C', opacity: 0.8 }}>({(((Number(manualDiscount) || 0) / analysis.grossRevenue) * 100).toFixed(1)}%)</span>}
                   </div>
@@ -310,7 +311,7 @@ const ProfitSimulator = () => {
                 <span style={{ fontSize: '12px', fontWeight: 700, color: themeColor, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Lãi Ròng Ước Tính</span>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                   <span style={{ fontSize: '24px', fontWeight: 900, color: themeColor, letterSpacing: '-0.5px' }}>
-                    {analysis.netProfit.toLocaleString('vi-VN')} đ
+                    {formatMoney(analysis.netProfit)} đ
                   </span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'white', padding: '4px 8px', borderRadius: '8px', border: `1px solid ${border}` }}>
                     <Icon size={14} color={themeColor} strokeWidth={3} />

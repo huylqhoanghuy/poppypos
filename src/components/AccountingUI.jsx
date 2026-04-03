@@ -1,10 +1,11 @@
 import React from 'react';
-import { Wallet, Plus, Search, Building2, CreditCard, Banknote, ArrowLeftRight, Trash2, Edit3, FileText, Printer, AlertCircle, TrendingUp } from 'lucide-react';
+import { Wallet, Plus, Search, Building2, CreditCard, Banknote, ArrowLeftRight, Trash2, Edit3, FileText, Printer, AlertCircle, TrendingUp, Calendar } from 'lucide-react';
 import CurrencyInput from './CurrencyInput';
 import SmartTable from './SmartTable';
 import BulkActionBar from './BulkActionBar';
 import UnifiedTrash from './UnifiedTrash';
-import SmartDatePicker from './SmartDatePicker';
+import SmartDateFilter from './SmartDateFilter';
+import { numberToWords } from '../utils/formatter';
 
 const Settings2 = ({ size, onClick, style, title }) => (
   <Edit3 size={size} onClick={onClick} style={style} title={title} />
@@ -197,20 +198,13 @@ export default function AccountingUI({ manager }) {
                   <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'var(--font-sm)' }}>
                      <TrendingUp size={18} color="var(--primary)"/> Thống Kê Nhanh
                   </h4>
-                  <select 
-                    className="table-feature-select"
-                    value={datePreset} 
-                    onChange={e => setDatePreset(e.target.value)}
-                    style={{ borderColor: 'var(--primary)', color: 'var(--primary)' }}
-                  >
-                    <option value="today">Hôm nay</option>
-                    <option value="yesterday">Hôm qua</option>
-                    <option value="7days">7 ngày qua</option>
-                    <option value="30days">30 ngày qua</option>
-                    <option value="this_month">Tháng này</option>
-                    <option value="last_month">Tháng trước</option>
-                    <option value="this_year">Năm nay</option>
-                  </select>
+                     <SmartDateFilter 
+                         filterDate={manager.models.statsFilterDate}
+                         setFilterDate={manager.actions.setStatsFilterDate}
+                         datePreset={datePreset}
+                         setDatePreset={setDatePreset}
+                         align="right"
+                     />
                </div>
                
                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
@@ -267,16 +261,6 @@ export default function AccountingUI({ manager }) {
 
                   {activeJournalTab !== 'payable' && activeJournalTab !== 'receivable' && (
                      <>
-                       <button className="btn btn-ghost" style={{ display: 'flex', gap: '6px', alignItems: 'center', position: 'relative', background: 'var(--surface-color)', border: '1px solid var(--surface-border)', height: '34px', padding: '0 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 600 }} onClick={toggleTrashMode}>
-                         <Trash2 size={14} color={trashMode ? 'var(--primary)' : 'var(--text-secondary)'}/>
-                         <span className="mobile-hide" style={{ color: trashMode ? 'var(--primary)' : 'var(--text-primary)' }}>{trashMode ? 'Quay lại Sổ Quỹ' : 'Thùng rác'}</span>
-                         {trashItems && trashItems.length > 0 && !trashMode && (
-                           <span style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--danger)', color: 'white', fontSize: '10px', padding: '2px 6px', borderRadius: '10px', fontWeight: 800 }}>
-                             {trashItems.length}
-                           </span>
-                         )}
-                       </button>
-
                        <select 
                           className="table-feature-select"
                           value={selectedAcc?.id || 'all'} 
@@ -315,62 +299,23 @@ export default function AccountingUI({ manager }) {
                      </select>
                   )}
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }} ref={datePickerRef}>
-                     <button 
-                        className="btn btn-ghost"
-                        style={{ padding: '0 14px', height: '34px', background: 'var(--surface-color)', border: '1px solid var(--surface-border)', borderRadius: '8px', fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)', display: 'flex', gap: '6px', alignItems: 'center' }}
-                        onClick={() => setShowDatePicker(!showDatePicker)}
-                     >
-                        <AlertCircle size={14} color="var(--primary)" />
-                        {currentPresetFilterLabel}
-                        <ArrowLeftRight size={14} color="var(--text-secondary)" style={{ marginLeft: '4px', transform: showDatePicker ? 'rotate(90deg)' : 'rotate(0deg)', transition: '0.2s' }} />
-                     </button>
-
-                     {showDatePicker && (
-                         <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: '0', background: '#FFFFFF', padding: '16px', borderRadius: '12px', border: '1px solid var(--surface-border)', boxShadow: 'var(--shadow-lg)', zIndex: 110, display: 'flex', gap: '20px', minWidth: '320px' }}>
-                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '160px' }}>
-                                <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '4px' }}>Mốc thời gian</div>
-                                {Object.entries(datePresetsDict).map(([key, label]) => {
-                                   if (key === 'custom') return null;
-                                   return (
-                                      <button 
-                                        key={key}
-                                        onClick={() => { handlePresetApply(key); setShowDatePicker(false); }}
-                                        style={{ padding: '8px 12px', textAlign: 'left', background: (filters.dateFilterPreset||'all') === key ? 'var(--primary)' : 'transparent', color: (filters.dateFilterPreset||'all') === key ? '#FFF' : 'var(--text-primary)', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, transition: '0.2s' }}
-                                      >
-                                        {label}
-                                      </button>
-                                   )
-                                })}
-                             </div>
-                             
-                             <div style={{ width: '1px', background: 'var(--surface-border)' }}></div>
-
-                             <div>
-                                <SmartDatePicker 
-                                   initialStart={filters.start}
-                                   initialEnd={filters.end}
-                                   onConfirm={(start, end) => {
-                                      let endNormalized = end;
-                                      if (end) {
-                                          const e = new Date(end);
-                                          e.setHours(23, 59, 59, 999);
-                                          endNormalized = e;
-                                      }
-                                      const pad = n => n.toString().padStart(2, '0');
-                                      setFilters({
-                                          ...filters,
-                                          start: start ? `${start.getFullYear()}-${pad(start.getMonth()+1)}-${pad(start.getDate())}` : '',
-                                          end: endNormalized ? `${endNormalized.getFullYear()}-${pad(endNormalized.getMonth()+1)}-${pad(endNormalized.getDate())}` : '',
-                                          dateFilterPreset: 'custom'
-                                      });
-                                      setShowDatePicker(false);
-                                   }}
-                                   onCancel={() => setShowDatePicker(false)}
-                                />
-                             </div>
-                         </div>
-                     )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                     <SmartDateFilter 
+                         filterDate={{ start: filters.start, end: filters.end }}
+                         setFilterDate={(date) => {
+                             if (!date) return;
+                             setFilters({
+                                 ...filters,
+                                 start: date.start,
+                                 end: date.end,
+                                 dateFilterPreset: 'custom'
+                             });
+                         }}
+                         datePreset={filters.dateFilterPreset || 'all'}
+                         handlePresetChange={(preset) => handlePresetApply(preset)}
+                         icon={AlertCircle}
+                         align="right"
+                     />
                   </div>
                   <button className="btn btn-ghost" onClick={() => { setFilters({ start: '', end: '', type: 'all', categoryId: 'all', search: '', dateFilterPreset: 'all' }); setSelectedAcc(null); setActiveJournalTab('all'); setDebtFilters({ supplierId: 'all', channelId: 'all' }); }} style={{ color: 'var(--danger)', fontSize: '13px', fontWeight: 600, padding: '0 12px', height: '34px', border: '1px dashed #FCA5A5', borderRadius: '8px', background: '#FEF2F2' }}>Xóa Lọc</button>
                </div>
@@ -426,24 +371,31 @@ export default function AccountingUI({ manager }) {
                    emptyMessage="Toàn bộ khoản thu đã được thanh toán đầy đủ."
                  />
                ) : trashMode ? (
-                 <UnifiedTrash 
-                   items={trashItems}
-                   columns={[
-                     { key: 'voucherCode', label: 'Mã Phiếu', render: val => <span style={{fontWeight: 700, color: 'var(--primary)'}}>{val}</span> },
-                     { key: 'date', label: 'Ngày Tháng', render: val => new Date(val).toLocaleString('vi-VN', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) },
-                     { key: 'accountId', label: 'Vật Mang (Ví)', render: val => rootState.accounts.find(a => a.id === val)?.name || val },
-                     { key: 'amount', label: 'Số Tiền', render: (_, t) => (
-                         <span style={{ fontWeight: 800, color: t.type === 'Thu' ? 'var(--success)' : 'var(--danger)' }}>
-                            {t.type === 'Thu' ? '+' : '-'}{t.amount.toLocaleString('vi-VN')} đ
-                         </span>
-                     )}
-                   ]}
-                   onRestore={handlers?.handleBulkRestore ? (id) => handlers.handleBulkRestore([id]) : null}
-                   onHardDelete={handlers?.handleBulkHardDelete ? (id) => handlers.handleBulkHardDelete([id]) : null}
-                   onBulkRestore={handlers?.handleBulkRestore}
-                   onBulkHardDelete={handlers?.handleBulkHardDelete}
-                   emptyMessage="Không có chứng từ nào trong thùng rác."
-                 />
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                   <div style={{ display: 'flex' }}>
+                     <button className="btn btn-ghost" style={{ display: 'flex', gap: '6px', alignItems: 'center', background: 'var(--surface-color)', border: '1px solid var(--surface-border)', height: '34px', padding: '0 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }} onClick={toggleTrashMode}>
+                       <Trash2 size={14} color="var(--primary)"/> Quay lại Sổ Quỹ
+                     </button>
+                   </div>
+                   <UnifiedTrash 
+                     items={trashItems}
+                     columns={[
+                       { key: 'voucherCode', label: 'Mã Phiếu', render: val => <span style={{fontWeight: 700, color: 'var(--primary)'}}>{val}</span> },
+                       { key: 'date', label: 'Ngày Tháng', render: val => new Date(val).toLocaleString('vi-VN', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) },
+                       { key: 'accountId', label: 'Vật Mang (Ví)', render: val => rootState.accounts.find(a => a.id === val)?.name || val },
+                       { key: 'amount', label: 'Số Tiền', render: (_, t) => (
+                           <span style={{ fontWeight: 800, color: t.type === 'Thu' ? 'var(--success)' : 'var(--danger)' }}>
+                              {t.type === 'Thu' ? '+' : '-'}{t.amount.toLocaleString('vi-VN')} đ
+                           </span>
+                       )}
+                     ]}
+                     onRestore={handlers?.handleBulkRestore ? (id) => handlers.handleBulkRestore([id]) : null}
+                     onHardDelete={handlers?.handleBulkHardDelete ? (id) => handlers.handleBulkHardDelete([id]) : null}
+                     onBulkRestore={handlers?.handleBulkRestore}
+                     onBulkHardDelete={handlers?.handleBulkHardDelete}
+                     emptyMessage="Không có chứng từ nào trong thùng rác."
+                   />
+                 </div>
                ) : (
                  <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                    {selectedIds && selectedIds.length > 0 && (
@@ -455,6 +407,16 @@ export default function AccountingUI({ manager }) {
                    )}
                    <SmartTable 
                      data={filteredTransactions}
+                     topCustomLeft={
+                        <button className="btn btn-ghost" style={{ display: 'flex', gap: '6px', alignItems: 'center', background: 'var(--surface-color)', border: '1px dashed var(--danger)', height: '28px', padding: '0 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, color: 'var(--danger)', position: 'relative' }} onClick={toggleTrashMode}>
+                           <Trash2 size={12} color="var(--danger)"/> Thùng rác
+                           {trashItems && trashItems.length > 0 && (
+                             <span style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--danger)', color: 'white', fontSize: '9px', padding: '1px 5px', borderRadius: '10px', fontWeight: 800 }}>
+                               {trashItems.length}
+                             </span>
+                           )}
+                        </button>
+                     }
                      selectable={true}
                      selectedIds={selectedIds}
                      onSelectToggle={toggleSelection}
@@ -689,7 +651,7 @@ export default function AccountingUI({ manager }) {
                  })()}</p>
                  <p><strong>Nội dung:</strong> {viewVoucher.note}</p>
                  <p><strong>Số tiền:</strong> <span style={{ fontSize: '1.2rem', fontWeight: 800 }}>{viewVoucher.amount.toLocaleString()} đ</span></p>
-                 <p><strong>Bằng chữ:</strong> ....................................................................</p>
+                 <p><strong>Bằng chữ:</strong> {numberToWords(viewVoucher.amount)}</p>
                  <p><strong>Tài khoản:</strong> {rootState.accounts.find(a => a.id === viewVoucher.accountId)?.name}</p>
                  {viewVoucher.relatedId && <p><strong>Kèm theo:</strong> Chứng từ gốc {viewVoucher.relatedId}</p>}
               </div>

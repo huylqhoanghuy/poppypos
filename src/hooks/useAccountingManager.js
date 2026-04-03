@@ -25,6 +25,7 @@ export const useAccountingManager = () => {
   const [filters, setFilters] = useState({ start: '', end: '', type: 'all', categoryId: 'all', search: '' });
   const [activeJournalTab, setActiveJournalTab] = useState('all'); // all, income, expense, payable, receivable
   const [datePreset, setDatePreset] = useState('this_month'); 
+  const [statsFilterDate, setStatsFilterDate] = useState({ start: '', end: '' });
 
   useEffect(() => {
     const handleEsc = (e) => {
@@ -70,6 +71,9 @@ export const useAccountingManager = () => {
         end = new Date(now.getFullYear(), now.getMonth(), 0).setHours(23,59,59,999);
     } else if (datePreset === 'this_year') {
         start = new Date(now.getFullYear(), 0, 1).getTime();
+    } else if (datePreset === 'custom') {
+        start = statsFilterDate.start ? new Date(statsFilterDate.start).setHours(0,0,0,0) : new Date(2000,0,1).getTime();
+        end = statsFilterDate.end ? new Date(statsFilterDate.end).setHours(23,59,59,999) : new Date().getTime();
     }
     
     return state.transactions.reduce((acc, t) => {
@@ -80,7 +84,7 @@ export const useAccountingManager = () => {
         }
         return acc;
     }, { income: 0, expense: 0 });
-  }, [state.transactions, datePreset]);
+  }, [state.transactions, datePreset, statsFilterDate]);
 
   const monthlyNet = statsByRange.income - statsByRange.expense;
 
@@ -236,6 +240,7 @@ export const useAccountingManager = () => {
       filters,
       activeJournalTab,
       datePreset,
+      statsFilterDate,
       statsByRange,
       monthlyNet,
       filteredTransactions,
@@ -246,7 +251,7 @@ export const useAccountingManager = () => {
     actions: {
       setSelectedAcc, setShowVoucherModal, setShowAdjustModal, setShowTransferModal, setShowCatModal,
       setViewVoucher, setVForm, setAdjustForm, setTransferForm, setCatForm, setConfirmDelete, setViewOrder,
-      setDebtFilters, setFilters, setActiveJournalTab, setDatePreset,
+      setDebtFilters, setFilters, setActiveJournalTab, setDatePreset, setStatsFilterDate,
       handleAdjustSubmit, handleVoucherSubmit, handleEditTransaction, handleDeleteTransaction, handleProcessDebt
     }
   };

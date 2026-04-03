@@ -15,15 +15,18 @@ import {
   ArrowRightLeft,
   BookOpen,
   Calendar,
-  RefreshCcw
+  RefreshCcw,
+  ChevronDown
 } from 'lucide-react';
 import { useFinancialStatements } from '../hooks/useFinancialStatements';
+import SmartDateFilter from '../components/SmartDateFilter';
 
 export default function FinancialStatements() {
   const { state } = useData();
   const { 
     activeTab, setActiveTab, 
     period, setPeriod, 
+    filterDate, setFilterDate,
     isRefreshing, handleRefresh, 
     statements 
   } = useFinancialStatements(state);
@@ -33,6 +36,7 @@ export default function FinancialStatements() {
     totalRevenue, totalCOGS, cogsByCategory, grossProfit, operatingExpenses, netProfit,
     cashInflows, cashOutflows, netCashFlow, filteredTransactions = []
   } = statements;
+
 
 
 
@@ -58,14 +62,14 @@ export default function FinancialStatements() {
          </div>
 
          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-               <select className="table-feature-select" value={period} onChange={(e) => setPeriod(e.target.value)} style={{ paddingLeft: '32px' }}>
-                  <option value="today">Hôm nay</option>
-                  <option value="month">Tháng này</option>
-                  <option value="year">Năm nay</option>
-                  <option value="all">Toàn thời gian (Lũy kế)</option>
-               </select>
-               <Calendar size={14} style={{ position: 'absolute', left: '10px', color: 'var(--text-secondary)', pointerEvents: 'none' }} />
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <SmartDateFilter 
+                   filterDate={filterDate}
+                   setFilterDate={setFilterDate}
+                   datePreset={period}
+                   setDatePreset={setPeriod}
+                   align="right"
+                />
             </div>
             
             <button onClick={handleRefresh} className="btn btn-primary table-feature-btn">

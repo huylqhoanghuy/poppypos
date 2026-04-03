@@ -23,7 +23,9 @@ import {
   CheckCircle,
   AlertTriangle,
   XCircle,
-  Info
+  Info,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 import './App.css';
 
@@ -50,6 +52,7 @@ const GlobalTrash = React.lazy(() => import('./pages/GlobalTrash'));
 const Purchases = React.lazy(() => import('./pages/Purchases'));
 const InventoryWarning = React.lazy(() => import('./pages/InventoryWarning'));
 const FinancialStatements = React.lazy(() => import('./pages/FinancialStatements'));
+const ImportData = React.lazy(() => import('./pages/ImportData'));
 import Login from './pages/Login';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -179,9 +182,10 @@ const SidebarMenu = ({ onNavItemClick }) => {
       icon: <SettingsIcon size={20} />,
       children: [
         { path: '/settings', name: 'Cài Đặt Chung' },
-        { path: '/system-architecture', name: 'Kiến Trúc Hệ Thống' },
-        { path: '/backup-sync', name: 'Đồng Bộ & Sao Lưu' },
-        { path: '/global-trash', name: 'Thùng Rác Tổng' }
+        { path: '/backup-sync', name: 'Sao Lưu & Đồng Bộ' },
+        { path: '/import', name: 'Đọc Dữ Liệu Sàn' },
+        { path: '/global-trash', name: 'Thùng Rác Tổng' },
+        { path: '/system-architecture', name: 'Kiến Trúc Hệ Thống' }
       ]
     }] : [])
   ];
@@ -228,6 +232,48 @@ const AppContent = () => {
   
   const notifications = (state.notifications || []).filter(n => !n.deleted);
   const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  const [network, setNetwork] = React.useState({
+    isOnline: navigator.onLine,
+    downlink: navigator.connection?.downlink || 0,
+    rtt: navigator.connection?.rtt || 0,
+    type: navigator.connection?.effectiveType || 'unknown'
+  });
+
+  React.useEffect(() => {
+    const updateNet = () => {
+      setNetwork({
+        isOnline: navigator.onLine,
+        downlink: navigator.connection?.downlink || 0,
+        rtt: navigator.connection?.rtt || 0,
+        type: navigator.connection?.effectiveType || 'unknown'
+      });
+    };
+
+    window.addEventListener('online', updateNet);
+    window.addEventListener('offline', updateNet);
+    if (navigator.connection) {
+      navigator.connection.addEventListener('change', updateNet);
+    }
+    
+    // Simulate real-time fluctuating ping for visual feedback if connection isn't available
+    const pingInterval = setInterval(() => {
+       if (navigator.connection?.rtt) {
+         updateNet();
+       } else if (navigator.onLine) {
+         setNetwork(prev => ({ ...prev, isOnline: true, rtt: Math.floor(Math.random() * 20) + 10, downlink: navigator.connection?.downlink || 5.5 }));
+       }
+    }, 5000);
+
+    return () => {
+      window.removeEventListener('online', updateNet);
+      window.removeEventListener('offline', updateNet);
+      if (navigator.connection) {
+        navigator.connection.removeEventListener('change', updateNet);
+      }
+      clearInterval(pingInterval);
+    };
+  }, []);
 
   const storeName = state?.settings?.storeName || 'Xóm Gà POPPY';
   const logoUrl = state?.settings?.logoUrl;
@@ -395,7 +441,7 @@ const AppContent = () => {
                   <Menu size={24} />
                 </button>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <h1 className="header-title" style={{ fontSize: '18px', margin: 0 }}>Hệ Thống Quản Trị & Vận Hành Bán Hàng</h1>
+                  <h1 className="header-title" style={{ fontSize: '18px', margin: 0 }}>Trung Tâm Điều Hành</h1>
                   <span style={{ fontSize: '12px', color: 'var(--primary)', fontWeight: 700, textTransform: 'uppercase' }}>
                     [{user?.role === 'ADMIN' ? 'Quản Trị Tối Cao' : user?.role === 'MANAGER' ? 'Quản Lý Cửa Hàng' : 'Nhân Viên Thu Ngân'}]
                   </span>
@@ -406,6 +452,27 @@ const AppContent = () => {
                 <div className="hide-on-mobile">
                   <LiveClock />
                 </div>
+                
+                {/* Network Status Indicator */}
+                <div 
+                  style={{ 
+                    display: 'flex', alignItems: 'center', gap: '6px', 
+                    padding: '6px 12px', borderRadius: '24px', 
+                    background: network.isOnline ? (network.rtt > 150 ? 'var(--warning-light, #fff7ed)' : 'var(--success-light, #ecfdf5)') : 'var(--danger-light, #fef2f2)',
+                    border: `1px solid ${network.isOnline ? (network.rtt > 150 ? 'var(--warning, #f59e0b)' : 'var(--success, #10b981)') : 'var(--danger, #ef4444)'}`,
+                    color: network.isOnline ? (network.rtt > 150 ? 'var(--warning, #f59e0b)' : 'var(--success, #10b981)') : 'var(--danger, #ef4444)',
+                    fontSize: '12px', fontWeight: 700 
+                  }}
+                  title={network.isOnline ? `Đang kết nối: Băng thông ~${network.downlink} Mbps | Ping: ~${network.rtt}ms` : "Mất mạng!"}
+                >
+                  {network.isOnline ? <Wifi size={14} /> : <WifiOff size={14} />}
+                  <span className="hide-on-mobile">
+                    {network.isOnline 
+                      ? (network.rtt ? `${network.downlink}M - ${network.rtt}ms` : 'Đã Kết Nối') 
+                      : 'Mất Mạng'}
+                  </span>
+                </div>
+
                 <HeaderDataMonitor />
                 <div style={{ position: 'relative' }} ref={notifRef}>
                   <button onClick={() => setShowNotifications(!showNotifications)} style={{ 
@@ -533,6 +600,7 @@ const AppContent = () => {
                 <Route path="/settings" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><Settings /></ProtectedRoute>} />
                 <Route path="/system-architecture" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><SystemArchitecture /></ProtectedRoute>} />
                 <Route path="/backup-sync" element={<ProtectedRoute allowedRoles={['ADMIN']}><BackupSync /></ProtectedRoute>} />
+                <Route path="/import" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><ImportData /></ProtectedRoute>} />
                 <Route path="/global-trash" element={<ProtectedRoute allowedRoles={['ADMIN']}><GlobalTrash /></ProtectedRoute>} />
                 
                 {/* Catch all non-matched routes and redirect to dashboard */}

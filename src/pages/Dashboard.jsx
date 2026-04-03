@@ -234,6 +234,7 @@ const Dashboard = () => {
   }).length;
 
   const totalInventoryValue = (state.ingredients || []).reduce((sum, ing) => {
+    if (ing.deleted) return sum;
     const buyPrice = Number(ing.buyPrice || (Number(ing.cost || 0) * Number(ing.conversionRate || 1)));
     return sum + (Number(ing.stock) || 0) * buyPrice;
   }, 0);

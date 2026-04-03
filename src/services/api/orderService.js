@@ -85,6 +85,7 @@ export const OrderApi = {
 
       txList.unshift({
           id: StorageService.generateId('TX-'),
+          voucherCode: StorageService.generateId('PT-'),
           type: 'Thu',
           amount: Number(order.netAmount || 0) + (Number(order.extraFee) || 0),
           accountId: targetAccountId,
@@ -211,6 +212,7 @@ export const OrderApi = {
       if (originalTx) {
           txList.unshift({
               id: StorageService.generateId('TX-'),
+              voucherCode: StorageService.generateId('PC-'),
               type: 'Chi',
               amount: Number(list[i].netAmount || 0),
               accountId: originalTx.accountId,
@@ -274,11 +276,15 @@ export const OrderApi = {
          // Reverse transaction
          const txList = await StorageService.getCollection('transactions');
          const accounts = await StorageService.getCollection('accounts');
-         const originalTx = txList.find(t => t.relatedId === id && t.type === 'Thu');
+         const originalTx = txList.find(t => 
+             (t.relatedId === id || t.voucherCode === `PT-${id.slice(-6)}`) 
+             && t.type === 'Thu'
+         );
 
          if (originalTx) {
              txList.unshift({
                  id: StorageService.generateId('TX-'),
+                 voucherCode: StorageService.generateId('PC-'),
                  type: 'Chi',
                  amount: Number(list[i].netAmount || 0) + (Number(list[i].extraFee) || 0),
                  accountId: originalTx.accountId,
@@ -359,6 +365,7 @@ export const OrderApi = {
 
          txList.unshift({
              id: StorageService.generateId('TX-'),
+             voucherCode: StorageService.generateId('PT-'),
              type: 'Thu',
              amount: Number(list[i].netAmount || 0) + (Number(list[i].extraFee) || 0),
              accountId: targetAccountId,

@@ -342,8 +342,12 @@ export const processUpdateOrderStatus = (state, action) => {
 
 export const processHardDeletePosOrder = (state, action) => {
   const orderId = action.payload;
-  const order = state.posOrders.find(o => o.id === orderId);
-  if (!order) return state;
+  
+  // Find EXACTLY ONE order index
+  const oIndex = state.posOrders.findIndex(o => o.id === orderId);
+  if (oIndex === -1) return state;
+
+  const order = state.posOrders[oIndex];
 
   let updatedIngredients = [...state.ingredients];
   if (order.status !== 'Cancelled') {
@@ -352,21 +356,31 @@ export const processHardDeletePosOrder = (state, action) => {
     });
   }
 
-  const relatedTx = state.transactions.find(t => t.relatedId === orderId && t.type === 'Thu');
-  let updatedTransactions = state.transactions;
+  // Find EXACTLY ONE related transaction
+  const tIndex = state.transactions.findIndex(t => 
+      (t.relatedId === orderId || t.voucherCode === `PT-${orderId.slice(-6)}`) 
+      && t.type === 'Thu'
+  );
+
+  let updatedTransactions = [...state.transactions];
   let updatedAccounts = state.accounts;
 
-  if (relatedTx) {
-      updatedTransactions = state.transactions.filter(t => t.id !== relatedTx.id);
+  if (tIndex !== -1) {
+      const relatedTx = updatedTransactions[tIndex];
+      updatedTransactions.splice(tIndex, 1);
+      
       updatedAccounts = state.accounts.map(acc => 
           acc.id === relatedTx.accountId ? { ...acc, balance: acc.balance - relatedTx.amount } : acc
       );
   }
 
+  const updatedOrders = [...state.posOrders];
+  updatedOrders.splice(oIndex, 1);
+
   return {
     ...state,
     ingredients: updatedIngredients,
-    posOrders: state.posOrders.filter(o => o.id !== orderId),
+    posOrders: updatedOrders,
     transactions: updatedTransactions,
     accounts: updatedAccounts
   };
@@ -393,11 +407,15 @@ export const processConfirmImportOrders = (state, action) => {
         categoryId: 'FC1',
         note: `${ord.channelName} Order: ${ord.orderCode}`,
         voucherCode: `PT-${ord.id.slice(-6)}`,
-        collector: 'System'
+        collector: 'System',
+        relatedId: ord.id
      });
 
      ord.items.forEach(item => {
-         let latestProduct = state.products?.find(p => p.name.toLowerCase() === item.product?.name?.toLowerCase());
+         let latestProduct = null;
+         if (item.product?.name) {
+             latestProduct = state.products?.find(p => p.name?.toLowerCase() === item.product.name.toLowerCase());
+         }
          if (latestProduct && latestProduct.recipe) {
              updatedIngredients = adjustInventoryQuantity(updatedIngredients, state.products, latestProduct.recipe, item.quantity, true);
          } else if (item.product?.recipe) {

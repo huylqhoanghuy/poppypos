@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { Package, Search, Edit, Trash2, CheckSquare, Square, AlertCircle, ShoppingCart, Calendar, Focus } from 'lucide-react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { Package, Search, Edit, Trash2, CheckSquare, Square, AlertCircle, ShoppingCart, Calendar, Focus, ChevronDown } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useInventoryForecast } from '../hooks/useInventoryForecast';
 import { PurchaseApi } from '../services/api/purchaseService';
+import SmartDatePicker from '../components/SmartDatePicker';
 
 const InventoryWarning = () => {
     const { state, dispatch } = useData();
@@ -14,6 +15,48 @@ const InventoryWarning = () => {
     // UI states
     const [filterDate, setFilterDate] = useState({ start: firstDay, end: lastDay });
     const [datePreset, setDatePreset] = useState('this_month'); // Default preset
+
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const datePickerRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (datePickerRef.current && !datePickerRef.current.contains(event.target)) {
+                setShowDatePicker(false);
+            }
+        };
+        const handleEsc = (e) => {
+            if (e.key === 'Escape') setShowDatePicker(false);
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        window.addEventListener('keydown', handleEsc);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            window.removeEventListener('keydown', handleEsc);
+        };
+    }, []);
+
+    const datePresetsDict = {
+        'today': 'Hôm nay',
+        'yesterday': 'Hôm qua',
+        '7days': '7 ngày qua',
+        '30days': '30 ngày qua',
+        'this_month': 'Tháng này',
+        'last_month': 'Tháng trước',
+        'this_year': 'Năm nay',
+        'all': 'Tất cả thời gian',
+        'custom': 'Tuỳ chọn'
+    };
+
+    const currentPresetFilterLabel = (() => {
+        if (datePreset !== 'custom' && datePreset && datePresetsDict[datePreset]) {
+            return datePresetsDict[datePreset];
+        }
+        const sDate = filterDate.start ? new Date(filterDate.start).toLocaleDateString('vi-VN') : '...';
+        const eDate = filterDate.end ? new Date(filterDate.end).toLocaleDateString('vi-VN') : '...';
+        if (sDate === eDate && sDate !== '...') return sDate;
+        return `${sDate} - ${eDate}`;
+    })();
     const [thresholdX, setThresholdX] = useState(5); // Daily orders
     const [forecastDays, setForecastDays] = useState(7); // Days to forecast
     
@@ -36,51 +79,41 @@ const InventoryWarning = () => {
 
     const [selectedShortfalls, setSelectedShortfalls] = useState([]);
 
-    const handleDatePresetChange = (e) => {
-        const preset = e.target.value;
+    const handleDatePresetChange = (preset) => {
+        if (preset.target) preset = preset.target.value; // Fallback just in case
         setDatePreset(preset);
         
         const now = new Date();
-        let start, end;
+        let startObj = new Date(now);
+        let endObj = new Date(now);
         
-        switch (preset) {
-            case 'this_week': {
-                const day = now.getDay() || 7; // Convert 0 (Sun) to 7
-                const firstDayOfWeek = new Date(now);
-                firstDayOfWeek.setDate(now.getDate() - day + 1);
-                start = firstDayOfWeek.toISOString().split('T')[0];
-                end = new Date(firstDayOfWeek);
-                end.setDate(firstDayOfWeek.getDate() + 6);
-                end = end.toISOString().split('T')[0];
-                break;
-            }
-            case 'last_week': {
-                const day = now.getDay() || 7;
-                const lastWeekEnd = new Date(now);
-                lastWeekEnd.setDate(now.getDate() - day);
-                const lastWeekStart = new Date(lastWeekEnd);
-                lastWeekStart.setDate(lastWeekEnd.getDate() - 6);
-                
-                start = lastWeekStart.toISOString().split('T')[0];
-                end = lastWeekEnd.toISOString().split('T')[0];
-                break;
-            }
-            case 'this_month': {
-                start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-                end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-                break;
-            }
-            case 'last_month': {
-                start = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
-                end = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
-                break;
-            }
-            case 'custom':
-            default:
-                return; // Keep existing filterDate
+        if (preset === 'today') {
+            // today
+        } else if (preset === 'yesterday') {
+            startObj.setDate(now.getDate() - 1);
+            endObj.setDate(now.getDate() - 1);
+        } else if (preset === '7days') {
+            startObj.setDate(now.getDate() - 6);
+        } else if (preset === '30days') {
+            startObj.setDate(now.getDate() - 29);
+        } else if (preset === 'this_month') {
+            startObj.setDate(1);
+        } else if (preset === 'last_month') {
+            startObj.setMonth(now.getMonth() - 1, 1);
+            endObj.setMonth(now.getMonth(), 0);
+        } else if (preset === 'this_year') {
+            startObj.setMonth(0, 1);
+        } else if (preset === 'all') {
+            startObj.setFullYear(2000, 0, 1);
         }
-        
-        setFilterDate({ start, end });
+
+        if (preset !== 'custom') {
+            const pad = n => n.toString().padStart(2, '0');
+            setFilterDate({
+                start: preset === 'all' ? '' : `${startObj.getFullYear()}-${pad(startObj.getMonth()+1)}-${pad(startObj.getDate())}`,
+                end: preset === 'all' ? '' : `${endObj.getFullYear()}-${pad(endObj.getMonth()+1)}-${pad(endObj.getDate())}`
+            });
+        }
     };
 
     const showToast = (message, type = 'success') => {
@@ -108,22 +141,66 @@ const InventoryWarning = () => {
                     </div>
                     
                     <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap', background: 'var(--surface-variant)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }} ref={datePickerRef}>
                             <Calendar size={18} color="var(--primary)" />
                             <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '13px' }}>Dữ liệu gốc:</span>
-                            <select className="form-input" value={datePreset} onChange={handleDatePresetChange} style={{ padding: '8px 12px', fontWeight: 600, minWidth: '130px', background: '#FFF' }}>
-                                <option value="this_week">Tuần Này</option>
-                                <option value="last_week">Tuần Trước</option>
-                                <option value="this_month">Tháng Này</option>
-                                <option value="last_month">Tháng Trước</option>
-                                <option value="custom">Tùy Chọn Lịch...</option>
-                            </select>
                             
-                            {datePreset === 'custom' && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '4px' }}>
-                                    <input title="Từ ngày" type="date" className="form-input" value={filterDate.start} onChange={e => setFilterDate({...filterDate, start: e.target.value})} style={{ padding: '8px', background: '#FFF' }} />
-                                    <span style={{ color: 'var(--text-secondary)' }}>-</span>
-                                    <input title="Đến ngày" type="date" className="form-input" value={filterDate.end} onChange={e => setFilterDate({...filterDate, end: e.target.value})} style={{ padding: '8px', background: '#FFF' }} />
+                            <button 
+                              className="btn btn-ghost"
+                              style={{ padding: '0 14px', height: '34px', background: 'var(--surface-color)', border: '1px solid var(--surface-border)', borderRadius: '8px', fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)', display: 'flex', gap: '6px', alignItems: 'center' }}
+                              onClick={() => setShowDatePicker(!showDatePicker)}
+                            >
+                              {currentPresetFilterLabel}
+                              <ChevronDown size={14} color="var(--text-secondary)" style={{ marginLeft: '2px', transform: showDatePicker ? 'rotate(180deg)' : 'none', transition: '0.2s' }} />
+                            </button>
+
+                            {showDatePicker && (
+                                <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: '0', background: '#FFFFFF', padding: '16px', borderRadius: '12px', border: '1px solid var(--surface-border)', boxShadow: 'var(--shadow-lg)', zIndex: 110, display: 'flex', gap: '20px', minWidth: '320px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '160px' }}>
+                                      <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '4px' }}>Mốc thời gian</div>
+                                      {Object.entries(datePresetsDict).map(([key, label]) => {
+                                          if (key === 'custom') return null;
+                                          return (
+                                            <button 
+                                               key={key}
+                                               onClick={() => { 
+                                                    // Convert standard keys to the format handleDatePresetChange expects
+                                                    // Wait, handleDatePresetChange uses target.value
+                                                    handleDatePresetChange({ target: { value: key }}); 
+                                                    setShowDatePicker(false); 
+                                               }}
+                                               style={{ padding: '8px 12px', textAlign: 'left', background: (datePreset || 'this_month') === key ? 'var(--primary)' : 'transparent', color: (datePreset || 'this_month') === key ? '#FFF' : 'var(--text-primary)', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, transition: '0.2s' }}
+                                            >
+                                               {label}
+                                            </button>
+                                          )
+                                      })}
+                                    </div>
+                                    
+                                    <div style={{ width: '1px', background: 'var(--surface-border)' }}></div>
+
+                                    <div>
+                                       <SmartDatePicker 
+                                          initialStart={filterDate.start}
+                                          initialEnd={filterDate.end}
+                                          onConfirm={(start, end) => {
+                                             let endNormalized = end;
+                                             if (end) {
+                                                 const e = new Date(end);
+                                                 e.setHours(23, 59, 59, 999);
+                                                 endNormalized = e;
+                                             }
+                                             const pad = n => n.toString().padStart(2, '0');
+                                             setFilterDate({
+                                                 start: start ? `${start.getFullYear()}-${pad(start.getMonth()+1)}-${pad(start.getDate())}` : '',
+                                                 end: endNormalized ? `${endNormalized.getFullYear()}-${pad(endNormalized.getMonth()+1)}-${pad(endNormalized.getDate())}` : ''
+                                             });
+                                             setDatePreset('custom');
+                                             setShowDatePicker(false);
+                                          }}
+                                          onCancel={() => setShowDatePicker(false)}
+                                       />
+                                    </div>
                                 </div>
                             )}
                         </div>

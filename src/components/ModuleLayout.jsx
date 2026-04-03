@@ -209,6 +209,7 @@ const ModuleLayout = ({
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', paddingBottom: '32px' }}>
       
       {/* TOOLBAR NGUYÊN KHỐI (Header + BỘ LỌC) */}
+      {/* TOOLBAR NGUYÊN KHỐI (Header + BỘ LỌC) */}
       <div className={children ? "" : "glass-panel"} 
            style={{ 
               display: 'flex', flexDirection: 'column',
@@ -225,7 +226,12 @@ const ModuleLayout = ({
           {/* LEFT COLUMN: TITLE & DESCRIPTION */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, minWidth: '280px' }}>
             <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)' }}>
-              {Icon && <Icon color="var(--primary)" size={24} />} {title}
+              {trashMode && (
+                 <button className="btn btn-ghost" style={{ padding: '4px', marginRight: '4px' }} onClick={toggleTrashMode}>
+                    <X size={20} color="var(--text-secondary)" />
+                 </button>
+              )}
+              {Icon && <Icon color="var(--primary)" size={24} />} {trashMode ? `Thùng Rác ${title}` : title}
               {!trashMode && !hideTotalBadge && (
                 <span style={{ fontSize: '13px', background: '#FFF0E6', color: '#EA580C', padding: '2px 10px', borderRadius: '12px', border: '1px solid #FFD8C4', fontWeight: 900 }}>
                   {(overrideData || filteredActiveItems).length}
@@ -233,7 +239,7 @@ const ModuleLayout = ({
               )}
             </h2>
 
-            {description && (
+            {description && !trashMode && (
                <span style={{ margin: 0, color: '#4B5563', fontSize: '13px', fontWeight: 500, display: 'block' }}>
                  {description.startsWith('-') ? description.substring(1).trim() : description}
                </span>
@@ -283,15 +289,6 @@ const ModuleLayout = ({
                  <Plus size={16} /> <span style={{fontSize: '13px', fontWeight: 600}}>Khai báo mới</span>
                </button>
             )}
-            {canEditOrDelete && (
-              <button 
-                className={`btn ${trashMode ? 'btn-danger' : 'btn-outline'} table-feature-btn`} 
-                onClick={toggleTrashMode} 
-                style={{ display: listState ? 'flex' : 'none', border: trashMode ? 'none' : '1px solid var(--surface-border)' }}
-              >
-                <Trash2 size={16} /> <span style={{fontSize: '13px', fontWeight: 600}}>{trashMode ? 'Thoát' : `Thùng rác (${trashItems.length})`}</span>
-              </button>
-            )}
           </div>
         </div>
       </div>
@@ -319,7 +316,26 @@ const ModuleLayout = ({
                 (viewMode === 'table' && activeColumns) ? (
                    renderActiveTable && React.isValidElement(renderActiveTable())
                       ? React.cloneElement(renderActiveTable(), {
-                          topCustomLeft: dateFilterBlock,
+                          topCustomLeft: (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                 {dateFilterBlock}
+                                 {(!trashMode && listState && canEditOrDelete) ? (
+                                    <button 
+                                      className="btn btn-ghost" 
+                                      title="Quản lý thùng rác"
+                                      onClick={toggleTrashMode} 
+                                      style={{ display: 'flex', gap: '6px', alignItems: 'center', background: 'var(--surface-color)', border: '1px dashed var(--danger)', height: '28px', padding: '0 10px', borderRadius: '4px', fontSize: '12px', fontWeight: 600, color: 'var(--danger)', position: 'relative' }}
+                                    >
+                                       <Trash2 size={12} color="var(--danger)"/> Thùng rác
+                                       {trashItems && trashItems.length > 0 && (
+                                         <span style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--danger)', color: 'white', fontSize: '9px', padding: '1px 5px', borderRadius: '10px', fontWeight: 800 }}>
+                                           {trashItems.length}
+                                         </span>
+                                       )}
+                                    </button>
+                                 ) : null}
+                              </div>
+                          ),
                           topCustomRight: extraFilters
                         })
                       : (renderActiveTable ? renderActiveTable() : <div/>)
@@ -327,7 +343,24 @@ const ModuleLayout = ({
                   <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                      {!children && !trashMode && (
                         <div style={{ padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', borderBottom: '1px solid var(--surface-border)', background: 'var(--surface-color)', borderRadius: '12px 12px 0 0' }}>
-                           {dateFilterBlock}
+                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                               {dateFilterBlock}
+                               {(!trashMode && listState && canEditOrDelete) ? (
+                                  <button 
+                                    className="btn btn-ghost" 
+                                    title="Quản lý thùng rác"
+                                    onClick={toggleTrashMode} 
+                                    style={{ display: 'flex', gap: '6px', alignItems: 'center', background: 'var(--surface-color)', border: '1px dashed var(--danger)', height: '32px', padding: '0 12px', borderRadius: '6px', fontSize: '13px', fontWeight: 600, color: 'var(--danger)', position: 'relative' }}
+                                  >
+                                     <Trash2 size={14} color="var(--danger)"/> Thùng rác
+                                     {trashItems && trashItems.length > 0 && (
+                                       <span style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--danger)', color: 'white', fontSize: '9px', padding: '1px 5px', borderRadius: '10px', fontWeight: 800 }}>
+                                         {trashItems.length}
+                                       </span>
+                                     )}
+                                  </button>
+                               ) : null}
+                           </div>
                            {extraFilters && <div style={{ display: 'flex', gap: '8px' }}>{extraFilters}</div>}
                         </div>
                      )}

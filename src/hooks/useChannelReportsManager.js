@@ -10,26 +10,34 @@ export const useChannelReportsManager = () => {
   const handlePresetChange = (preset) => {
     setDatePreset(preset);
     const now = new Date();
-    const startObj = new Date(now);
-    const endObj = new Date(now);
+    let startObj = new Date(now);
+    let endObj = new Date(now);
     
     if (preset === 'today') {
-      // already today
-    } else if (preset === 'week') {
-      const day = now.getDay();
-      const diff = now.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
-      startObj.setDate(diff);
-    } else if (preset === 'month') {
+      // today
+    } else if (preset === 'yesterday') {
+      startObj.setDate(now.getDate() - 1);
+      endObj.setDate(now.getDate() - 1);
+    } else if (preset === '7days') {
+      startObj.setDate(now.getDate() - 6);
+    } else if (preset === '30days') {
+      startObj.setDate(now.getDate() - 29);
+    } else if (preset === 'this_month') {
       startObj.setDate(1);
-    } else if (preset === 'year') {
+    } else if (preset === 'last_month') {
+      startObj.setMonth(now.getMonth() - 1, 1);
+      endObj.setMonth(now.getMonth(), 0);
+    } else if (preset === 'this_year') {
       startObj.setMonth(0, 1);
+    } else if (preset === 'all') {
+      startObj.setFullYear(2000, 0, 1);
     }
 
     if (preset !== 'custom') {
       const pad = n => n.toString().padStart(2, '0');
       setFilterDate({
-        start: `${startObj.getFullYear()}-${pad(startObj.getMonth()+1)}-${pad(startObj.getDate())}`,
-        end: `${endObj.getFullYear()}-${pad(endObj.getMonth()+1)}-${pad(endObj.getDate())}`
+        start: preset === 'all' ? '' : `${startObj.getFullYear()}-${pad(startObj.getMonth()+1)}-${pad(startObj.getDate())}`,
+        end: preset === 'all' ? '' : `${endObj.getFullYear()}-${pad(endObj.getMonth()+1)}-${pad(endObj.getDate())}`
       });
     }
   };
