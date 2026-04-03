@@ -164,7 +164,11 @@ export const useBackupSync = () => {
       const payloadString = JSON.stringify(payload);
       const payloadSize = payloadString.length;
       
-      const response = await fetch(hookUrl, {
+      // Đính kèm thẳng tên file vào URL để Make.com dễ dàng lấy ra mà không cần Parse Body!
+      const separator = hookUrl.includes('?') ? '&' : '?';
+      const finalUrl = `${hookUrl}${separator}filename=${suggestedName}`;
+
+      const response = await fetch(finalUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

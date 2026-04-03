@@ -340,13 +340,16 @@ const AppContent = () => {
         if (hoursNeeded) {
           const msNeeded = hoursNeeded * 60 * 60 * 1000;
           if (Date.now() - lastSync >= msNeeded) {
-            
             // Cơ chế xoay vòng Camera DVR (1-5 slots)
             const currentSlot = settings.backupDvrSlot ? Number(settings.backupDvrSlot) : 1;
             const nextSlot = currentSlot >= 5 ? 1 : currentSlot + 1;
             const suggestedName = `poppy_backup_slot_${currentSlot}.json`;
 
-            const response = await fetch(webhookUrl, {
+            // Đính kèm thẳng tên file vào URL để Make.com dễ dàng lấy ra mà không cần Parse Body!
+            const separator = webhookUrl.includes('?') ? '&' : '?';
+            const finalUrl = `${webhookUrl}${separator}filename=${suggestedName}`;
+
+            const response = await fetch(finalUrl, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
