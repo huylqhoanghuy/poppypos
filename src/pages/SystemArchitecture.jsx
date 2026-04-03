@@ -88,7 +88,77 @@ export default function SystemArchitecture() {
                 Đơn Hàng đã bị Hủy hoặc Xóa Mềm <ArrowRight size={14} /> Bị Hệ thống từ chối lọc <ArrowRight size={14} /> Gạch tên khỏi Sổ Cảnh Báo Vay Nợ.
             </div>
          </div>
+      <div style={{ marginTop: '40px', padding: '24px', background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95))', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.1)', color: 'white', position: 'relative', overflow: 'hidden' }}>
+         <svg style={{ position: 'absolute', top: 0, right: 0, opacity: 0.05, width: '300px', height: '300px' }} viewBox="0 0 100 100">
+             <path d="M50 0 L100 50 L50 100 L0 50 Z" fill="white" />
+         </svg>
+         
+         <div style={{ textAlign: 'center', marginBottom: '32px', position: 'relative', zIndex: 1 }}>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '24px', fontWeight: 800, background: 'linear-gradient(to right, #38bdf8, #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+               VỀ DỰ ÁN & NHÀ PHÁT TRIỂN
+            </h3>
+            <p style={{ margin: 0, color: '#94a3b8', fontSize: '14px' }}>Hệ Sinh Thái Poppy POS V2 & Đội Ngũ Kiến Tạo</p>
+         </div>
+
+         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', position: 'relative', zIndex: 1 }}>
+            {/* Trung tâm */}
+            <div style={{ padding: '16px 32px', background: 'var(--primary)', borderRadius: '30px', fontWeight: 800, fontSize: '18px', boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.5)', zIndex: 2 }}>
+               POPPY POS PROJECT
+            </div>
+            
+            {/* Đường nối xuống */}
+            <div style={{ width: '2px', height: '30px', background: 'rgba(255, 255, 255, 0.2)' }}></div>
+            
+            {/* Phân nhánh */}
+            <div style={{ width: '60%', height: '2px', background: 'rgba(255, 255, 255, 0.2)', position: 'relative' }}>
+               <div style={{ position: 'absolute', left: 0, top: 0, width: '2px', height: '30px', background: 'rgba(255, 255, 255, 0.2)' }}></div>
+               <div style={{ position: 'absolute', right: 0, top: 0, width: '2px', height: '30px', background: 'rgba(255, 255, 255, 0.2)' }}></div>
+               <div style={{ position: 'absolute', left: '50%', top: 0, width: '2px', height: '30px', background: 'rgba(255, 255, 255, 0.2)', transform: 'translateX(-50%)' }}></div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', width: '100%', marginTop: '30px' }}>
+               
+               {/* Người Mệnh Lệnh (Owner) */}
+               <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', textAlign: 'center' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(45deg, #f59e0b, #ea580c)', margin: '0 auto 12px auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                     👤
+                  </div>
+                  <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', color: '#f8fafc' }}>Lê Quang Huy</h4>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#fbbf24', fontWeight: 600 }}>CEO / System Architect</p>
+                  <p style={{ margin: '12px 0 0 0', fontSize: '12px', color: '#94a3b8', lineHeight: 1.5 }}>
+                     Người thiết kế logic, hoạch định tài chính và đặt ra bộ quy tắc vận hành khắt khe (ERP) cho toàn bộ hệ thống.
+                  </p>
+               </div>
+
+               {/* Hệ Thống & Liên Hệ */}
+               <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', textAlign: 'center' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(45deg, #10b981, #059669)', margin: '0 auto 12px auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                     <PackageOpen size={20} color="white" />
+                  </div>
+                  <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', color: '#f8fafc' }}>Poppy POS V2.1</h4>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#34d399', fontWeight: 600 }}>Tài sản trí tuệ & Liên hệ</p>
+                  <p style={{ margin: '12px 0 0 0', fontSize: '12px', color: '#94a3b8', lineHeight: 1.5 }}>
+                     Bản quyền thuộc về Xóm Gà Poppy. Liên hệ triển khai & tư vấn vận hành F&B thông qua Email/Hotline của cửa hàng.
+                  </p>
+               </div>
+
+               {/* AI Assistant (Antigravity) */}
+               <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', textAlign: 'center', position: 'relative' }}>
+                  <div style={{ position: 'absolute', top: -10, right: -10, background: '#3b82f6', color: 'white', fontSize: '10px', padding: '4px 8px', borderRadius: '12px', fontWeight: 800 }}>⚡ PAIR PROGRAMMING</div>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(45deg, #3b82f6, #4f46e5)', margin: '0 auto 12px auto', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                     🤖
+                  </div>
+                  <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', color: '#f8fafc' }}>Antigravity (AI)</h4>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#818cf8', fontWeight: 600 }}>Google DeepMind Agent</p>
+                  <p style={{ margin: '12px 0 0 0', fontSize: '12px', color: '#94a3b8', lineHeight: 1.5 }}>
+                     Cộng sự mã hóa chính thức kiến tạo toàn bộ giao diện và luồng logic code dựa trên chỉ đạo của CEO. Hỗ trợ 24/7 trong IDE!
+                  </p>
+               </div>
+
+            </div>
+         </div>
       </div>
+    </div>
     </div>
     </div>
   );
