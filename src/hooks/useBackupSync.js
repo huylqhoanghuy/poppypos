@@ -147,9 +147,17 @@ export const useBackupSync = () => {
       showToast('Đang đóng gói và gửi dữ liệu lên Webhook...', 'success');
       const entireState = await StorageService.getAll();
       
+      // Cơ chế xoay vòng Camera DVR (1-5 slots)
+      const currentSlot = settings.backupDvrSlot ? Number(settings.backupDvrSlot) : 1;
+      const nextSlot = currentSlot >= 5 ? 1 : currentSlot + 1;
+      const suggestedName = `poppy_backup_slot_${currentSlot}.json`;
+
       const payload = {
         timestamp: new Date().toISOString(),
         storeName: settings.storeName || 'POPPY POS',
+        type: 'auto_webhook_sync',
+        dvrSlot: currentSlot,
+        suggestedFilename: suggestedName,
         data: entireState
       };
       
@@ -166,7 +174,7 @@ export const useBackupSync = () => {
       
       if (response.ok) {
         showToast('✅ Đã gửi thành công bản Backup JSON lên Webhook Cloud (Make/Zapier)!', 'success');
-        await updateSettings({ lastWebhookSync: Date.now(), lastWebhookSyncSize: payloadSize });
+        await updateSettings({ lastWebhookSync: Date.now(), lastWebhookSyncSize: payloadSize, backupDvrSlot: nextSlot });
       } else {
         showToast(`Make/Zapier từ chối. HTTP Code: ${response.status}`, 'error');
       }
