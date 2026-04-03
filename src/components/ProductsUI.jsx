@@ -506,18 +506,20 @@ const ProductsUI = ({ manager }) => {
                             }
                           },
                           datalabels: {
+                            display: true,
                             color: '#FFFFFF',
                             font: { weight: 'bold', size: 11 },
                             formatter: (value, ctx) => {
                               const percentage = ((value / totalCost) * 100).toFixed(1);
                               if (percentage < 5) return null; // Hide text if slice is too small
-                              return percentage + '%';
+                              const labelName = ctx.chart.data.labels[ctx.dataIndex];
+                              return labelName + '\n' + percentage + '%';
                             },
                             anchor: 'center',
                             align: 'center',
                             offset: 0,
-                            textShadowColor: 'rgba(0,0,0,0.5)',
-                            textShadowBlur: 4,
+                            textShadowColor: 'rgba(0,0,0,0.8)',
+                            textShadowBlur: 6,
                           }
                         }
                       };
