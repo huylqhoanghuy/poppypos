@@ -171,9 +171,14 @@ const ProfitSimulator = () => {
                     </p>
                     <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden', borderLeft: '1px solid var(--surface-border)', paddingLeft: '8px' }}>
                       {product.recipe?.length > 0 ? product.recipe.map(r => {
-                        const ing = activeIngredients.find(i => i.id === r.id);
-                        return ing ? `${ing.name} (${r.quantity}${ing.unit})` : '';
-                      }).filter(Boolean).join(' + ') : 'Chưa có định mức'}
+                        const ing = activeIngredients.find(i => i.id === r.ingredientId);
+                        const subProd = !ing ? activeProducts.find(p => p.id === r.ingredientId) : null;
+                        const entity = ing || subProd;
+                        if (!entity) return '';
+                        let displayUnit = ing ? (r.unitMode === 'buy' ? (ing.buyUnit || ing.unit) : ing.unit) : 'suất';
+                        let prefix = r.unitMode === 'divide' ? `1/${r.qty}` : r.qty;
+                        return `${entity.name} (${prefix}${displayUnit})`;
+                      }).filter(Boolean).join(' + ') : 'Chưa cài định mức'}
                     </span>
                   </div>
                 </div>
