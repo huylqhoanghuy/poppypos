@@ -244,7 +244,7 @@ const InventoryReports = () => {
       labels: Object.keys(reportData.categoryValueMap),
       datasets: [{
           data: Object.values(reportData.categoryValueMap),
-          backgroundColor: ['#F75300', '#0ea5e9', '#059669', '#d97706', '#dc2626', '#8b5cf6', '#64748b'],
+          backgroundColor: ['#F75300', '#0ea5e9', '#059669', '#d97706', '#dc2626', '#06b6d4', '#64748b'],
           borderWidth: 0, hoverOffset: 4
       }]
   };

@@ -238,8 +238,8 @@ export default function AccountingUI({ manager }) {
                         onClick={() => { setActiveJournalTab(tab); if (tab !== 'payable' && tab !== 'receivable') setFilters(prev => ({ ...prev, categoryId: 'all' })); }}
                         style={{ 
                             padding: '12px 24px', background: 'transparent', border: 'none', 
-                            borderBottom: activeJournalTab === tab ? `2px solid ${tab === 'payable' ? 'var(--warning)' : tab === 'receivable' ? '#a855f7' : tab === 'income' ? 'var(--success)' : tab === 'expense' ? 'var(--danger)' : 'var(--primary)'}` : '2px solid transparent', 
-                            color: activeJournalTab === tab ? (tab === 'payable' ? 'var(--warning)' : tab === 'receivable' ? '#a855f7' : tab === 'income' ? 'var(--success)' : tab === 'expense' ? 'var(--danger)' : 'var(--primary)') : 'var(--text-secondary)', 
+                            borderBottom: activeJournalTab === tab ? `2px solid ${tab === 'payable' ? 'var(--warning)' : tab === 'receivable' ? '#0ea5e9' : tab === 'income' ? 'var(--success)' : tab === 'expense' ? 'var(--danger)' : 'var(--primary)'}` : '2px solid transparent', 
+                            color: activeJournalTab === tab ? (tab === 'payable' ? 'var(--warning)' : tab === 'receivable' ? '#0ea5e9' : tab === 'income' ? 'var(--success)' : tab === 'expense' ? 'var(--danger)' : 'var(--primary)') : 'var(--text-secondary)', 
                             fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' 
                         }}
                     >

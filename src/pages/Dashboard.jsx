@@ -346,7 +346,7 @@ const Dashboard = () => {
       labels: Object.keys(ch),
       datasets: [{
         data: Object.values(ch),
-        backgroundColor: ['#F75300', '#0ea5e9', '#059669', '#d97706', '#7c3aed'],
+        backgroundColor: ['#F75300', '#0ea5e9', '#059669', '#d97706', '#14b8a6'],
         borderWidth: 0, hoverOffset: 4
       }]
     };
@@ -385,6 +385,7 @@ const Dashboard = () => {
 
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <select
+            aria-label="Chọn kỳ báo cáo"
             value={period}
             onChange={e => setPeriod(e.target.value)}
             style={{

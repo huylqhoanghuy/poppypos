@@ -59,7 +59,7 @@ const BusinessReports = () => {
       labels: reportData.channels.map(c => c.name),
       datasets: [{
           data: reportData.channels.map(c => c.revenue),
-          backgroundColor: ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b'],
+          backgroundColor: ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#06b6d4', '#ec4899', '#64748b'],
           borderWidth: 1
       }]
   };

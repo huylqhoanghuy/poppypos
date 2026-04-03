@@ -178,7 +178,7 @@ export default function ReportsIndex() {
                   title="Phân Tích Biến Động Tồn Kho"
                   description="Báo cáo mức độ rủi ro hàng tồn, tuổi thọ nguyên liệu quá hạn, và giá trị tài sản đang nằm ứ đọng trên kệ kho."
                   icon={<Package size={24} />}
-                  color="#9333EA"
+                  color="#14B8A6"
                   bg="#FAF5FF"
                   onClick={() => navigate('/reports/inventory')}
                />

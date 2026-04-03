@@ -105,7 +105,7 @@ const PriceStructure = () => {
          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Settings size={20} color="var(--primary)" />
             <span style={{ fontWeight: 600 }}>Chi Phí Vận Hành Cố Định (OPEX)/Món:</span>
-            <input type="number" className="form-control" style={{ width: '120px' }} value={opexPerDish} onChange={e => setOpexPerDish(Number(e.target.value))} />
+            <input aria-label="Chi phí vận hành giả định" type="number" className="form-control" style={{ width: '120px' }} value={opexPerDish} onChange={e => setOpexPerDish(Number(e.target.value))} />
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>(Điện, nước, bao bì, lương...)</span>
          </div>
       </div>
@@ -206,7 +206,7 @@ const PriceStructure = () => {
                     const costLabels = cogsCategories.map(k => `Vốn (${k})`);
                     const costDataVals = cogsCategories.map(k => p.cogsBreakdown[k]);
                     
-                    const rawBreakdownColors = ['#EF4444', '#EC4899', '#D946EF', '#8B5CF6', '#F43F5E', '#BE185D', '#9D174D'];
+                    const rawBreakdownColors = ['#EF4444', '#EC4899', '#D946EF', '#06b6d4', '#F43F5E', '#BE185D', '#9D174D'];
                     const cogsColors = costLabels.map((_, i) => rawBreakdownColors[i % rawBreakdownColors.length]);
 
                     const chartData = {

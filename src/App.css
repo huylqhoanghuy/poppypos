@@ -96,7 +96,7 @@
   border-radius: 10px;
   color: rgba(255,255,255,0.65);
   text-decoration: none;
-  transition: all 0.18s ease;
+  transition: transform 0.18s ease, background-color 0.18s ease, color 0.18s ease;
   font-weight: 500;
   font-size: 13.5px;
   position: relative;

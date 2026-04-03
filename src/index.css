@@ -29,6 +29,19 @@
   --success: #10B981;
   --danger: #EE5D50;
   --warning: #F59E0B;
+
+  /* Modern Multi-layered Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.02);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.02);
+  
+  /* Performance Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Sizing */
+  --radius-sm: 8px;
+  --border-thin: 1px solid var(--surface-border);
 }
 
 /* Layout Constants */
@@ -166,8 +179,9 @@ input, select, textarea {
   color: var(--text-primary);
   background: var(--surface-color);
   box-shadow: var(--shadow-sm);
-  transition: all var(--transition-fast); 
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
   outline: none;
+  min-height: 44px; /* Fitts Law - minimum touch target */
 }
 
 input:focus, select:focus, textarea:focus {
@@ -230,12 +244,13 @@ input:focus, select:focus, textarea:focus {
   font-weight: 500;
   font-size: var(--font-sm);
   cursor: pointer;
-  transition: all var(--transition-fast); /* Animation siêu mịn */
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
   border: 1px solid transparent;
   background: var(--surface-color);
   color: var(--text-primary);
   box-shadow: var(--shadow-sm);
   font-family: inherit;
+  min-height: 44px; /* Fitts Law */
 }
 
 .btn:hover {
