@@ -4,6 +4,7 @@ import CurrencyInput from './CurrencyInput';
 import SmartTable from './SmartTable';
 import BulkActionBar from './BulkActionBar';
 import UnifiedTrash from './UnifiedTrash';
+import SmartDatePicker from './SmartDatePicker';
 
 const Settings2 = ({ size, onClick, style, title }) => (
   <Edit3 size={size} onClick={onClick} style={style} title={title} />
@@ -115,9 +116,15 @@ export default function AccountingUI({ manager }) {
      });
   };
 
-  const currentPresetFilterLabel = filters.dateFilterPreset === 'custom' || (!filters.dateFilterPreset && (filters.start || filters.end))
-        ? `${filters.start ? new Date(filters.start).toLocaleDateString('vi-VN') : '...'} - ${filters.end ? new Date(filters.end).toLocaleDateString('vi-VN') : '...'}`
-        : datePresetsDict[filters.dateFilterPreset || 'all'];
+  const currentPresetFilterLabel = (() => {
+    if (filters.dateFilterPreset !== 'custom' && filters.dateFilterPreset && datePresetsDict[filters.dateFilterPreset]) {
+        return datePresetsDict[filters.dateFilterPreset];
+    }
+    const sDate = filters.start ? new Date(filters.start).toLocaleDateString('vi-VN') : '...';
+    const eDate = filters.end ? new Date(filters.end).toLocaleDateString('vi-VN') : '...';
+    if (sDate === eDate && sDate !== '...') return sDate;
+    return `${sDate} - ${eDate}`;
+  })();
 
   const InputStyle = { 
     background: '#FFFFFF', border: '1px solid #D1D5DB', color: '#111827', padding: '12px 16px', 
@@ -252,16 +259,16 @@ export default function AccountingUI({ manager }) {
                   {activeJournalTab === 'payable' ? 'Chi tiết công nợ phải trả' : activeJournalTab === 'receivable' ? 'Chi tiết công nợ phải thu' : (selectedAcc ? `Sổ Chi Tiết: ${selectedAcc.name}` : 'Toàn bộ dòng tiền')}
                </h3>
                
-               <div className="ledger-toolbar" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', flex: 1, justifyContent: 'flex-end' }}>
-                  <div className="search-box" style={{ width: 'clamp(240px, 100%, 300px)', padding: '10px 16px', background: 'var(--surface-variant)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <Search size={16} color="var(--text-secondary)" />
-                    <input type="text" placeholder="Tìm theo Mã, Diễn giải, Đối tác..." value={filters.search} onChange={e => setFilters({...filters, search: e.target.value})} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none', flex: 1, fontSize: 'var(--font-sm)' }} />
+               <div className="ledger-toolbar" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', flex: 1, justifyContent: 'flex-end', alignItems: 'center' }}>
+                  <div className="search-box" style={{ width: 'clamp(200px, 100%, 280px)', padding: '0 12px', height: '34px', background: 'var(--surface-color)', borderRadius: '8px', border: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Search size={14} color="var(--text-secondary)" />
+                    <input type="text" placeholder="Tìm theo Mã, Diễn giải, Đối tác..." value={filters.search} onChange={e => setFilters({...filters, search: e.target.value})} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none', flex: 1, fontSize: '13px', fontWeight: 500 }} />
                   </div>
 
                   {activeJournalTab !== 'payable' && activeJournalTab !== 'receivable' && (
                      <>
-                       <button className="btn btn-outline" style={{ display: 'flex', gap: '8px', alignItems: 'center', position: 'relative', background: 'var(--surface-color)', padding: '8px 16px' }} onClick={toggleTrashMode}>
-                         <Trash2 size={16} color={trashMode ? 'var(--primary)' : 'var(--text-secondary)'}/>
+                       <button className="btn btn-ghost" style={{ display: 'flex', gap: '6px', alignItems: 'center', position: 'relative', background: 'var(--surface-color)', border: '1px solid var(--surface-border)', height: '34px', padding: '0 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 600 }} onClick={toggleTrashMode}>
+                         <Trash2 size={14} color={trashMode ? 'var(--primary)' : 'var(--text-secondary)'}/>
                          <span className="mobile-hide" style={{ color: trashMode ? 'var(--primary)' : 'var(--text-primary)' }}>{trashMode ? 'Quay lại Sổ Quỹ' : 'Thùng rác'}</span>
                          {trashItems && trashItems.length > 0 && !trashMode && (
                            <span style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--danger)', color: 'white', fontSize: '10px', padding: '2px 6px', borderRadius: '10px', fontWeight: 800 }}>
@@ -274,6 +281,7 @@ export default function AccountingUI({ manager }) {
                           className="table-feature-select"
                           value={selectedAcc?.id || 'all'} 
                           onChange={e => setSelectedAcc(rootState.accounts.find(a => a.id === e.target.value) || null)}
+                          style={{ background: 'var(--surface-color)', border: '1px solid var(--surface-border)', height: '34px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', padding: '0 12px' }}
                        >
                           <option value="all">Tất cả Ví</option>
                           {rootState.accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}{acc.accountNumber ? ` - ${acc.accountNumber}` : ''}</option>)}
@@ -286,6 +294,7 @@ export default function AccountingUI({ manager }) {
                         className="table-feature-select"
                         value={debtFilters.supplierId}
                         onChange={e => setDebtFilters({...debtFilters, supplierId: e.target.value})}
+                        style={{ background: 'var(--surface-color)', border: '1px solid var(--surface-border)', height: '34px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', padding: '0 12px' }}
                      >
                         <option value="all">Tất cả NCC</option>
                         {rootState.suppliers?.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
@@ -297,6 +306,7 @@ export default function AccountingUI({ manager }) {
                         className="table-feature-select"
                         value={debtFilters.channelId}
                         onChange={e => setDebtFilters({...debtFilters, channelId: e.target.value})}
+                        style={{ background: 'var(--surface-color)', border: '1px solid var(--surface-border)', height: '34px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', padding: '0 12px' }}
                      >
                         <option value="all">Tất cả Kênh</option>
                         <option value="Grab">Grab Order</option>
@@ -307,18 +317,18 @@ export default function AccountingUI({ manager }) {
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }} ref={datePickerRef}>
                      <button 
-                        className="btn btn-ghost table-feature-btn"
-                        style={{ background: 'var(--surface-variant)', border: '1px solid var(--surface-border)' }}
+                        className="btn btn-ghost"
+                        style={{ padding: '0 14px', height: '34px', background: 'var(--surface-color)', border: '1px solid var(--surface-border)', borderRadius: '8px', fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)', display: 'flex', gap: '6px', alignItems: 'center' }}
                         onClick={() => setShowDatePicker(!showDatePicker)}
                      >
-                        <AlertCircle size={16} color="var(--primary)" />
+                        <AlertCircle size={14} color="var(--primary)" />
                         {currentPresetFilterLabel}
                         <ArrowLeftRight size={14} color="var(--text-secondary)" style={{ marginLeft: '4px', transform: showDatePicker ? 'rotate(90deg)' : 'rotate(0deg)', transition: '0.2s' }} />
                      </button>
 
                      {showDatePicker && (
                          <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: '0', background: '#FFFFFF', padding: '16px', borderRadius: '12px', border: '1px solid var(--surface-border)', boxShadow: 'var(--shadow-lg)', zIndex: 110, display: 'flex', gap: '20px', minWidth: '320px' }}>
-                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '160px' }}>
                                 <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '4px' }}>Mốc thời gian</div>
                                 {Object.entries(datePresetsDict).map(([key, label]) => {
                                    if (key === 'custom') return null;
@@ -326,7 +336,7 @@ export default function AccountingUI({ manager }) {
                                       <button 
                                         key={key}
                                         onClick={() => { handlePresetApply(key); setShowDatePicker(false); }}
-                                        style={{ padding: '8px 12px', textAlign: 'left', background: (filters.dateFilterPreset||'all') === key ? 'var(--primary)' : 'transparent', color: (filters.dateFilterPreset||'all') === key ? '#FFF' : 'var(--text-primary)', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 500, transition: '0.2s' }}
+                                        style={{ padding: '8px 12px', textAlign: 'left', background: (filters.dateFilterPreset||'all') === key ? 'var(--primary)' : 'transparent', color: (filters.dateFilterPreset||'all') === key ? '#FFF' : 'var(--text-primary)', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, transition: '0.2s' }}
                                       >
                                         {label}
                                       </button>
@@ -336,22 +346,33 @@ export default function AccountingUI({ manager }) {
                              
                              <div style={{ width: '1px', background: 'var(--surface-border)' }}></div>
 
-                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1.5 }}>
-                                <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Tuỳ chọn từ ngày</div>
-                                <div>
-                                  <label style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>Từ ngày</label>
-                                  <input type="date" className="form-input" style={{ width: '100%', padding: '8px 12px', fontSize: '13px' }} value={filters.start} onChange={e => setFilters({...filters, start: e.target.value, dateFilterPreset: 'custom'})} />
-                                </div>
-                                <div>
-                                  <label style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>Đến ngày</label>
-                                  <input type="date" className="form-input" style={{ width: '100%', padding: '8px 12px', fontSize: '13px' }} value={filters.end} onChange={e => setFilters({...filters, end: e.target.value, dateFilterPreset: 'custom'})} />
-                                </div>
-                                <button className="btn btn-primary" style={{ marginTop: 'auto', padding: '8px', fontSize: '13px', display: 'flex', justifyContent: 'center' }} onClick={() => setShowDatePicker(false)}>Xong</button>
+                             <div>
+                                <SmartDatePicker 
+                                   initialStart={filters.start}
+                                   initialEnd={filters.end}
+                                   onConfirm={(start, end) => {
+                                      let endNormalized = end;
+                                      if (end) {
+                                          const e = new Date(end);
+                                          e.setHours(23, 59, 59, 999);
+                                          endNormalized = e;
+                                      }
+                                      const pad = n => n.toString().padStart(2, '0');
+                                      setFilters({
+                                          ...filters,
+                                          start: start ? `${start.getFullYear()}-${pad(start.getMonth()+1)}-${pad(start.getDate())}` : '',
+                                          end: endNormalized ? `${endNormalized.getFullYear()}-${pad(endNormalized.getMonth()+1)}-${pad(endNormalized.getDate())}` : '',
+                                          dateFilterPreset: 'custom'
+                                      });
+                                      setShowDatePicker(false);
+                                   }}
+                                   onCancel={() => setShowDatePicker(false)}
+                                />
                              </div>
                          </div>
                      )}
                   </div>
-                  <button className="btn btn-ghost" onClick={() => { setFilters({ start: '', end: '', type: 'all', categoryId: 'all', search: '', dateFilterPreset: 'all' }); setSelectedAcc(null); setActiveJournalTab('all'); setDebtFilters({ supplierId: 'all', channelId: 'all' }); }} style={{ color: 'var(--danger)', fontSize: '0.75rem', padding: '4px 8px' }}>Xóa Lọc</button>
+                  <button className="btn btn-ghost" onClick={() => { setFilters({ start: '', end: '', type: 'all', categoryId: 'all', search: '', dateFilterPreset: 'all' }); setSelectedAcc(null); setActiveJournalTab('all'); setDebtFilters({ supplierId: 'all', channelId: 'all' }); }} style={{ color: 'var(--danger)', fontSize: '13px', fontWeight: 600, padding: '0 12px', height: '34px', border: '1px dashed #FCA5A5', borderRadius: '8px', background: '#FEF2F2' }}>Xóa Lọc</button>
                </div>
             </div>
             
