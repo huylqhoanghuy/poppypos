@@ -4,6 +4,13 @@ import ModuleLayout from './ModuleLayout';
 import SortHeader from './SortHeader';
 import CurrencyInput from './CurrencyInput';
 import SmartTable from './SmartTable';
+import {
+  Chart as ChartJS, ArcElement, Tooltip, Legend
+} from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import { Doughnut } from 'react-chartjs-2';
+
+ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels);
 
 const ProductsUI = ({ manager }) => {
   const {
@@ -464,38 +471,58 @@ const ProductsUI = ({ manager }) => {
                 <div style={{ background: '#F8FAFC', padding: '24px', borderRadius: '12px', border: '1px solid var(--surface-border)', display: 'flex', gap: '32px', alignItems: 'center' }}>
                   
                   {/* CHART SIDE */}
-                  <div style={{ flexShrink: 0 }}>
+                  <div style={{ flexShrink: 0, width: '220px', height: '220px' }}>
                     {(() => {
                       const colors = ['#f97316', '#3b82f6', '#14b8a6', '#eab308', '#ef4444', '#8b5cf6'];
-                      let currentDegree = 0;
-                      const gradientStops = sortedCats.map(([cat, val], idx) => {
-                         const perc = (val / totalCost) * 100;
-                         const start = currentDegree;
-                         const end = currentDegree + perc;
-                         currentDegree = end;
-                         return `${colors[idx % colors.length]} ${start}% ${end}%`;
-                      }).join(', ');
+                      const dataLabels = sortedCats.map(([cat]) => cat);
+                      const dataValues = sortedCats.map(([, val]) => val);
                       
-                      return (
-                        <div style={{ 
-                           width: '120px', height: '120px', 
-                           borderRadius: '50%', 
-                           background: `conic-gradient(${gradientStops})`,
-                           boxShadow: 'var(--shadow-md)',
-                           position: 'relative',
-                           display: 'flex',
-                           alignItems: 'center',
-                           justifyContent: 'center'
-                        }}>
-                           {/* DOUGHNUT HOLE */}
-                           <div style={{
-                              width: '64px', height: '64px',
-                              borderRadius: '50%',
-                              background: '#F8FAFC',
-                              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)'
-                           }} />
-                        </div>
-                      );
+                      const chartData = {
+                        labels: dataLabels,
+                        datasets: [
+                          {
+                            data: dataValues,
+                            backgroundColor: colors,
+                            borderWidth: 2,
+                            borderColor: '#F8FAFC',
+                            hoverOffset: 4
+                          }
+                        ]
+                      };
+
+                      const chartOptions = {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '55%',
+                        plugins: {
+                          legend: { display: false },
+                          tooltip: {
+                            callbacks: {
+                              label: function(context) {
+                                const value = context.raw;
+                                const percentage = ((value / totalCost) * 100).toFixed(1);
+                                return `${context.label}: ${percentage}% (${Math.round(value).toLocaleString('vi-VN')} đ)`;
+                              }
+                            }
+                          },
+                          datalabels: {
+                            color: '#FFFFFF',
+                            font: { weight: 'bold', size: 11 },
+                            formatter: (value, ctx) => {
+                              const percentage = ((value / totalCost) * 100).toFixed(1);
+                              if (percentage < 5) return null; // Hide text if slice is too small
+                              return percentage + '%';
+                            },
+                            anchor: 'center',
+                            align: 'center',
+                            offset: 0,
+                            textShadowColor: 'rgba(0,0,0,0.5)',
+                            textShadowBlur: 4,
+                          }
+                        }
+                      };
+
+                      return <Doughnut data={chartData} options={chartOptions} />;
                     })()}
                   </div>
                   
