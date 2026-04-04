@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Plus, Minus, Trash2, Flame, Image as ImageIcon, Calculator, TrendingUp, TrendingDown, Percent, Settings2 } from 'lucide-react';
+import { Search, Plus, Minus, Trash2, Flame, Image as ImageIcon, Calculator, TrendingUp, TrendingDown, Percent, Settings2, FileSpreadsheet } from 'lucide-react';
 import { useInventoryEngine } from '../hooks/useInventoryEngine';
 import { useProducts } from '../hooks/useProducts';
 import { useCategories } from '../hooks/useCategories';
@@ -92,11 +92,13 @@ const ProfitSimulator = () => {
   };
 
   return (
-    <div className="pos-container profit-simulator-layout">
-      
-      {/* Cột trái: Danh sách Món */}
-      <div className="profit-simulator-left">
-        <div className="glass-panel" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+          <div className="pos-container profit-simulator-layout" style={{ height: '100%', padding: '24px 24px 40px 24px' }}>
+              
+              {/* Cột trái: Danh sách Món */}
+              <div className="profit-simulator-left">
+                <div className="glass-panel" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--surface-variant)', padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--surface-border)' }}>
               <Search size={20} color="var(--text-secondary)" />
@@ -324,8 +326,10 @@ const ProfitSimulator = () => {
             );
           })()}
 
+          </div>
         </div>
       </div>
+     </div>
     </div>
   );
 };
