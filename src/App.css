@@ -8,6 +8,8 @@
   overflow: hidden;
   position: relative;
   background: var(--bg-color);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 /* Sidebar Overlay */
@@ -224,10 +226,15 @@
     left: 0;
     transform: translateX(-100%);
     box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: transform var(--transition-normal), opacity var(--transition-normal), visibility var(--transition-normal);
   }
   
   .sidebar.open {
     transform: translateX(0);
+    opacity: 1;
+    visibility: visible;
   }
 
   .sidebar-overlay {
@@ -246,8 +253,17 @@
     display: flex;
   }
 
+  .header-left {
+    min-width: 0;
+    flex: 1;
+  }
+
   .header-title {
     font-size: var(--font-base);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
   }
 
   .user-name {
@@ -401,5 +417,54 @@
   }
   .dashboard-chart-grid {
     grid-template-columns: 1fr !important;
+  }
+}
+
+/* Profit Simulator Responsive Layout */
+.profit-simulator-layout {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+  gap: 24px;
+}
+.profit-simulator-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+}
+.profit-simulator-right {
+  width: 420px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--surface-color);
+  border-left: 1px solid var(--surface-border);
+  box-shadow: -4px 0 15px rgba(0,0,0,0.02);
+}
+
+@media (max-width: 1024px) {
+  .profit-simulator-layout {
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 24px;
+    gap: 16px;
+  }
+  .profit-simulator-left {
+    overflow: visible;
+  }
+  .profit-simulator-left > .product-scroll-area {
+    overflow: visible !important;
+  }
+  .profit-simulator-right {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--surface-border);
+    box-shadow: 0 -4px 15px rgba(0,0,0,0.02);
+    flex-shrink: 0;
+    overflow: visible;
   }
 }

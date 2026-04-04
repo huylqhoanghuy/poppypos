@@ -159,6 +159,7 @@ const ImportData = () => {
                         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                            <thead style={{ position: 'sticky', top: 0, background: 'var(--surface-variant)', zIndex: 1, backdropFilter: 'blur(8px)' }}>
                               <tr>
+                                 <th style={{ padding: '14px 0px 14px 20px', width: '50px', fontSize: '13px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 800, borderBottom: '1px solid var(--surface-border)', textAlign: 'center' }}>STT</th>
                                  <th style={{ padding: '14px 20px', fontSize: '13px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 800, borderBottom: '1px solid var(--surface-border)' }}>Mã Đơn / Thời Gian</th>
                                  <th style={{ padding: '14px 20px', fontSize: '13px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 800, borderBottom: '1px solid var(--surface-border)' }}>Phân Lớp Từ Khóa</th>
                                  <th style={{ padding: '14px 20px', fontSize: '13px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 800, textAlign: 'right', borderBottom: '1px solid var(--surface-border)' }}>Tổng Tiền (Gross)</th>
@@ -167,8 +168,11 @@ const ImportData = () => {
                               </tr>
                            </thead>
                            <tbody style={{ overflowY: 'auto' }}>
-                              {previewOrders.map(order => (
+                              {previewOrders.map((order, idx) => (
                                  <tr key={order.id} style={{ borderBottom: '1px solid var(--surface-border)', background: '#fff' }}>
+                                    <td style={{ padding: '16px 0px 16px 20px', fontSize: '14px', fontWeight: 800, color: 'var(--text-secondary)', textAlign: 'center' }}>
+                                       {idx + 1}
+                                    </td>
                                     <td style={{ padding: '16px 20px' }}>
                                        <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '14px', marginBottom: '4px' }}>{order.orderCode || order.id}</div>
                                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
@@ -209,6 +213,22 @@ const ImportData = () => {
                                  </tr>
                               ))}
                            </tbody>
+                           <tfoot style={{ position: 'sticky', bottom: 0, background: '#F8FAFC', zIndex: 1, borderTop: '2px solid var(--primary)', outline: '1px solid var(--surface-border)' }}>
+                              <tr>
+                                 <td colSpan="3" style={{ padding: '16px 20px', fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>
+                                    Tổng cộng trước khi nhập: {previewOrders.length} Đơn
+                                 </td>
+                                 <td style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 800, color: 'var(--text-secondary)', fontSize: '15px' }}>
+                                    {totalGross.toLocaleString('vi-VN')} đ
+                                 </td>
+                                 <td style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 800, color: 'var(--danger)', fontSize: '15px' }}>
+                                    -{totalDeduction.toLocaleString('vi-VN')} đ
+                                 </td>
+                                 <td style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 900, color: 'var(--success)', fontSize: '16px' }}>
+                                    {totalNet.toLocaleString('vi-VN')} đ
+                                 </td>
+                              </tr>
+                           </tfoot>
                         </table>
                      </div>
                  </div>

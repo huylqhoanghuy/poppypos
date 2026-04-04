@@ -92,10 +92,10 @@ const ProfitSimulator = () => {
   };
 
   return (
-    <div className="pos-container" style={{ display: 'flex', gap: '24px', height: '100%', overflow: 'hidden' }}>
+    <div className="pos-container profit-simulator-layout">
       
       {/* Cột trái: Danh sách Món */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px', overflow: 'hidden' }}>
+      <div className="profit-simulator-left">
         <div className="glass-panel" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--surface-variant)', padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--surface-border)' }}>
@@ -182,7 +182,7 @@ const ProfitSimulator = () => {
       </div>
 
       {/* Cột phải: Bảng Tính Thử Khuyến Mãi */}
-      <div style={{ width: '420px', display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0, background: 'var(--surface-color)', borderLeft: '1px solid var(--surface-border)', boxShadow: '-4px 0 15px rgba(0,0,0,0.02)' }}>
+      <div className="profit-simulator-right">
         <div style={{ padding: '24px 24px 16px 24px', borderBottom: '1px solid var(--surface-border)', background: 'var(--surface-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Settings2 size={20} color="var(--primary)" /> Bảng Tính Thử Lợi Nhuận
