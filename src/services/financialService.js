@@ -66,7 +66,48 @@ export const FinancialService = {
     // ============================================
     // 2. TÍNH TOÁN (INCOME STATEMENT - KQKD / P&L)
     // ============================================
-    const totalRevenue = filteredOrders.reduce((sum, o) => sum + o.netAmount, 0) || 0;
+    const salesChannels = state.salesChannels || [];
+    let totalGrossRevenue = 0;
+    let totalPlatformCommission = 0;
+    let totalPlatformVAT = 0;
+    let totalPlatformTNCN = 0;
+
+    filteredOrders.forEach(o => {
+        const net = Number(o.netAmount) || 0;
+        const gross = Number(o.totalAmount) || net; // Nếu pos đơn giản không có totalAmount, lấy net
+        
+        totalGrossRevenue += gross;
+        
+        const matchedChannelObj = salesChannels.find(c => c.name === o.channelName);
+        const commissionRate = Number(matchedChannelObj?.commission ?? matchedChannelObj?.discountRate ?? 0);
+        
+        let orderFee = 0;
+        let isPlatform = false;
+        if (gross > net && net > 0) {
+            orderFee = gross - net;
+            isPlatform = true;
+        } else if (commissionRate > 0 && o.channelName) {
+            orderFee = gross * (commissionRate / 100);
+            isPlatform = true;
+        }
+
+        if (isPlatform && orderFee > 0) {
+            let vat = 0;
+            let tncn = 0;
+            // Chỉ khấu trừ thuế nếu mức phí lớn hơn tổng thuế 4.5%
+            if (orderFee >= gross * 0.045) {
+                vat = gross * 0.03;
+                tncn = gross * 0.015;
+            }
+            totalPlatformVAT += vat;
+            totalPlatformTNCN += tncn;
+            totalPlatformCommission += (orderFee - vat - tncn);
+        }
+    });
+
+    const totalPlatformFee = totalPlatformCommission + totalPlatformVAT + totalPlatformTNCN;
+    const totalNetRevenue = totalGrossRevenue - totalPlatformFee;
+    const totalRevenue = totalGrossRevenue; // For backward compat
     
     const cogsByCategory = {};
     const totalCOGS = filteredOrders.reduce((sum, o) => {
@@ -96,10 +137,11 @@ export const FinancialService = {
       return sum + orderCOGS;
     }, 0) || 0;
 
-    const grossProfit = totalRevenue - totalCOGS;
+    const grossProfit = totalNetRevenue - totalCOGS;
 
     // Chi phí từ các phiếu chi thuần (Không bao gồm Nhập kho, Thu nợ)
     const operatingExpenses = filteredTransactions.filter(t => t.type === 'Chi' && !t.note?.toLowerCase().includes('nhập kho') && !t.note?.toLowerCase().includes('nợ')).reduce((sum, t) => sum + t.amount, 0) || 0;
+    
     
     // Chi phí hao hụt kho sinh ra từ các bút toán Hạch Toán (Hao hụt = Khấu trừ tài sản = Chi phí)
     const inventoryLossExpenses = filteredTransactions.filter(t => t.type === 'Hạch Toán' && t.note?.includes('Khấu trừ hao hụt')).reduce((sum, t) => sum + t.amount, 0) || 0;
@@ -118,6 +160,11 @@ export const FinancialService = {
     // Dòng tiền CHỈ TÍNH tiền mặt thật, KHÔNG TÍNH Bút toán Hạch Toán (isNonCash)
     const cashInflows = filteredTransactions.filter(t => t.type === 'Thu' && !t.isNonCash).reduce((sum, t) => sum + t.amount, 0) || 0;
     const cashOutflows = filteredTransactions.filter(t => t.type === 'Chi' && !t.isNonCash).reduce((sum, t) => sum + t.amount, 0) || 0;
+    
+    // Chi tiết phân loại Cash Flow để hiển thị hợp lý
+    const operationsCashInflows = filteredTransactions.filter(t => t.type === 'Thu' && t.categoryId === 'FC1' && !t.isNonCash).reduce((sum, t) => sum + t.amount, 0) || 0;
+    const equityInflows = filteredTransactions.filter(t => t.type === 'Thu' && t.categoryId === 'FC3' && !t.isNonCash).reduce((sum, t) => sum + t.amount, 0) || 0;
+
     const netCashFlow = cashInflows - cashOutflows;
 
     return {
@@ -126,15 +173,23 @@ export const FinancialService = {
       totalAssets,
       totalLiabilities,
       ownersEquity,
+      totalGrossRevenue,
+      totalNetRevenue,
       totalRevenue,
       totalCOGS,
       cogsByCategory,
       grossProfit,
       operatingExpenses: totalOPEX,
+      totalPlatformCommission,
+      totalPlatformVAT,
+      totalPlatformTNCN,
+      platformFee: totalPlatformFee,
       ebitda,
       netProfit,
       cashInflows,
       cashOutflows,
+      operationsCashInflows,
+      equityInflows,
       netCashFlow,
       filteredTransactions
     };
