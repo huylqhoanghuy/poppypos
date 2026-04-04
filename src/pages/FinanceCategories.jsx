@@ -147,7 +147,7 @@ const FinanceCategories = () => {
     };
 
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(300px, 1fr)', gap: '40px' }}>
+        <div className="dashboard-chart-grid-2" style={{ gap: '20px' }}>
           <div>
             <h3 style={{ margin: 0, marginBottom: '20px', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '18px', paddingBottom: '12px', borderBottom: '2px solid rgba(34, 197, 94, 0.2)' }}>
               + Khoản Thu Tiền (Income)

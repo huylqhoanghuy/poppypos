@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Store, MapPin, Phone, MessageSquare, Image as ImageIcon, Save, CheckCircle2 } from 'lucide-react';
 import { useData } from '../../context/DataContext';
+import logoPoppy from '../../assets/logo-poppy.png';
 
 export default function TenantConfigTab() {
-  const { state, dispatch } = useData();
+  const { state, dispatch, syncToCloud } = useData();
   const settings = state.settings || {};
   
   const [formData, setFormData] = useState({
@@ -26,15 +27,16 @@ export default function TenantConfigTab() {
     setSaveSuccess(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaving(true);
-    // Simulate slight delay for UX
-    setTimeout(() => {
-        dispatch({ type: 'UPDATE_SETTINGS', payload: formData });
-        setSaving(false);
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 3000);
-    }, 500);
+    // Lưu ngay xuống local và cloud
+    dispatch({ type: 'UPDATE_SETTINGS', payload: formData });
+    try {
+       await syncToCloud();
+    } catch(e) {}
+    setSaving(false);
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3000);
   };
 
   return (
@@ -149,7 +151,7 @@ export default function TenantConfigTab() {
                 {formData.logoUrl ? (
                     <img src={formData.logoUrl} alt="Preview" style={{ maxWidth: '100%', maxHeight: '60px', objectFit: 'contain' }} onError={(e) => { e.target.style.display='none' }}/>
                 ) : (
-                    <div style={{ background: 'var(--primary)', color: 'white', padding: '8px 16px', borderRadius: '8px', fontWeight: 800 }}>Icon Mặc định</div>
+                    <img src={logoPoppy} alt="Default Logo" style={{ maxWidth: '100%', maxHeight: '60px', objectFit: 'contain' }} />
                 )}
             </div>
         </div>

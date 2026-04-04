@@ -415,7 +415,7 @@ const Dashboard = () => {
           subtitle="Giám sát kênh bán hàng, tồn kho & đơn nhập kho"
         />
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px' }}>
+        <div className="dashboard-kpi-grid">
           <KpiCard
             title="Giá Trị Tồn Kho"
             value={totalInventoryValue >= 1_000_000 ? `${(totalInventoryValue / 1_000_000).toFixed(1)}Tr` : `${(totalInventoryValue / 1000).toFixed(0)}K`}
@@ -449,7 +449,7 @@ const Dashboard = () => {
           />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr)', gap: '16px' }}>
+        <div className="dashboard-chart-grid-3">
           <ChartPanel title="Tỷ trọng kênh bán" accentColor="#ea580c" height={200}>
             {channelData.labels.length > 0
               ? <Doughnut data={channelData} options={{ 
@@ -555,7 +555,7 @@ const Dashboard = () => {
           subtitle="Doanh thu thuần, lợi nhuận gộp & chi phí vận hành"
         />
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px' }}>
+        <div className="dashboard-kpi-grid">
           <KpiCard
             title="Doanh Thu Thuần"
             value={totalRevenue >= 1_000_000 ? `${(totalRevenue / 1_000_000).toFixed(1)}Tr` : `${(totalRevenue / 1000).toFixed(0)}K`}
@@ -622,7 +622,7 @@ const Dashboard = () => {
           subtitle="COGS, công nợ nhà cung cấp & dòng tiền ròng"
         />
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+        <div className="dashboard-kpi-grid-3">
           <KpiCard
             title="Giá Vốn Hàng Bán (COGS)"
             value={totalCOGS >= 1_000_000 ? `${(totalCOGS / 1_000_000).toFixed(1)}Tr` : `${(totalCOGS / 1000).toFixed(0)}K`}
@@ -648,7 +648,7 @@ const Dashboard = () => {
           />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div className="dashboard-chart-grid-2">
           <ChartPanel title="Cơ cấu chi phí nguyên vật liệu" accentColor="#dc2626" height={220}>
             {cogsData.labels.length > 0
               ? <Doughnut data={cogsData} options={{ 

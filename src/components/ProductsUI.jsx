@@ -249,7 +249,7 @@ const ProductsUI = ({ manager }) => {
     const draftCost = recipeItem.ingredientId && Number(recipeItem.qty) ? getRecipeItemCost({ ...recipeItem, qty: Number(recipeItem.qty) }) : 0;
 
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(400px, 1.2fr)', gap: '40px' }}>
+      <div className="dashboard-chart-grid-2" style={{ gap: '20px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
             <div style={{ width: '80px', height: '80px', flexShrink: 0, borderRadius: '12px', background: 'var(--surface-variant)', border: '1px dashed var(--surface-border)', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative' }} onClick={() => document.getElementById('productImageUpload').click()}>

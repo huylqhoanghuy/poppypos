@@ -194,7 +194,7 @@ const ChannelReportsUI = ({
           <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Globe color="var(--primary)" /> Báo Cáo Kênh Bán Hàng
           </h2>
-          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>
+          <p className="hide-on-landscape" style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>
              Hiệu năng kinh doanh, tiêu hao nguyên liệu chi tiết cho từng kênh độc lập.
           </p>
         </div>

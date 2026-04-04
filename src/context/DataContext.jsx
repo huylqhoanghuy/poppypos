@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect, useState, useRef } from 'react';
 import { db } from '../firebase';
+import logoPoppy from '../assets/logo-poppy.png';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 import { StorageService } from '../services/api/storage';
@@ -907,10 +908,28 @@ export const DataProvider = ({ children }) => {
   }, [state]);
 
   if (loading) {
+    let logoToUse = logoPoppy;
+    try {
+        const rawLocalStr = localStorage.getItem('omnipos_gaumuoi_v3');
+        if (rawLocalStr) {
+            const parsed = JSON.parse(rawLocalStr);
+            if (parsed?.settings?.logoUrl) logoToUse = parsed.settings.logoUrl;
+        }
+    } catch (e) {}
+
     return (
       <div style={{ padding: '60px', textAlign: 'center', fontFamily: 'system-ui, sans-serif', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-color)' }}>
-        <div style={{ width: '80px', height: '80px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
-           <div className="spinner" style={{ width: '36px', height: '36px', borderWidth: '3.5px', borderTopColor: 'var(--primary)', animation: 'spin 1.2s linear infinite' }}></div>
+        <div style={{ position: 'relative', width: '120px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px' }}>
+           <img src={logoToUse} alt="POPPY Logo" style={{ width: '80px', height: '80px', objectFit: 'contain', zIndex: 2, borderRadius: '50%', filter: 'drop-shadow(0 4px 16px rgba(255,100,0,0.5))' }} />
+           
+           {/* Vòng sáng chính quay nhanh - Màu chủ đạo cam */}
+           <div style={{ position: 'absolute', inset: 0, border: '5px solid transparent', borderTopColor: '#ff7000', borderLeftColor: 'rgba(255, 112, 0, 0.2)', borderRadius: '50%', animation: 'spin 1s linear infinite', zIndex: 1, boxShadow: '0 0 20px rgba(255, 112, 0, 0.6), inset 0 0 15px rgba(255, 112, 0, 0.4)' }}></div>
+           
+           {/* Vòng bao ngoài đứt khúc - Quay ngược chiều */}
+           <div style={{ position: 'absolute', inset: -10, border: '3px dashed transparent', borderBottomColor: '#f97316', borderRightColor: 'rgba(249, 115, 22, 0.4)', borderRadius: '50%', animation: 'spin 3s linear infinite reverse', zIndex: 1 }}></div>
+           
+           {/* Hào quang nền toả nhiệt */}
+           <div style={{ position: 'absolute', inset: -25, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,112,0,0.15) 0%, transparent 70%)', animation: 'subtlePulse 2s ease-in-out infinite', zIndex: 0 }}></div>
         </div>
         <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '12px' }}>Đang nạp hệ thống lõi...</h2>
         <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6', fontSize: '14px', maxWidth: '320px' }}>

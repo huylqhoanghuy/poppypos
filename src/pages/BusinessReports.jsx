@@ -308,7 +308,7 @@ const BusinessReports = () => {
           <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
             <BarChart3 color="var(--primary)" /> Doanh Thu & Lợi Nhuận Khái Quát
           </h2>
-          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>
+          <p className="hide-on-landscape" style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>
              Dữ liệu tổng hợp hệ thống, không chia tách. Để xem chi tiết theo kênh, sang tính năng Báo Cáo Kênh Phân Rã.
           </p>
         </div>
@@ -318,9 +318,9 @@ const BusinessReports = () => {
              onClick={() => setIsCSVViewerOpen(true)}
              style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-color)', border: '1px solid var(--primary)', color: 'var(--primary)' }}
           >
-             <FileSpreadsheet size={16}/> Đọc file Báo Cáo App
+             <FileSpreadsheet size={16}/> <span className="hide-on-mobile">Đọc file Báo Cáo App</span>
           </button>
-          <button className="btn btn-primary table-feature-btn" onClick={() => window.print()}><Download size={16}/> Xuất Báo Cáo</button>
+          <button className="btn btn-primary table-feature-btn" onClick={() => window.print()}><Download size={16}/> <span className="hide-on-mobile">Xuất Báo Cáo</span></button>
         </div>
       </div>
 
@@ -367,7 +367,7 @@ const BusinessReports = () => {
           </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: '24px' }}>
+      <div className="report-chart-grid-2">
           <div className="glass-panel" style={{ padding: '24px' }}>
               <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-secondary)' }}>BIỂU ĐỒ THEO DÕI DOANH THU / LỢI NHUẬN TỔNG {datePreset === 'today' ? 'TRONG NGÀY' : 'HẰNG NGÀY'}</h4>
               <div style={{ height: '300px' }}>
@@ -431,7 +431,7 @@ const BusinessReports = () => {
               />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '24px' }}>
+      <div className="report-chart-grid-2">
           <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
               <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-secondary)' }}>TOP 10 SẢN PHẨM BÁN CHẠY NHẤT (THEO SỐ LƯỢNG)</h4>
               <div style={{ height: '320px', width: '100%' }}>

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogIn, Key, User, Eye, EyeOff, AlertCircle, ChefHat } from 'lucide-react';
 import { useData } from '../context/DataContext';
+import logoPoppy from '../assets/logo-poppy.png';
 
 // Star field canvas - giữ nguyên nền vũ trụ
 function StarCanvas() {
@@ -172,15 +173,7 @@ export default function Login() {
                 <img src={logoUrl} alt="Logo" style={{ height: '64px', objectFit: 'contain', marginBottom: '14px', filter: 'drop-shadow(0 4px 16px rgba(255,120,0,0.5))' }} />
               ) : (
                 <div style={{ marginBottom: '14px', display: 'flex', justifyContent: 'center' }}>
-                  <div style={{
-                    width: 72, height: 72, borderRadius: '20px',
-                    background: 'linear-gradient(135deg, #C84800 0%, #FF7A00 60%, #FFB347 100%)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 8px 32px rgba(200,72,0,0.5), 0 0 0 1px rgba(255,150,60,0.3)',
-                    animation: 'subtlePulse 3s ease-in-out infinite'
-                  }}>
-                    <ChefHat size={34} color="white" />
-                  </div>
+                  <img src={logoPoppy} alt="POPPY Logo" style={{ height: '72px', objectFit: 'contain', filter: 'drop-shadow(0 4px 16px rgba(255,120,0,0.5))' }} />
                 </div>
               )}
 

@@ -59,7 +59,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import { TrendingUp, BarChart3, FileText, CheckCircle2, AlertCircle, Briefcase } from 'lucide-react';
-
+import logoPoppy from './assets/logo-poppy.png';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
 const SidebarSection = ({ item, onNavItemClick }) => {
@@ -282,16 +282,15 @@ const AppContent = () => {
   React.useEffect(() => {
     // Cập nhật Document Title
     document.title = `${storeName} | Quản trị Hệ Thống`;
-    // Thử cập nhật favicon nếu có
-    if (state?.settings?.faviconUrl) {
-       let link = document.querySelector("link[rel~='icon']");
-       if (!link) {
-           link = document.createElement('link');
-           link.rel = 'icon';
-           document.getElementsByTagName('head')[0].appendChild(link);
-       }
-       link.href = state.settings.faviconUrl;
+    
+    // Thử cập nhật favicon nếu có, nếu không lấy Logo Local làm mặc định
+    let link = document.querySelector("link[rel~='icon']");
+    if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.getElementsByTagName('head')[0].appendChild(link);
     }
+    link.href = state?.settings?.faviconUrl || logoPoppy;
   }, [storeName, state?.settings?.faviconUrl]);
 
   React.useEffect(() => {
@@ -432,7 +431,7 @@ const AppContent = () => {
         <div className="sidebar-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', flex: 1 }} onClick={() => setIsMobileMenuOpen(false)}>
             {logoUrl ? <img src={logoUrl} alt="Logo" style={{ height: '32px', borderRadius: '6px' }}/> : (
-                <div style={{ background: 'linear-gradient(135deg, #f75300, #ff7a30)', padding: '7px', borderRadius: '10px', color: 'white', display: 'flex', boxShadow: '0 3px 10px rgba(247,83,0,0.4)' }}><BarChart3 size={18} /></div>
+                <img src={logoPoppy} alt="Default Logo" style={{ height: '32px', borderRadius: '6px' }}/>
             )}
             <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <span className="brand-name">{storeName}</span>
@@ -575,7 +574,7 @@ const AppContent = () => {
                     <img src={`https://ui-avatars.com/api/?name=${user?.username}&background=random`} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
-                     <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>{user?.name || user?.username}</span>
+                     <span className="user-name" style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>{user?.name || user?.username}</span>
                   </div>
                 </div>
 

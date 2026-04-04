@@ -141,12 +141,12 @@ export default function AccountingUI({ manager }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', height: '100%', overflowY: 'auto', paddingBottom: '40px' }}>
-      <div className="accounting-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+      <div className="accounting-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '12px', fontSize: 'var(--font-xl)' }}>
             <Wallet color="var(--primary)" /> Sổ Quỹ & Công Nợ
           </h2>
-          <p className="mobile-hide" style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Quản lý dòng tiền, đối soát ví và công nợ tập trung.</p>
+          <p className="mobile-hide hide-on-landscape" style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Quản lý dòng tiền, đối soát ví và công nợ tập trung.</p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
            <button className="btn btn-ghost table-feature-btn" onClick={() => setShowTransferModal(true)}>
@@ -230,8 +230,8 @@ export default function AccountingUI({ manager }) {
             </div>
          </div>
 
-         <div className="glass-panel ledger-container" style={{ padding: '24px', overflow: 'hidden', display: 'flex', flexDirection: 'column', flex: 1 }}>
-            <div className="journal-tabs" style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--surface-border)', marginBottom: '20px', paddingBottom: '2px', overflowX: 'auto', whiteSpace: 'nowrap' }}>
+         <div className="glass-panel ledger-container bctc-panel" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', flex: 1 }}>
+            <div className="journal-tabs bctc-tabs" style={{ display: 'flex', borderBottom: '1px solid var(--surface-border)', overflowX: 'auto', whiteSpace: 'nowrap' }}>
                 {['all', 'income', 'expense', 'payable', 'receivable'].map(tab => (
                     <button 
                         key={tab}
@@ -248,7 +248,7 @@ export default function AccountingUI({ manager }) {
                 ))}
             </div>
 
-            <div className="ledger-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
+            <div className="ledger-toolbar bctc-panel-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
                <h3 style={{ margin: 0, fontSize: 'var(--font-base)', minWidth: '150px' }}>
                   {activeJournalTab === 'payable' ? 'Chi tiết công nợ phải trả' : activeJournalTab === 'receivable' ? 'Chi tiết công nợ phải thu' : (selectedAcc ? `Sổ Chi Tiết: ${selectedAcc.name}` : 'Toàn bộ dòng tiền')}
                </h3>

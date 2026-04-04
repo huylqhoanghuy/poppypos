@@ -28,11 +28,10 @@ const POS = () => {
   const [orderCode, setOrderCode] = useState('');
   const [extraFee, setExtraFee] = useState(0);
   const [extraFeeNote, setExtraFeeNote] = useState('');
+  // Không tự động chọn kênh sàn đầu tiên, giữ mặc định là trống (Tại Quán)
   React.useEffect(() => {
-     if (!selectedChannelId && activeSalesChannels?.length > 0) {
-        setSelectedChannelId(activeSalesChannels[0].id);
-     }
-  }, [activeSalesChannels, selectedChannelId]);
+     // Giữ selectedChannelId là rỗng để chọn option "Tại Quán"
+  }, []);
 
 
   
@@ -174,12 +173,13 @@ const POS = () => {
     const prefix = getChannelPrefix(selectedChannel?.name);
     setOrderCode(`${prefix}-${Date.now().toString().slice(-6)}`);
   };
-
   return (
-    <div className="pos-container" style={{ display: 'flex', gap: '24px', height: '100%', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+          <div className="pos-container pos-layout" style={{ height: '100%', padding: '24px 24px 40px 24px' }}>
       
       {/* Cột trái: Danh sách Món */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px', overflow: 'hidden' }}>
+      <div className="pos-left">
 
         <div className="glass-panel" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -288,14 +288,14 @@ const POS = () => {
       </div>
 
       {/* Cột phải: Giỏ hàng */}
-      <div style={{ width: '400px', display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0, background: 'var(--surface-color)', borderLeft: '1px solid var(--surface-border)', boxShadow: '-4px 0 15px rgba(0,0,0,0.02)' }}>
+      <div className="pos-right">
         <div style={{ padding: '24px 24px 16px 24px', borderBottom: '1px solid var(--surface-border)', background: 'var(--surface-color)' }}>
           <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>
             Giỏ Hàng / Lên Đơn
           </h3>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--bg-color)' }}>
+        <div className="cart-scroll-area" style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--bg-color)' }}>
           {cart.length === 0 ? (
             <div style={{ textAlign: 'center', color: 'var(--text-secondary)', marginTop: '40px', fontWeight: 600 }}>Chưa có món nào trong giỏ</div>
           ) : (
@@ -329,7 +329,7 @@ const POS = () => {
               <input className="form-input" placeholder="Anh Tuấn..." value={customerName} onChange={e => setCustomerName(e.target.value)} />
             </div>
             <div>
-              <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>Điện thoại (Tra trước):</label>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>Số điện thoại:</label>
               <input className="form-input" placeholder="09xxxxxx" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
             </div>
           </div>
@@ -345,6 +345,7 @@ const POS = () => {
             <div>
                <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>Nguồn Đơn:</label>
                <select className="form-input" style={{ cursor: 'pointer' }} value={selectedChannelId} onChange={e => setSelectedChannelId(e.target.value)}>
+                 <option value="">Tại Quán / Mang Đi (0%)</option>
                  {activeSalesChannels?.map(ch => <option key={ch.id} value={ch.id}>{ch.name}</option>)}
                </select>
             </div>
@@ -398,6 +399,8 @@ const POS = () => {
               <CreditCard size={18} style={{marginRight: '8px'}} /> Thu Tiền Đơn
             </button>
           </div>
+        </div>
+      </div>
         </div>
       </div>
     </div>

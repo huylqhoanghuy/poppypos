@@ -236,7 +236,7 @@ const InventoryWarning = () => {
                     </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 1fr) minmax(400px, 2fr)', gap: '24px' }}>
+                <div className="dashboard-chart-grid-2" style={{ gap: '20px', alignItems: 'stretch' }}>
                     {/* Danh sách Món Ăn Bảng Xếp Hạng Panel */}
                     <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', border: '1px solid #FECACA', background: '#FEF2F2' }}>
                         <h4 style={{ margin: 0, fontSize: '16px', color: 'var(--danger)', borderBottom: '1px solid #FECACA', paddingBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>

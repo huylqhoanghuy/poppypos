@@ -240,7 +240,7 @@ const ModuleLayout = ({
             </h2>
 
             {description && !trashMode && (
-               <span style={{ margin: 0, color: '#4B5563', fontSize: '13px', fontWeight: 500, display: 'block' }}>
+               <span className="hide-on-landscape" style={{ margin: 0, color: '#4B5563', fontSize: '13px', fontWeight: 500, display: 'block' }}>
                  {description.startsWith('-') ? description.substring(1).trim() : description}
                </span>
             )}
@@ -248,11 +248,11 @@ const ModuleLayout = ({
 
           {/* MIDDLE COLUMN: SEARCH */}
           {!trashMode && !children && (
-            <div style={{ display: 'flex', justifyContent: 'center', flex: 1, minWidth: '220px' }}>
+            <div className="hide-on-landscape" style={{ display: 'flex', justifyContent: 'center', flex: 1, minWidth: '200px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-color)', padding: '0 14px', borderRadius: '8px', border: '1px solid var(--surface-border)', width: '100%', maxWidth: '400px', height: '34px' }}>
                 <Search size={16} color="var(--text-secondary)" />
                 <input 
-                  placeholder="Tìm kiếm nhanh..." 
+                  placeholder="Tìm kiếm..." 
                   value={search} onChange={e => setSearch(e.target.value)}
                   style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none', width: '100%', fontSize: '13px', fontWeight: 500, height: '100%' }}
                 />
@@ -261,7 +261,7 @@ const ModuleLayout = ({
           )}
 
           {/* RIGHT COLUMN: ACTIONS */}
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', flex: 1, justifyContent: 'flex-end', minWidth: '280px' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', flex: 1, justifyContent: 'flex-end', minWidth: '200px' }}>
             {/* View Toggle */}
             {!trashMode && activeColumns && renderActiveList && (
               <div style={{ display: 'flex', background: 'var(--surface-variant)', padding: '2px', borderRadius: '6px', border: '1px solid var(--surface-border)' }}>
@@ -285,8 +285,8 @@ const ModuleLayout = ({
             {extraHeaderActions}
 
             {!trashMode && listState && canEditOrDelete && (
-               <button className="btn btn-primary table-feature-btn" onClick={() => setShowForm(true)}>
-                 <Plus size={16} /> <span style={{fontSize: '13px', fontWeight: 600}}>Khai báo mới</span>
+               <button className="btn btn-primary table-feature-btn" onClick={() => setShowForm(true)} title="Khai báo mới">
+                 <Plus size={16} /> <span className="hide-on-mobile" style={{fontSize: '13px', fontWeight: 600}}>Khai báo mới</span>
                </button>
             )}
           </div>

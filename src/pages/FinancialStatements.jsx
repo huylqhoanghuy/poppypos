@@ -52,12 +52,12 @@ export default function FinancialStatements() {
     <div className="bctc-container" style={{ padding: '0 0 40px 0', maxWidth: '1000px', margin: '0 auto', opacity: isRefreshing ? 0.6 : 1, transition: '0.3s' }}>
       
       {/* HEADER */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
          <div>
            <h2 style={{ margin: 0, fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '12px', letterSpacing: '-0.5px' }}>
               <Briefcase size={32} color="var(--primary)" /> Báo Cáo Tài Chính (BCTC)
            </h2>
-           <p style={{ margin: '8px 0 0 0', fontSize: '15px', color: 'var(--text-secondary)' }}>
+           <p className="hide-on-landscape" style={{ margin: '8px 0 0 0', fontSize: '15px', color: 'var(--text-secondary)' }}>
              Hệ thống Realtime truy xuất tự động dữ liệu từ Kênh Bán Hàng & Các Trọng Điểm Quỹ.
            </p>
          </div>
@@ -75,13 +75,13 @@ export default function FinancialStatements() {
             
             <button onClick={handleRefresh} className="btn btn-primary table-feature-btn">
               <RefreshCcw size={16} className={isRefreshing ? 'spin-anim' : ''} />
-              Đồng Bộ Dữ Liệu
+              <span className="hide-on-mobile">Đồng Bộ Dữ Liệu</span>
             </button>
          </div>
       </div>
 
       {/* TABS NAVIGATION */}
-      <div style={{ display: 'flex', gap: '16px', marginBottom: '32px', borderBottom: '2px solid var(--surface-border)', paddingBottom: '16px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+      <div className="bctc-tabs" style={{ display: 'flex', gap: '16px', marginBottom: '32px', borderBottom: '2px solid var(--surface-border)', paddingBottom: '16px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <button 
           onClick={() => setActiveTab('balance')}
           style={{ flex: 1, minWidth: '180px', background: activeTab === 'balance' ? 'var(--primary)' : 'var(--surface-color)', color: activeTab === 'balance' ? '#fff' : 'var(--text-primary)', border: 'none', padding: '16px 20px', borderRadius: '12px', fontWeight: 700, fontSize: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: '0.2s', boxShadow: activeTab === 'balance' ? '0 10px 15px -3px rgba(249, 115, 22, 0.3)' : 'none' }}>
@@ -107,30 +107,30 @@ export default function FinancialStatements() {
       {/* TAB CONTENT: BALANCE SHEET */}
       {activeTab === 'balance' && (
         <div style={{ animation: 'fadeIn 0.3s' }}>
-           <div style={{ background: '#fff', borderRadius: '16px', padding: '32px', border: '1px solid var(--surface-border)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-               <h3 style={{ margin: '0 0 24px 0', fontSize: '20px', fontWeight: 800, textAlign: 'center', color: 'var(--text-primary)' }}>BẢNG CÂN ĐỐI KẾ TOÁN (BALANCE SHEET)</h3>
+          <div className="bctc-panel" style={{ background: '#fff', borderRadius: '16px', padding: '32px', border: '1px solid var(--surface-border)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+               <h3 className="bctc-panel-title" style={{ margin: '0 0 24px 0', fontSize: '20px', fontWeight: 800, textAlign: 'center', color: 'var(--text-primary)' }}>BẢNG CÂN ĐỐI KẾ TOÁN (BALANCE SHEET)</h3>
                
-               <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '40px' }}>
+               <div className="dashboard-chart-grid-2" style={{ gap: '40px' }}>
                   {/* CỘT TÀI SẢN */}
                   <div>
-                     <div style={{ paddingBottom: '12px', borderBottom: '3px solid #0284c7', marginBottom: '20px' }}>
-                        <h4 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#0284c7' }}>I. TÀI SẢN (ASSETS)</h4>
+                     <div className="bctc-row" style={{ borderBottom: '3px solid #0284c7', marginBottom: '12px' }}>
+                        <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0284c7' }}>I. TÀI SẢN (ASSETS)</h4>
                      </div>
                      
-                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '15px' }}>
+                     <div className="bctc-sub-row" style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ color: 'var(--text-secondary)' }}>1. Tiền Mặt & Ngân Hàng khả dụng</span>
                         <span style={{ fontWeight: 600 }}>{formatVND(totalCash)}</span>
                      </div>
-                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '15px' }}>
+                     <div className="bctc-sub-row" style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ color: 'var(--text-secondary)' }}>2. Giá trị Hàng Tồn Kho (Kho nguyên liệu)</span>
                         <span style={{ fontWeight: 600 }}>{formatVND(totalInventoryValue)}</span>
                      </div>
-                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '15px' }}>
+                     <div className="bctc-sub-row" style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ color: 'var(--text-secondary)' }}>3. Tài Sản Lưu Động Khác</span>
                         <span style={{ fontWeight: 600 }}>{formatVND(0)}</span>
                      </div>
 
-                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '30px', padding: '16px', background: '#f0f9ff', borderRadius: '8px', fontWeight: 800, fontSize: '16px', color: '#0284c7' }}>
+                     <div className="bctc-row" style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', padding: '12px 16px', background: '#f0f9ff', borderRadius: '8px', fontWeight: 800, color: '#0284c7' }}>
                         <span>TỔNG TÀI SẢN</span>
                         <span>{formatVND(totalAssets)}</span>
                      </div>
@@ -138,24 +138,24 @@ export default function FinancialStatements() {
 
                   {/* CỘT NGUỒN VỐN */}
                   <div>
-                     <div style={{ paddingBottom: '12px', borderBottom: '3px solid #dc2626', marginBottom: '20px' }}>
-                        <h4 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#dc2626' }}>II. NGUỒN VỐN (LIABILITIES & EQUITY)</h4>
+                     <div className="bctc-row" style={{ borderBottom: '3px solid #dc2626', marginBottom: '12px' }}>
+                        <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#dc2626' }}>II. NGUỒN VỐN (LIABILITIES & EQUITY)</h4>
                      </div>
 
-                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '15px' }}>
+                     <div className="bctc-sub-row" style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ color: 'var(--text-secondary)' }}>1. Nợ Công Phải Trả (A/P NCC)</span>
                         <span style={{ fontWeight: 600, color: '#dc2626' }}>{formatVND(totalLiabilities)}</span>
                      </div>
-                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '15px' }}>
+                     <div className="bctc-sub-row" style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ color: 'var(--text-secondary)' }}>2. Nợ Vay (Ngân Hàng)</span>
                         <span style={{ fontWeight: 600 }}>{formatVND(0)}</span>
                      </div>
-                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '15px', borderTop: '1px dashed var(--surface-border)', paddingTop: '12px' }}>
+                     <div className="bctc-row" style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed var(--surface-border)', paddingTop: '8px', marginTop: '8px' }}>
                         <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>3. Vốn Chủ Sở Hữu (Tài Sản Thuần)</span>
                         <span style={{ fontWeight: 700, color: '#16a34a' }}>{formatVND(ownersEquity)}</span>
                      </div>
 
-                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '30px', padding: '16px', background: '#fef2f2', borderRadius: '8px', fontWeight: 800, fontSize: '16px', color: '#dc2626' }}>
+                     <div className="bctc-row" style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', padding: '12px 16px', background: '#fef2f2', borderRadius: '8px', fontWeight: 800, color: '#dc2626' }}>
                         <span>TỔNG NGUỒN VỐN</span>
                         <span>{formatVND(totalLiabilities + ownersEquity)}</span>
                      </div>
@@ -168,44 +168,44 @@ export default function FinancialStatements() {
       {/* TAB CONTENT: INCOME STATEMENT */}
       {activeTab === 'income' && (
         <div style={{ animation: 'fadeIn 0.3s' }}>
-           <div style={{ background: '#fff', borderRadius: '16px', padding: '32px', border: '1px solid var(--surface-border)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-               <h3 style={{ margin: '0 0 32px 0', fontSize: '20px', fontWeight: 800, textAlign: 'center', color: 'var(--text-primary)' }}>BÁO CÁO KẾT QUẢ HOẠT ĐỘNG KINH DOANH (P&L)</h3>
+           <div className="bctc-panel" style={{ background: '#fff', borderRadius: '16px', padding: '32px', border: '1px solid var(--surface-border)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+               <h3 className="bctc-panel-title" style={{ margin: '0 0 32px 0', fontSize: '20px', fontWeight: 800, textAlign: 'center', color: 'var(--text-primary)' }}>BÁO CÁO KẾT QUẢ HOẠT ĐỘNG KINH DOANH (P&L)</h3>
                
                <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
                   {/* DOANH THU */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 0', borderBottom: '1px solid #f1f5f9' }}>
-                     <span style={{ fontSize: '16px', fontWeight: 700 }}>1. Doanh Thu Bán Hàng (Gross Revenue)</span>
-                     <span style={{ fontSize: '16px', fontWeight: 700, color: '#16a34a' }}>{formatVND(totalGrossRevenue)}</span>
+                  <div className="bctc-row" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9' }}>
+                     <span style={{ fontWeight: 700 }}>1. Doanh Thu Bán Hàng (Gross Revenue)</span>
+                     <span style={{ fontWeight: 700, color: '#16a34a' }}>{formatVND(totalGrossRevenue)}</span>
                   </div>
                   
                   {/* CÁC KHOẢN GIẢM TRỪ */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0 4px 24px', color: 'var(--text-secondary)' }}>
+                  <div className="bctc-sub-row" style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '24px', color: 'var(--text-secondary)' }}>
                      <span>- Chiết khấu Nền tảng / Sàn Dịch vụ</span>
                      <span>- {formatVND(totalPlatformCommission)}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0 4px 24px', color: 'var(--text-secondary)' }}>
+                  <div className="bctc-sub-row" style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '24px', color: 'var(--text-secondary)' }}>
                      <span>- Thuế GTGT nộp hộ (3%)</span>
                      <span>- {formatVND(totalPlatformVAT)}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0 12px 24px', borderBottom: '1px dashed #f1f5f9', color: 'var(--text-secondary)' }}>
+                  <div className="bctc-sub-row" style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '24px', borderBottom: '1px dashed #f1f5f9', color: 'var(--text-secondary)' }}>
                      <span>- Thuế TNCN nộp hộ (1.5%)</span>
                      <span>- {formatVND(totalPlatformTNCN)}</span>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '20px 0', borderBottom: '2px solid var(--surface-border)' }}>
-                     <span style={{ fontSize: '16px', fontWeight: 800, color: '#0ea5e9' }}>2. DOANH THU THUẦN (Net Revenue)</span>
-                     <span style={{ fontSize: '16px', fontWeight: 800 }}>{formatVND(totalNetRevenue)}</span>
+                  <div className="bctc-row" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid var(--surface-border)' }}>
+                     <span style={{ fontWeight: 800, color: '#0ea5e9' }}>2. DOANH THU THUẦN (Net Revenue)</span>
+                     <span style={{ fontWeight: 800 }}>{formatVND(totalNetRevenue)}</span>
                   </div>
 
                   {/* GIÁ VỐN */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 0', borderBottom: '1px solid #f1f5f9' }}>
-                     <span style={{ fontSize: '16px', fontWeight: 700 }}>3. Giá Vốn Hàng Bán (COGS)</span>
-                     <span style={{ fontSize: '16px', fontWeight: 700, color: '#ef4444' }}>- {formatVND(totalCOGS)}</span>
+                  <div className="bctc-row" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9' }}>
+                     <span style={{ fontWeight: 700 }}>3. Giá Vốn Hàng Bán (COGS)</span>
+                     <span style={{ fontWeight: 700, color: '#ef4444' }}>- {formatVND(totalCOGS)}</span>
                   </div>
                   {cogsByCategory && Object.keys(cogsByCategory).length > 0 && (
                      <div style={{ paddingBottom: '8px', background: '#f8fafc', borderRadius: '4px', margin: '4px 0 12px 0' }}>
                         {Object.entries(cogsByCategory).map(([cat, amount]) => (
-                           <div key={cat} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 16px 4px 24px', color: 'var(--text-secondary)', fontSize: '14px' }}>
+                           <div key={cat} className="bctc-sub-row" style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '24px', color: 'var(--text-secondary)' }}>
                               <span style={{ display: 'flex', alignItems: 'center' }}>
                                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#94a3b8', marginRight: '8px' }}/>
                                  {cat}
@@ -217,21 +217,21 @@ export default function FinancialStatements() {
                   )}
                   
                   {/* LỢI NHUẬN GỘP */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '20px 0', borderBottom: '2px solid var(--surface-border)' }}>
-                     <span style={{ fontSize: '16px', fontWeight: 800, color: '#ea580c' }}>4. LỢI NHUẬN GỘP (Gross Profit)</span>
-                     <span style={{ fontSize: '16px', fontWeight: 800 }}>{formatVND(grossProfit)}</span>
+                  <div className="bctc-row" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid var(--surface-border)' }}>
+                     <span style={{ fontWeight: 800, color: '#ea580c' }}>4. LỢI NHUẬN GỘP (Gross Profit)</span>
+                     <span style={{ fontWeight: 800 }}>{formatVND(grossProfit)}</span>
                   </div>
 
                   {/* CHI PHÍ HOẠT ĐỘNG */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 0', borderBottom: '1px solid #f1f5f9' }}>
-                     <span style={{ fontSize: '16px', fontWeight: 700 }}>5. Chi Phí Hoạt Động Cố Định (OPEX)</span>
-                     <span style={{ fontSize: '16px', fontWeight: 700, color: '#ef4444' }}>- {formatVND(operatingExpenses)}</span>
+                  <div className="bctc-row" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9' }}>
+                     <span style={{ fontWeight: 700 }}>5. Chi Phí Hoạt Động Cố Định (OPEX)</span>
+                     <span style={{ fontWeight: 700, color: '#ef4444' }}>- {formatVND(operatingExpenses)}</span>
                   </div>
 
                   {/* LỢI NHUẬN RÒNG */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '24px 20px', background: '#f0fdf4', borderRadius: '12px', marginTop: '24px', border: '1px solid #bcf0da' }}>
-                     <span style={{ fontSize: '18px', fontWeight: 800, color: '#16a34a' }}>6. LỢI NHUẬN RÒNG (NET PROFIT)</span>
-                     <span style={{ fontSize: '18px', fontWeight: 800, color: '#16a34a' }}>{formatVND(netProfit)}</span>
+                  <div className="bctc-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', background: '#f0fdf4', borderRadius: '12px', marginTop: '16px', border: '1px solid #bcf0da' }}>
+                     <span style={{ fontWeight: 800, color: '#16a34a' }}>6. LỢI NHUẬN RÒNG (NET PROFIT)</span>
+                     <span style={{ fontWeight: 800, color: '#16a34a' }}>{formatVND(netProfit)}</span>
                   </div>
                </div>
            </div>
@@ -241,44 +241,44 @@ export default function FinancialStatements() {
       {/* TAB CONTENT: CASH FLOW */}
       {activeTab === 'cashflow' && (
         <div style={{ animation: 'fadeIn 0.3s' }}>
-           <div style={{ background: '#fff', borderRadius: '16px', padding: '32px', border: '1px solid var(--surface-border)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-               <h3 style={{ margin: '0 0 32px 0', fontSize: '20px', fontWeight: 800, textAlign: 'center', color: 'var(--text-primary)' }}>BÁO CÁO LƯU CHUYỂN TIỀN TỆ (CASH FLOW)</h3>
+           <div className="bctc-panel" style={{ background: '#fff', borderRadius: '16px', padding: '32px', border: '1px solid var(--surface-border)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+               <h3 className="bctc-panel-title" style={{ margin: '0 0 32px 0', fontSize: '20px', fontWeight: 800, textAlign: 'center', color: 'var(--text-primary)' }}>BÁO CÁO LƯU CHUYỂN TIỀN TỆ (CASH FLOW)</h3>
                
-               <div style={{ paddingBottom: '16px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between' }}>
-                  <div style={{ fontWeight: 700, fontSize: '16px', color: '#16a34a' }}>I. DÒNG TIỀN VÀO (CASH INFLOWS)</div>
-                  <div style={{ fontWeight: 800, fontSize: '16px' }}>{formatVND(cashInflows)}</div>
+               <div className="bctc-row" style={{ borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ fontWeight: 700, color: '#16a34a' }}>I. DÒNG TIỀN VÀO (CASH INFLOWS)</div>
+                  <div style={{ fontWeight: 800 }}>{formatVND(cashInflows)}</div>
                </div>
-               <div style={{ padding: '12px 24px', borderBottom: '1px dashed #f1f5f9', display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+               <div className="bctc-sub-row" style={{ borderBottom: '1px dashed #f1f5f9', display: 'flex', justifyContent: 'space-between', paddingLeft: '24px', color: 'var(--text-secondary)' }}>
                   <span>- Tiền thu từ HĐ bán hàng (Operations)</span>
                   <span>{formatVND(operationsCashInflows)}</span>
                </div>
                {equityInflows > 0 && (
-                   <div style={{ padding: '12px 24px', borderBottom: '1px dashed #f1f5f9', display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+                   <div className="bctc-sub-row" style={{ borderBottom: '1px dashed #f1f5f9', display: 'flex', justifyContent: 'space-between', paddingLeft: '24px', color: 'var(--text-secondary)' }}>
                       <span>- Tiền góp vốn chủ sở hữu (Financing)</span>
                       <span>{formatVND(equityInflows)}</span>
                    </div>
                )}
-               <div style={{ padding: '12px 24px', display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+               <div className="bctc-sub-row" style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '24px', color: 'var(--text-secondary)' }}>
                   <span>- Tiền thu nhập khác</span>
                   <span>{formatVND(Math.max(0, cashInflows - operationsCashInflows - equityInflows))}</span>
                </div>
 
-               <div style={{ paddingBottom: '16px', paddingTop: '32px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between' }}>
-                  <div style={{ fontWeight: 700, fontSize: '16px', color: '#ef4444' }}>II. DÒNG TIỀN RA (CASH OUTFLOWS)</div>
-                  <div style={{ fontWeight: 800, fontSize: '16px' }}>{formatVND(cashOutflows)}</div>
+               <div className="bctc-row" style={{ paddingTop: '16px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ fontWeight: 700, color: '#ef4444' }}>II. DÒNG TIỀN RA (CASH OUTFLOWS)</div>
+                  <div style={{ fontWeight: 800 }}>{formatVND(cashOutflows)}</div>
                </div>
-               <div style={{ padding: '12px 24px', borderBottom: '1px dashed #f1f5f9', display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+               <div className="bctc-sub-row" style={{ borderBottom: '1px dashed #f1f5f9', display: 'flex', justifyContent: 'space-between', paddingLeft: '24px', color: 'var(--text-secondary)' }}>
                   <span>- Tiền chi trả kho NVL / Nhà cung cấp</span>
                   <span>{formatVND(filteredTransactions.filter(t=>t.type==='Chi' && t.note?.includes('nhập kho')).reduce((sum,t)=>sum+t.amount,0) || 0)}</span>
                </div>
-               <div style={{ padding: '12px 24px', display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+               <div className="bctc-sub-row" style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '24px', color: 'var(--text-secondary)' }}>
                   <span>- Tiền chi phí hoạt động KDXD</span>
                   <span>{formatVND(operatingExpenses)}</span>
                </div>
 
-               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '24px 20px', background: netCashFlow >= 0 ? '#f0fdf4' : '#fef2f2', borderRadius: '12px', marginTop: '32px', border: '1px solid', borderColor: netCashFlow >= 0 ? '#bcf0da' : '#fecaca' }}>
-                  <span style={{ fontSize: '18px', fontWeight: 800, color: netCashFlow >= 0 ? '#16a34a' : '#ef4444' }}>III. LƯU CHUYỂN TIỀN TỆ THUẦN (NET CASH FLOW)</span>
-                  <span style={{ fontSize: '18px', fontWeight: 800, color: netCashFlow >= 0 ? '#16a34a' : '#ef4444' }}>{formatVND(netCashFlow)}</span>
+               <div className="bctc-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', background: netCashFlow >= 0 ? '#f0fdf4' : '#fef2f2', borderRadius: '12px', marginTop: '16px', border: '1px solid', borderColor: netCashFlow >= 0 ? '#bcf0da' : '#fecaca' }}>
+                  <span style={{ fontWeight: 800, color: netCashFlow >= 0 ? '#16a34a' : '#ef4444' }}>III. LƯU CHUYỂN TIỀN TỆ THUẦN</span>
+                  <span style={{ fontWeight: 800, color: netCashFlow >= 0 ? '#16a34a' : '#ef4444' }}>{formatVND(netCashFlow)}</span>
                </div>
            </div>
         </div>
@@ -287,8 +287,8 @@ export default function FinancialStatements() {
       {/* TAB CONTENT: FINANCIAL NOTES */}
       {activeTab === 'notes' && (
         <div style={{ animation: 'fadeIn 0.3s' }}>
-           <div style={{ background: '#fff', borderRadius: '16px', padding: '32px', border: '1px solid var(--surface-border)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-               <h3 style={{ margin: '0 0 8px 0', fontSize: '24px', fontWeight: 800, textAlign: 'center', color: '#1e293b', textTransform: 'uppercase' }}>BÁO CÁO CỔ ĐÔNG & CHỈ ĐẠO ĐIỀU HÀNH</h3>
+           <div className="bctc-panel" style={{ background: '#fff', borderRadius: '16px', padding: '32px', border: '1px solid var(--surface-border)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+               <h3 className="bctc-panel-title" style={{ margin: '0 0 8px 0', fontSize: '24px', fontWeight: 800, textAlign: 'center', color: '#1e293b', textTransform: 'uppercase' }}>BÁO CÁO CỔ ĐÔNG & CHỈ ĐẠO ĐIỀU HÀNH</h3>
                <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: '32px' }}>Trích xuất theo chuẩn VAS/IFRS - Cảnh báo Real-time từ Trí Tuệ Nhân Tạo</p>
                
                <div style={{ fontSize: '15px', lineHeight: '1.8', color: 'var(--text-primary)' }}>

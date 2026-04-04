@@ -310,8 +310,8 @@ export default function AccountsUI({
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-         <div>
+      <div className="accounting-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+         <div className="hide-on-landscape">
             <h2 style={{ margin: 0 }}>Quản Lý Két / Số Dư</h2>
          </div>
          <div style={{ display: 'flex', gap: '12px' }}>

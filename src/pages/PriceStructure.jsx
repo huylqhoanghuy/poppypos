@@ -97,7 +97,7 @@ const PriceStructure = () => {
           <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
             <TrendingUp color="var(--primary)" /> Ma Trận Cấu Trúc Giá & Lợi Nhuận Menu
           </h2>
-          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Đánh giá biên lợi nhuận ròng của từng món ăn trên các kênh bán hàng song song.</p>
+          <p className="hide-on-landscape" style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Đánh giá biên lợi nhuận ròng của từng món ăn trên các kênh bán hàng song song.</p>
         </div>
       </div>
 

@@ -54,8 +54,8 @@ const OrdersUI = ({ manager }) => {
   const [showImportModal, setShowImportModal] = React.useState(false);
 
   const headerActionsBlock = (
-    <button className="btn btn-primary" onClick={() => setShowImportModal(true)}>
-      <UploadCloud size={18} /> Đồng Bộ Đơn Sàn (Import)
+    <button className="btn btn-primary" onClick={() => setShowImportModal(true)} title="Đồng Bộ Đơn Sàn (Import)">
+      <UploadCloud size={18} /> <span className="hide-on-mobile">Đồng Bộ Đơn Sàn (Import)</span>
     </button>
   );
 
@@ -165,6 +165,13 @@ const OrdersUI = ({ manager }) => {
       e.target.value = ""; // Reset selector
   };
 
+  const formatDatetimeLocal = (val) => {
+    if (!val) return '';
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return '';
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  };
+
   const renderForm = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 800 }}>Sửa Thông Tin Đơn Hàng</h3>
@@ -180,7 +187,7 @@ const OrdersUI = ({ manager }) => {
       <div className="form-group">
         <label style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-secondary)' }}>Thời Gian & Kênh Bán</label>
         <div style={{ display: 'flex', gap: '8px' }}>
-           <input className="input-field" type="datetime-local" value={formData.date ? formData.date.slice(0, 16) : ''} onChange={e => setFormData({...formData, date: new Date(e.target.value).toISOString()})} style={{ flex: 1 }}/>
+           <input className="input-field" type="datetime-local" value={formatDatetimeLocal(formData.date)} onChange={e => setFormData({...formData, date: new Date(e.target.value).toISOString()})} style={{ flex: 1 }}/>
            <select className="input-field" value={formData.channelId || formData.channelName || ''} onChange={e => {
               const totals = calculateTotals(formData, e.target.value);
               setFormData({...formData, ...totals});
@@ -260,6 +267,43 @@ const OrdersUI = ({ manager }) => {
     </div>
   );
 
+  const renderOrderCards = () => (
+    <div className="grid-auto-fit" style={{ padding: '16px' }}>
+      {(displayOrders || listState.filteredActiveItems).map(order => {
+          const net = (order.netAmount || 0) + (Number(order.extraFee) || 0);
+          return (
+          <div key={order.id} style={{ background: 'var(--surface-color)', padding: '16px', borderRadius: '12px', border: '1px solid var(--surface-border)', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                 <div>
+                    <div style={{ fontWeight: 800, fontSize: '15px', color: 'var(--text-primary)' }}>{order.orderCode || order.id}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{new Date(order.date).toLocaleString('vi-VN')}</div>
+                 </div>
+                 {getStatusBadge(order.status)}
+             </div>
+             
+             <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                <strong>KH:</strong> {order.customerName || 'Khách vãng lai'} <br/>
+                <strong>Kênh:</strong> <span style={{ color: 'var(--primary)', fontWeight: 700 }}>{order.liveChannelName || order.channelName || 'Trực tiếp'}</span>
+             </div>
+             
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--surface-border)' }}>
+                 <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 800 }}>Thực Thu (Net)</span>
+                    <span style={{ fontSize: '16px', fontWeight: 900, color: 'var(--success)' }}>
+                      {net.toLocaleString('vi-VN')} đ
+                    </span>
+                 </div>
+                 <div style={{ display: 'flex', gap: '4px' }}>
+                    {extraRowActions(order)}
+                    <button className="btn btn-ghost" onClick={() => toggleExpand(order.id)} style={{ padding: '6px' }}><Eye size={18} color="var(--primary)"/></button>
+                 </div>
+             </div>
+          </div>
+          );
+      })}
+    </div>
+  );
+
   return (
     <>
       <ModuleLayout
@@ -276,6 +320,7 @@ const OrdersUI = ({ manager }) => {
         extraFilters={extraFiltersBlock}
         extraHeaderActions={headerActionsBlock}
         renderForm={renderForm}
+        renderActiveList={renderOrderCards}
       />
 
       {selectedOrder && (

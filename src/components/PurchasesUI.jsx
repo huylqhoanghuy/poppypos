@@ -180,7 +180,7 @@ export default function PurchasesUI({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
        {/* Toolbar */}
-       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+       <div className="accounting-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div style={{ display: 'flex', gap: '12px', flex: 1, maxWidth: '500px' }}>
             <div className="search-bar" style={{ flex: 1, display: 'flex', alignItems: 'center', background: 'var(--bg-color)', border: '1px solid var(--surface-border)', borderRadius: '8px', padding: '0 14px', height: '34px' }}>
                 <Search size={16} color="var(--text-secondary)" />
@@ -204,7 +204,7 @@ export default function PurchasesUI({
        {showForm ? (
           <div style={{ background: '#fff', padding: '24px', borderRadius: '16px', border: '1px solid var(--surface-border)' }}>
              <h3 style={{ margin: '0 0 20px', color: 'var(--text-primary)' }}>Lập phiếu nhập kho & Thanh toán</h3>
-             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 2fr', gap: '24px' }}>
+             <div className="dashboard-chart-grid-2" style={{ gap: '20px' }}>
                  <div>
                     <label style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>Nhà Cung Cấp Đối Tác</label>
                     <select className="form-input" value={importForm.supplierId} onChange={e => setImportForm({...importForm, supplierId: e.target.value})}>

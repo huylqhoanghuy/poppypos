@@ -192,7 +192,7 @@ const ProfitSimulator = () => {
           <button className="btn btn-ghost" onClick={clearCart} style={{ color: 'var(--danger)', fontSize: '13px', padding: '4px 8px' }}>Làm Lại</button>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: '12px', background: 'var(--bg-color)' }}>
+        <div className="cart-scroll-area" style={{ flex: 1, overflowY: 'auto', padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: '12px', background: 'var(--bg-color)' }}>
           {cart.length === 0 ? (
             <div style={{ textAlign: 'center', color: 'var(--text-secondary)', marginTop: '40px', fontWeight: 600 }}>Thêm món vào để bắt đầu tính ròng</div>
           ) : (
