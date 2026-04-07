@@ -159,10 +159,12 @@ export const useBackupSync = () => {
         type: 'auto_webhook_sync',
         dvrSlot: currentSlot,
         suggestedFilename: suggestedName,
+        filename: suggestedName,
         data: entireState,
         // Bí quyết: Cung cấp sẵn một biến string thô (Text) để anh map thẳng vào ô File Content (Make/Zapier)
         // Việc này ngăn lỗi Make.com biến data thành chữ [Collection] hoặc file 24 bytes (do nhầm map timestamp)
-        fileContentString: JSON.stringify(entireState, null, 2)
+        fileContentString: JSON.stringify(entireState, null, 2),
+        value: JSON.stringify(entireState, null, 2)
       };
       
       const payloadString = JSON.stringify(payload);

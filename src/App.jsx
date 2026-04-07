@@ -358,7 +358,10 @@ const AppContent = () => {
                 type: 'auto_webhook_sync',
                 dvrSlot: currentSlot,
                 suggestedFilename: suggestedName,
-                data: currentState
+                filename: suggestedName,
+                data: currentState,
+                fileContentString: JSON.stringify(currentState, null, 2),
+                value: JSON.stringify(currentState, null, 2)
               })
             });
 
