@@ -1,0 +1,2667 @@
+{
+  "categories": [
+    {
+      "id": "C2",
+      "type": "menu",
+      "name": "Gà Đại Tiệc"
+    },
+    {
+      "_originalIndex": 1,
+      "name": "Gia vị tẩm ướp",
+      "id": "C3",
+      "type": "expense"
+    },
+    {
+      "type": "inventory",
+      "id": "C4",
+      "name": "Đồ Nhựa Hộp Túi"
+    },
+    {
+      "id": "CAT-M8HKR",
+      "name": "Nguyên liệu chính",
+      "type": "inventory"
+    },
+    {
+      "id": "CAT-KOVNN",
+      "type": "menu",
+      "name": "Xôi - Mỳ- Nước Chấm"
+    },
+    {
+      "id": "CAT-8ZK77",
+      "type": "inventory",
+      "name": "Rau Củ Quả"
+    },
+    {
+      "name": "ComBo Tuyệt hảo",
+      "id": "CAT-O56RZ",
+      "type": "menu"
+    },
+    {
+      "id": "CAT-RSP95",
+      "type": "inventory",
+      "name": "Thực phẩm khô"
+    }
+  ],
+  "salesChannels": [
+    {
+      "discountRate": 0,
+      "commission": 20,
+      "name": "Trực tiếp",
+      "allowImport": false,
+      "id": "CH1"
+    },
+    {
+      "allowImport": true,
+      "hiddenFromStaff": false,
+      "id": "CH2",
+      "deletedAt": null,
+      "discountRate": 25,
+      "commission": 25,
+      "name": "ShopeeFood",
+      "deleted": false
+    },
+    {
+      "id": "CH3",
+      "allowImport": true,
+      "name": "GrabFood",
+      "commission": 25,
+      "discountRate": 30
+    }
+  ],
+  "ingredients": [
+    {
+      "buyCost": 30000,
+      "category": "Đồ Nhựa Hộp Túi",
+      "buyPrice": 30000,
+      "cost": 150,
+      "hiddenFromStaff": false,
+      "deletedAt": null,
+      "deleted": false,
+      "id": "NL2",
+      "lastPurchaseDate": "2026-03-27",
+      "buyUnit": "Kg",
+      "stock": 0.8700000000000047,
+      "minStock": 0,
+      "conversionRate": 200,
+      "unit": "Cái",
+      "name": "Túi Bóng"
+    },
+    {
+      "unit": "Con",
+      "name": "Gà Ủ Xì Dầu",
+      "stock": 1.5,
+      "buyUnit": "kg",
+      "minStock": 0,
+      "conversionRate": 1,
+      "lastPurchaseDate": "2026-03-27",
+      "id": "NL6",
+      "cost": 61000,
+      "_originalIndex": 1,
+      "category": "Nguyên liệu chính",
+      "buyPrice": 61000,
+      "buyCost": 120000
+    },
+    {
+      "deletedAt": null,
+      "_originalIndex": 2,
+      "cost": 30000,
+      "deleted": false,
+      "buyCost": 30000,
+      "buyPrice": 30000,
+      "category": "Nguyên liệu chính",
+      "conversionRate": 1,
+      "minStock": 0,
+      "buyUnit": "Túi",
+      "stock": 10,
+      "name": "Chân Gà Rút Xương",
+      "unit": "Phần",
+      "id": "NL8",
+      "lastPurchaseDate": "2026-03-27"
+    },
+    {
+      "lastPurchaseDate": "2026-03-27",
+      "id": "NL-0WZBO",
+      "unit": "Bộ",
+      "name": "Đũa thìa",
+      "buyUnit": "Thùng",
+      "stock": 0.9600000000000001,
+      "minStock": 0,
+      "conversionRate": 300,
+      "category": "Đồ Nhựa Hộp Túi",
+      "buyPrice": 46000,
+      "buyCost": 46000,
+      "cost": 153.33333333333334,
+      "_originalIndex": 3
+    },
+    {
+      "buyPrice": 50000,
+      "category": "Rau Củ Quả",
+      "buyCost": 50000,
+      "_originalIndex": 4,
+      "cost": 250,
+      "lastPurchaseDate": "2026-03-27",
+      "id": "NL-8968E",
+      "name": "Quất",
+      "unit": "Quả",
+      "conversionRate": 200,
+      "minStock": 0,
+      "stock": 0.43999999999999995,
+      "buyUnit": "Kg"
+    },
+    {
+      "lastPurchaseDate": "2026-03-27",
+      "id": "NL-A5QPP",
+      "name": "Ớt",
+      "unit": "Quả",
+      "minStock": 0,
+      "stock": 0.43999999999999995,
+      "buyUnit": "kg",
+      "conversionRate": 200,
+      "category": "Rau Củ Quả",
+      "buyPrice": 30000,
+      "buyCost": 30000,
+      "cost": 150,
+      "_originalIndex": 5
+    },
+    {
+      "minStock": 0,
+      "stock": 0.25999999999999995,
+      "buyUnit": "Kg",
+      "conversionRate": 1000,
+      "name": "Rau thơm",
+      "unit": "gr",
+      "id": "NL-KDP3F",
+      "lastPurchaseDate": "2026-03-27",
+      "cost": 20,
+      "_originalIndex": 6,
+      "buyCost": 20000,
+      "category": "Rau Củ Quả",
+      "buyPrice": 20000
+    },
+    {
+      "buyCost": 495000,
+      "id": "NL-W0G57",
+      "lastPurchaseDate": "2026-03-27",
+      "category": "Đồ Nhựa Hộp Túi",
+      "buyPrice": 495000,
+      "minStock": 0,
+      "stock": 0.948,
+      "buyUnit": "thùng",
+      "cost": 990,
+      "conversionRate": 500,
+      "name": "Hộp Giấy",
+      "unit": "Hộp"
+    },
+    {
+      "buyPrice": 60000,
+      "category": "Nguyên liệu chính",
+      "buyCost": 60000,
+      "_originalIndex": 9,
+      "cost": 12000,
+      "lastPurchaseDate": "2026-03-27",
+      "id": "NL-LTEOP",
+      "unit": "suất",
+      "name": "Gạo Đồ Xôi",
+      "conversionRate": 5,
+      "stock": 8.4,
+      "buyUnit": "kg",
+      "minStock": 0
+    },
+    {
+      "lastPurchaseDate": "2026-03-27",
+      "id": "NL-GFB4G",
+      "name": "Gà Ủ Muối",
+      "unit": "Con",
+      "minStock": 0,
+      "buyUnit": "Kg",
+      "stock": 15.5,
+      "conversionRate": 1,
+      "category": "Nguyên liệu chính",
+      "buyPrice": 61000,
+      "deleted": false,
+      "cost": 61000,
+      "deletedAt": null,
+      "_originalIndex": 10
+    },
+    {
+      "lastPurchaseDate": "2026-03-27",
+      "id": "NL-HX",
+      "unit": "Cái",
+      "name": "Hộp xôi trắng",
+      "conversionRate": 300,
+      "stock": 0.9500000000000002,
+      "buyUnit": "Thùng",
+      "minStock": 0,
+      "buyPrice": 130000,
+      "category": "Đồ Nhựa Hộp Túi",
+      "deleted": false,
+      "_originalIndex": 10,
+      "hiddenFromStaff": false,
+      "deletedAt": null,
+      "cost": 433
+    },
+    {
+      "id": "NL-HNC",
+      "buyPrice": 119000,
+      "lastPurchaseDate": "2026-03-27",
+      "category": "Đồ Nhựa Hộp Túi",
+      "conversionRate": 300,
+      "_originalIndex": 10,
+      "minStock": 0,
+      "buyUnit": "Thùng",
+      "stock": 0.9499999999999997,
+      "cost": 397,
+      "name": "Hũ đựng nước chấm",
+      "unit": "Hũ"
+    },
+    {
+      "buyPrice": 20000,
+      "category": "Gia vị tẩm ướp",
+      "lastPurchaseDate": "2026-03-27",
+      "id": "NL-9U1QB",
+      "unit": "Chai",
+      "name": "Nước chấm chai",
+      "_originalIndex": 13,
+      "conversionRate": 1,
+      "cost": 20000,
+      "buyUnit": "Chai",
+      "stock": 18.499999999999993,
+      "minStock": 0
+    },
+    {
+      "unit": "Cái",
+      "name": "Tai heo ủ muối",
+      "buyUnit": "Cái",
+      "cost": 30000,
+      "stock": 8,
+      "minStock": 0,
+      "_originalIndex": 14,
+      "conversionRate": 1,
+      "category": "Nguyên liệu chính",
+      "lastPurchaseDate": "2026-03-27",
+      "buyPrice": 30000,
+      "id": "NL-5O73F"
+    },
+    {
+      "buyPrice": 140000,
+      "category": "Thực phẩm khô",
+      "lastPurchaseDate": "2026-04-03",
+      "id": "ING-BCTVI",
+      "unit": "gr",
+      "name": "Ruốc heo",
+      "_originalIndex": 14,
+      "conversionRate": 40,
+      "stock": 0.9950000000000001,
+      "buyUnit": "kg",
+      "cost": 3500,
+      "minStock": 0
+    }
+  ],
+  "products": [
+    {
+      "recipe": [
+        {
+          "qty": 1,
+          "unitMode": "base",
+          "ingredientId": "NL-GFB4G"
+        },
+        {
+          "qty": 2,
+          "unitMode": "base",
+          "ingredientId": "SP-Q5GPJ"
+        },
+        {
+          "ingredientId": "SP-79WS5",
+          "unitMode": "base",
+          "qty": 1
+        },
+        {
+          "ingredientId": "NL-W0G57",
+          "unitMode": "base",
+          "name": "Hộp Giấy",
+          "qty": 2
+        }
+      ],
+      "image": "",
+      "price": 156000,
+      "id": "P2",
+      "_originalIndex": 0,
+      "name": "Gà Nguyên Con Ủ Muối",
+      "unit": "Suất",
+      "category": "Gà Đại Tiệc"
+    },
+    {
+      "_originalIndex": 1,
+      "id": "CB1",
+      "price": 108900,
+      "recipe": [
+        {
+          "qty": 0.5,
+          "unitMode": "base",
+          "ingredientId": "NL-GFB4G"
+        },
+        {
+          "ingredientId": "SP-Q5GPJ",
+          "unitMode": "base",
+          "qty": 1
+        },
+        {
+          "qty": 1,
+          "name": "Xôi ruốc heo chưa túi",
+          "unitMode": "base",
+          "ingredientId": "SP-GF99H"
+        },
+        {
+          "name": "Hộp Giấy",
+          "qty": 1,
+          "ingredientId": "NL-W0G57",
+          "unitMode": "base"
+        },
+        {
+          "name": "Combo Túi bóng- Thìa-Quất-Rau-ớt",
+          "qty": 1,
+          "ingredientId": "SP-79WS5",
+          "unitMode": "base"
+        }
+      ],
+      "unit": "Suất",
+      "status": "active",
+      "name": "Gà Ủ Muối 1/2 Con + Xôi Ruốc Heo",
+      "category": "ComBo Gà "
+    },
+    {
+      "category": "ComBo Tuyệt hảo",
+      "unit": "Suất",
+      "status": "active",
+      "name": "Gà Ủ Muối Nguyên Con + Xôi Ruốc Heo",
+      "price": 188000,
+      "id": "CB2",
+      "recipe": [
+        {
+          "unitMode": "base",
+          "ingredientId": "NL-GFB4G",
+          "qty": 1
+        },
+        {
+          "unitMode": "base",
+          "ingredientId": "NL-W0G57",
+          "qty": 2
+        },
+        {
+          "qty": 2,
+          "ingredientId": "SP-Q5GPJ",
+          "unitMode": "base"
+        },
+        {
+          "unitMode": "base",
+          "ingredientId": "SP-GF99H",
+          "qty": 1
+        },
+        {
+          "qty": 1,
+          "unitMode": "base",
+          "ingredientId": "SP-79WS5"
+        }
+      ]
+    },
+    {
+      "recipe": [
+        {
+          "qty": 0.5,
+          "ingredientId": "NL-GFB4G",
+          "unitMode": "base"
+        },
+        {
+          "qty": 1,
+          "ingredientId": "NL-5O73F",
+          "unitMode": "base"
+        },
+        {
+          "unitMode": "base",
+          "ingredientId": "SP-GF99H",
+          "qty": 1
+        },
+        {
+          "ingredientId": "NL-W0G57",
+          "unitMode": "base",
+          "qty": 1
+        },
+        {
+          "unitMode": "base",
+          "ingredientId": "NL-HX",
+          "qty": 1
+        },
+        {
+          "qty": 2,
+          "ingredientId": "SP-Q5GPJ",
+          "unitMode": "base"
+        },
+        {
+          "ingredientId": "SP-79WS5",
+          "unitMode": "base",
+          "name": "Combo Túi bóng- Thìa-Quất-Rau-ớt",
+          "qty": 1
+        }
+      ],
+      "price": 193000,
+      "id": "CB3",
+      "_originalIndex": 3,
+      "name": "Set Gà Ủ Muối 1/2 Con + Tai Heo Ủ Muối + Xôi Ruốc Nóng",
+      "unit": "Set",
+      "status": "active",
+      "category": "ComBo Tuyệt hảo"
+    },
+    {
+      "id": "CB4",
+      "price": 240800,
+      "recipe": [
+        {
+          "unitMode": "base",
+          "ingredientId": "NL-GFB4G",
+          "qty": 1
+        },
+        {
+          "unitMode": "base",
+          "ingredientId": "NL-5O73F",
+          "qty": 1
+        },
+        {
+          "unitMode": "base",
+          "ingredientId": "NL-W0G57",
+          "qty": 2
+        },
+        {
+          "qty": 1,
+          "unitMode": "base",
+          "ingredientId": "NL-HX"
+        },
+        {
+          "qty": 3,
+          "unitMode": "base",
+          "ingredientId": "SP-Q5GPJ"
+        },
+        {
+          "qty": 1,
+          "ingredientId": "SP-79WS5",
+          "unitMode": "base"
+        }
+      ],
+      "category": "ComBo Tuyệt hảo",
+      "name": "Gà Ủ Muối Nguyên Con + Tai Heo Ủ Muối",
+      "status": "active",
+      "unit": "Suất"
+    },
+    {
+      "id": "CB5",
+      "recipe": [
+        {
+          "ingredientId": "NL6",
+          "unitMode": "base",
+          "qty": 0.5
+        },
+        {
+          "qty": 1,
+          "unitMode": "base",
+          "ingredientId": "SP-Q5GPJ"
+        },
+        {
+          "qty": 1,
+          "ingredientId": "SP-79WS5",
+          "unitMode": "base"
+        },
+        {
+          "ingredientId": "SP-GF99H",
+          "unitMode": "base",
+          "qty": 1
+        },
+        {
+          "unitMode": "base",
+          "ingredientId": "NL-W0G57",
+          "name": "Hộp Giấy",
+          "qty": 1
+        }
+      ],
+      "price": 109000,
+      "_originalIndex": 5,
+      "name": "Gà Ủ Xi Dầu 1/2 Con + Xôi Ruốc Heo",
+      "unit": "Suất",
+      "status": "active",
+      "category": "ComBo Tuyệt hảo"
+    },
+    {
+      "category": "ComBo Gà ",
+      "unit": "Set",
+      "status": "active",
+      "name": "Gà Ủ Xi Dầu 1/2 Con + Gà Ủ Muối 1/2 Con + Xôi Ruốc Nóng",
+      "recipe": [
+        {
+          "ingredientId": "NL6",
+          "unitMode": "base",
+          "qty": 0.5
+        },
+        {
+          "ingredientId": "NL-GFB4G",
+          "unitMode": "base",
+          "qty": 0.5
+        },
+        {
+          "qty": 1,
+          "unitMode": "base",
+          "ingredientId": "SP-GF99H"
+        },
+        {
+          "qty": 2,
+          "unitMode": "base",
+          "ingredientId": "NL-W0G57"
+        },
+        {
+          "qty": 1,
+          "ingredientId": "SP-79WS5",
+          "unitMode": "base"
+        },
+        {
+          "qty": 2,
+          "unitMode": "base",
+          "ingredientId": "SP-Q5GPJ"
+        }
+      ],
+      "id": "CB6",
+      "price": 186000
+    },
+    {
+      "id": "CB7",
+      "recipe": [
+        {
+          "qty": 0.5,
+          "ingredientId": "NL6",
+          "unitMode": "base"
+        },
+        {
+          "ingredientId": "NL-GFB4G",
+          "unitMode": "base",
+          "qty": 0.5
+        },
+        {
+          "qty": 2,
+          "unitMode": "base",
+          "ingredientId": "NL-W0G57"
+        },
+        {
+          "ingredientId": "SP-Q5GPJ",
+          "unitMode": "base",
+          "qty": 2
+        },
+        {
+          "qty": 1,
+          "unitMode": "base",
+          "ingredientId": "SP-79WS5"
+        }
+      ],
+      "price": 157000,
+      "category": "ComBo Tuyệt hảo",
+      "status": "active",
+      "unit": "Set",
+      "name": "Gà Ủ Xi Dầu 1/2 con + Gà Ủ Muối 1/2 Con"
+    },
+    {
+      "recipe": [
+        {
+          "qty": 1,
+          "unitMode": "base",
+          "ingredientId": "NL8"
+        },
+        {
+          "ingredientId": "NL-GFB4G",
+          "unitMode": "base",
+          "qty": 1
+        },
+        {
+          "qty": 2,
+          "unitMode": "base",
+          "ingredientId": "NL-W0G57"
+        },
+        {
+          "qty": 1,
+          "unitMode": "base",
+          "ingredientId": "SP-79WS5"
+        },
+        {
+          "ingredientId": "SP-Q5GPJ",
+          "unitMode": "base",
+          "qty": 3
+        },
+        {
+          "unitMode": "base",
+          "ingredientId": "NL-HX",
+          "qty": 1,
+          "name": "Hộp xôi trắng"
+        }
+      ],
+      "price": 237800,
+      "id": "CB8",
+      "_originalIndex": 8,
+      "name": "Gà Ủ Muối Nguyên Con + Chân Gà Rút Xương",
+      "unit": "Set",
+      "status": "active",
+      "category": "ComBo Tuyệt hảo"
+    },
+    {
+      "id": "SP-QEARX",
+      "price": 109000,
+      "recipe": [
+        {
+          "qty": 0.5,
+          "ingredientId": "NL6",
+          "unitMode": "base"
+        },
+        {
+          "qty": 1,
+          "ingredientId": "SP-GF99H",
+          "unitMode": "base"
+        },
+        {
+          "qty": 1,
+          "ingredientId": "SP-Q5GPJ",
+          "unitMode": "base"
+        },
+        {
+          "ingredientId": "SP-79WS5",
+          "unitMode": "base",
+          "qty": 1
+        },
+        {
+          "unitMode": "base",
+          "ingredientId": "NL-W0G57",
+          "qty": 1
+        }
+      ],
+      "unit": "Suất",
+      "status": "active",
+      "name": "Gà Ủ Xi Dầu 1/2 Con + Xôi Ruốc Heo ",
+      "category": "ComBo Tuyệt hảo"
+    },
+    {
+      "name": "Gà Ủ Muối 1/2 Con ",
+      "status": "active",
+      "unit": "Suất",
+      "category": "Gà Đại Tiệc",
+      "price": 79000,
+      "id": "SP-XUYLE",
+      "recipe": [
+        {
+          "qty": 1,
+          "ingredientId": "SP-Q5GPJ",
+          "unitMode": "base"
+        },
+        {
+          "unitMode": "base",
+          "ingredientId": "NL-GFB4G",
+          "qty": 0.5
+        },
+        {
+          "qty": 1,
+          "ingredientId": "SP-79WS5",
+          "unitMode": "base"
+        },
+        {
+          "name": "Hộp Giấy",
+          "qty": 1,
+          "unitMode": "base",
+          "ingredientId": "NL-W0G57"
+        }
+      ],
+      "_originalIndex": 10
+    },
+    {
+      "status": "active",
+      "unit": "Suất",
+      "name": "Gà Ủ Muối 1/2 con + Tai Heo Ủ Muối",
+      "category": "ComBo Tuyệt hảo",
+      "_originalIndex": 11,
+      "price": 164000,
+      "id": "CB9",
+      "recipe": [
+        {
+          "qty": 0.5,
+          "unitMode": "base",
+          "ingredientId": "NL-GFB4G"
+        },
+        {
+          "qty": 1,
+          "ingredientId": "NL-5O73F",
+          "unitMode": "base"
+        },
+        {
+          "unitMode": "base",
+          "ingredientId": "SP-79WS5",
+          "qty": 1
+        },
+        {
+          "qty": 2,
+          "unitMode": "base",
+          "ingredientId": "SP-Q5GPJ"
+        },
+        {
+          "qty": 1,
+          "ingredientId": "NL-W0G57",
+          "unitMode": "base"
+        },
+        {
+          "ingredientId": "NL-HX",
+          "unitMode": "base",
+          "qty": 1,
+          "name": "Hộp xôi trắng"
+        }
+      ]
+    },
+    {
+      "recipe": [
+        {
+          "qty": 1,
+          "ingredientId": "SP-Q5GPJ",
+          "unitMode": "base"
+        },
+        {
+          "ingredientId": "NL-5O73F",
+          "unitMode": "base",
+          "qty": 1
+        },
+        {
+          "qty": 1,
+          "unitMode": "base",
+          "ingredientId": "SP-79WS5"
+        },
+        {
+          "name": "Hộp xôi trắng",
+          "qty": 1,
+          "unitMode": "base",
+          "ingredientId": "NL-HX"
+        }
+      ],
+      "price": 85000,
+      "id": "SP-5UES8",
+      "_originalIndex": 12,
+      "name": "Tai Heo Ủ Muối",
+      "status": "active",
+      "unit": "Suất",
+      "category": "Gà Đại Tiệc"
+    },
+    {
+      "deleted": false,
+      "name": "Chân Gà Rút Xương",
+      "unit": "Suất",
+      "deletedAt": null,
+      "_originalIndex": 13,
+      "status": "active",
+      "category": "Gà Đại Tiệc",
+      "id": "SP-9TMC5",
+      "recipe": [
+        {
+          "qty": 1,
+          "unitMode": "base",
+          "ingredientId": "NL8"
+        },
+        {
+          "qty": 1,
+          "ingredientId": "SP-Q5GPJ",
+          "unitMode": "base"
+        },
+        {
+          "unitMode": "base",
+          "ingredientId": "SP-79WS5",
+          "qty": 1
+        },
+        {
+          "unitMode": "base",
+          "ingredientId": "NL-HX",
+          "name": "Hộp xôi trắng",
+          "qty": 1
+        }
+      ],
+      "price": 82000
+    },
+    {
+      "recipe": [
+        {
+          "qty": 0.5,
+          "unitMode": "base",
+          "ingredientId": "NL6"
+        },
+        {
+          "qty": 1,
+          "unitMode": "base",
+          "ingredientId": "SP-Q5GPJ"
+        },
+        {
+          "unitMode": "base",
+          "ingredientId": "SP-79WS5",
+          "qty": 1
+        },
+        {
+          "unitMode": "base",
+          "ingredientId": "NL-W0G57",
+          "name": "Hộp Giấy",
+          "qty": 1
+        }
+      ],
+      "price": 79000,
+      "id": "SP-5L6L0",
+      "_originalIndex": 14,
+      "name": "Gà Ủ Xi Dầu 1/2 con",
+      "unit": "Suất",
+      "status": "active",
+      "category": "Gà Đại Tiệc"
+    },
+    {
+      "price": 6900,
+      "recipe": [
+        {
+          "qty": 10,
+          "unitMode": "divide",
+          "ingredientId": "NL-9U1QB"
+        },
+        {
+          "unitMode": "base",
+          "ingredientId": "NL-HNC",
+          "qty": 1
+        }
+      ],
+      "id": "SP-Q5GPJ",
+      "image": "",
+      "category": "Xôi - Mỳ- Nước Chấm",
+      "status": "active",
+      "unit": "hộp",
+      "name": "Hộp Sốt Chấm POPPY"
+    },
+    {
+      "id": "SP-79WS5",
+      "image": "",
+      "recipe": [
+        {
+          "ingredientId": "NL2",
+          "unitMode": "base",
+          "qty": 1
+        },
+        {
+          "unitMode": "base",
+          "ingredientId": "NL-0WZBO",
+          "qty": 1
+        },
+        {
+          "qty": 1,
+          "ingredientId": "NL-8968E",
+          "unitMode": "base"
+        },
+        {
+          "qty": 1,
+          "ingredientId": "NL-A5QPP",
+          "unitMode": "base"
+        },
+        {
+          "unitMode": "base",
+          "ingredientId": "NL-KDP3F",
+          "qty": 20
+        }
+      ],
+      "price": 1103,
+      "category": "Xôi - Mỳ- Nước Chấm",
+      "unit": "Bộ",
+      "status": "active",
+      "name": "Combo Túi bóng- Thìa-Quất-Rau-ớt"
+    },
+    {
+      "_originalIndex": 17,
+      "unit": "Suất-Hộp",
+      "name": "Xôi ruốc heo chưa túi",
+      "recipe": [
+        {
+          "unitMode": "buy",
+          "ingredientId": "NL-LTEOP",
+          "qty": 0.2
+        },
+        {
+          "unitMode": "base",
+          "ingredientId": "NL-HX",
+          "name": "Hộp xôi trắng",
+          "qty": 1
+        },
+        {
+          "name": "Ruốc heo",
+          "qty": 40,
+          "ingredientId": "ING-BCTVI",
+          "unitMode": "divide"
+        }
+      ],
+      "id": "SP-GF99H",
+      "image": "",
+      "price": 30000,
+      "category": "Xôi - Mỳ- Nước Chấm",
+      "status": "active"
+    },
+    {
+      "name": "Nước chấm thần thánh nguyên chai",
+      "unit": "Chai",
+      "status": "active",
+      "category": "Xôi - Mỳ- Nước Chấm",
+      "recipe": [
+        {
+          "qty": 1,
+          "unitMode": "base",
+          "ingredientId": "NL-9U1QB"
+        }
+      ],
+      "price": 65000,
+      "id": "SP-KJIWY",
+      "image": ""
+    }
+  ],
+  "suppliers": [
+    {
+      "name": "Lò Mổ Anh Tuấn",
+      "email": "Lấy gà tươi sống rạng sáng",
+      "phone": "0987654321",
+      "debt": 0,
+      "id": "SUP1"
+    },
+    {
+      "debt": 0,
+      "phone": "0909090909",
+      "email": "Ship túi bóng, hộp giấy",
+      "name": "Đại Lý Bao Bì Kim Ngân",
+      "id": "SUP2"
+    }
+  ],
+  "purchaseOrders": [],
+  "posOrders": [
+    {
+      "paymentMethod": "Imported",
+      "date": "2026-04-03T16:37:24.000Z",
+      "id": "SF-281314",
+      "netAmount": 113520,
+      "status": "Success",
+      "customerPhone": "",
+      "orderCode": "SF-281314",
+      "customerName": "Khách Shopee",
+      "accountId": "ACC3",
+      "totalAmount": 160000,
+      "isFuzzyRecognized": true,
+      "paymentStatus": "Paid",
+      "items": [
+        {
+          "itemTotal": 160000,
+          "quantity": 1,
+          "product": {
+            "recipe": [
+              {
+                "qty": 0.5,
+                "ingredientId": "NL6",
+                "unitMode": "base"
+              },
+              {
+                "qty": 0.5,
+                "ingredientId": "NL-GFB4G",
+                "unitMode": "base"
+              },
+              {
+                "qty": 2,
+                "ingredientId": "NL-W0G57",
+                "unitMode": "base"
+              },
+              {
+                "qty": 2,
+                "ingredientId": "SP-Q5GPJ",
+                "unitMode": "base"
+              },
+              {
+                "qty": 1,
+                "ingredientId": "SP-79WS5",
+                "unitMode": "base"
+              }
+            ],
+            "price": 157000,
+            "id": "CB7",
+            "category": "ComBo Tuyệt hảo",
+            "name": "Gà Ủ Xi Dầu 1/2 con + Gà Ủ Muối 1/2 Con",
+            "status": "active",
+            "unit": "Set"
+          }
+        }
+      ],
+      "channelName": "ShopeeFood"
+    },
+    {
+      "channelName": "ShopeeFood",
+      "items": [
+        {
+          "product": {
+            "_originalIndex": 3,
+            "id": "CB3",
+            "recipe": [
+              {
+                "qty": 0.5,
+                "ingredientId": "NL-GFB4G",
+                "unitMode": "base"
+              },
+              {
+                "unitMode": "base",
+                "ingredientId": "NL-5O73F",
+                "qty": 1
+              },
+              {
+                "qty": 1,
+                "unitMode": "base",
+                "ingredientId": "SP-GF99H"
+              },
+              {
+                "ingredientId": "NL-W0G57",
+                "unitMode": "base",
+                "qty": 1
+              },
+              {
+                "unitMode": "base",
+                "ingredientId": "NL-HX",
+                "qty": 1
+              },
+              {
+                "ingredientId": "SP-Q5GPJ",
+                "unitMode": "base",
+                "qty": 2
+              },
+              {
+                "qty": 1,
+                "name": "Combo Túi bóng- Thìa-Quất-Rau-ớt",
+                "ingredientId": "SP-79WS5",
+                "unitMode": "base"
+              }
+            ],
+            "price": 193000,
+            "unit": "Set",
+            "status": "active",
+            "name": "Set Gà Ủ Muối 1/2 Con + Tai Heo Ủ Muối + Xôi Ruốc Nóng",
+            "category": "ComBo Tuyệt hảo"
+          },
+          "quantity": 1,
+          "itemTotal": 192900
+        }
+      ],
+      "paymentStatus": "Paid",
+      "totalAmount": 192900,
+      "accountId": "ACC3",
+      "isFuzzyRecognized": true,
+      "netAmount": 136863,
+      "id": "SF-571046",
+      "customerName": "Khách Shopee",
+      "orderCode": "SF-571046",
+      "status": "Success",
+      "customerPhone": "",
+      "paymentMethod": "Imported",
+      "date": "2026-04-03T15:53:56.000Z"
+    },
+    {
+      "status": "Success",
+      "customerPhone": "",
+      "customerName": "Khách Shopee",
+      "orderCode": "SF-333053",
+      "netAmount": 56051,
+      "id": "SF-333053",
+      "date": "2026-04-03T15:43:16.000Z",
+      "paymentMethod": "Imported",
+      "channelName": "ShopeeFood",
+      "items": [
+        {
+          "itemTotal": 79000,
+          "quantity": 1,
+          "product": {
+            "status": "active",
+            "unit": "Suất",
+            "name": "Gà Ủ Muối 1/2 Con ",
+            "category": "Gà Đại Tiệc",
+            "_originalIndex": 10,
+            "price": 79000,
+            "id": "SP-XUYLE",
+            "recipe": [
+              {
+                "ingredientId": "SP-Q5GPJ",
+                "unitMode": "base",
+                "qty": 1
+              },
+              {
+                "ingredientId": "NL-GFB4G",
+                "unitMode": "base",
+                "qty": 0.5
+              },
+              {
+                "ingredientId": "SP-79WS5",
+                "unitMode": "base",
+                "qty": 1
+              },
+              {
+                "name": "Hộp Giấy",
+                "qty": 1,
+                "ingredientId": "NL-W0G57",
+                "unitMode": "base"
+              }
+            ]
+          }
+        }
+      ],
+      "paymentStatus": "Paid",
+      "isFuzzyRecognized": true,
+      "accountId": "ACC3",
+      "totalAmount": 79000
+    },
+    {
+      "date": "2026-04-03T11:31:39.000Z",
+      "paymentMethod": "Imported",
+      "customerPhone": "",
+      "status": "Success",
+      "customerName": "Khách Shopee",
+      "orderCode": "SF-804481",
+      "netAmount": 82160,
+      "id": "SF-804481",
+      "isFuzzyRecognized": true,
+      "accountId": "ACC3",
+      "totalAmount": 115800,
+      "channelName": "ShopeeFood",
+      "items": [
+        {
+          "product": {
+            "recipe": [
+              {
+                "qty": 0.2,
+                "ingredientId": "NL-LTEOP",
+                "unitMode": "buy"
+              },
+              {
+                "unitMode": "base",
+                "ingredientId": "NL-HX",
+                "qty": 1,
+                "name": "Hộp xôi trắng"
+              },
+              {
+                "ingredientId": "ING-BCTVI",
+                "unitMode": "divide",
+                "name": "Ruốc heo",
+                "qty": 40
+              }
+            ],
+            "id": "SP-GF99H",
+            "price": 30000,
+            "image": "",
+            "category": "Xôi - Mỳ- Nước Chấm",
+            "status": "active",
+            "_originalIndex": 17,
+            "name": "Xôi ruốc heo chưa túi",
+            "unit": "Suất-Hộp"
+          },
+          "quantity": 4,
+          "itemTotal": 115800
+        }
+      ],
+      "paymentStatus": "Paid"
+    },
+    {
+      "date": "2026-04-03T11:14:43.000Z",
+      "paymentMethod": "Imported",
+      "orderCode": "SF-281653",
+      "customerName": "Khách Shopee",
+      "customerPhone": "",
+      "status": "Success",
+      "id": "SF-281653",
+      "netAmount": 56051,
+      "isFuzzyRecognized": true,
+      "totalAmount": 79000,
+      "accountId": "ACC3",
+      "paymentStatus": "Paid",
+      "items": [
+        {
+          "quantity": 1,
+          "product": {
+            "name": "Gà Ủ Muối 1/2 Con ",
+            "status": "active",
+            "unit": "Suất",
+            "category": "Gà Đại Tiệc",
+            "id": "SP-XUYLE",
+            "recipe": [
+              {
+                "qty": 1,
+                "ingredientId": "SP-Q5GPJ",
+                "unitMode": "base"
+              },
+              {
+                "qty": 0.5,
+                "unitMode": "base",
+                "ingredientId": "NL-GFB4G"
+              },
+              {
+                "ingredientId": "SP-79WS5",
+                "unitMode": "base",
+                "qty": 1
+              },
+              {
+                "unitMode": "base",
+                "ingredientId": "NL-W0G57",
+                "qty": 1,
+                "name": "Hộp Giấy"
+              }
+            ],
+            "price": 79000,
+            "_originalIndex": 10
+          },
+          "itemTotal": 79000
+        }
+      ],
+      "channelName": "ShopeeFood"
+    },
+    {
+      "customerName": "Khách Shopee",
+      "orderCode": "SF-828398",
+      "status": "Success",
+      "customerPhone": "",
+      "netAmount": 56051,
+      "id": "SF-828398",
+      "date": "2026-04-03T10:54:56.000Z",
+      "paymentMethod": "Imported",
+      "channelName": "ShopeeFood",
+      "items": [
+        {
+          "product": {
+            "_originalIndex": 10,
+            "price": 79000,
+            "id": "SP-XUYLE",
+            "recipe": [
+              {
+                "qty": 1,
+                "unitMode": "base",
+                "ingredientId": "SP-Q5GPJ"
+              },
+              {
+                "unitMode": "base",
+                "ingredientId": "NL-GFB4G",
+                "qty": 0.5
+              },
+              {
+                "unitMode": "base",
+                "ingredientId": "SP-79WS5",
+                "qty": 1
+              },
+              {
+                "unitMode": "base",
+                "ingredientId": "NL-W0G57",
+                "qty": 1,
+                "name": "Hộp Giấy"
+              }
+            ],
+            "status": "active",
+            "unit": "Suất",
+            "name": "Gà Ủ Muối 1/2 Con ",
+            "category": "Gà Đại Tiệc"
+          },
+          "quantity": 1,
+          "itemTotal": 79000
+        }
+      ],
+      "paymentStatus": "Paid",
+      "isFuzzyRecognized": true,
+      "totalAmount": 79000,
+      "accountId": "ACC3"
+    },
+    {
+      "items": [
+        {
+          "itemTotal": 108900,
+          "quantity": 1,
+          "product": {
+            "price": 108900,
+            "id": "CB1",
+            "recipe": [
+              {
+                "qty": 0.5,
+                "unitMode": "base",
+                "ingredientId": "NL-GFB4G"
+              },
+              {
+                "qty": 1,
+                "unitMode": "base",
+                "ingredientId": "SP-Q5GPJ"
+              },
+              {
+                "qty": 1,
+                "name": "Xôi ruốc heo chưa túi",
+                "ingredientId": "SP-GF99H",
+                "unitMode": "base"
+              },
+              {
+                "name": "Hộp Giấy",
+                "qty": 1,
+                "unitMode": "base",
+                "ingredientId": "NL-W0G57"
+              },
+              {
+                "name": "Combo Túi bóng- Thìa-Quất-Rau-ớt",
+                "qty": 1,
+                "unitMode": "base",
+                "ingredientId": "SP-79WS5"
+              }
+            ],
+            "_originalIndex": 1,
+            "name": "Gà Ủ Muối 1/2 Con + Xôi Ruốc Heo",
+            "status": "active",
+            "unit": "Suất",
+            "category": "ComBo Gà "
+          }
+        }
+      ],
+      "channelName": "ShopeeFood",
+      "paymentStatus": "Paid",
+      "accountId": "ACC3",
+      "totalAmount": 108900,
+      "isFuzzyRecognized": true,
+      "netAmount": 77265,
+      "id": "SF-542736",
+      "status": "Success",
+      "customerPhone": "",
+      "customerName": "Khách Shopee",
+      "orderCode": "SF-542736",
+      "paymentMethod": "Imported",
+      "date": "2026-04-03T09:56:35.000Z"
+    },
+    {
+      "paymentMethod": "Imported",
+      "date": "2026-04-03T09:40:50.000Z",
+      "id": "SF-344939",
+      "netAmount": 77265,
+      "customerPhone": "",
+      "status": "Success",
+      "orderCode": "SF-344939",
+      "customerName": "Khách Shopee",
+      "accountId": "ACC3",
+      "totalAmount": 108900,
+      "isFuzzyRecognized": true,
+      "paymentStatus": "Paid",
+      "channelName": "ShopeeFood",
+      "items": [
+        {
+          "quantity": 1,
+          "product": {
+            "status": "active",
+            "unit": "Suất",
+            "name": "Gà Ủ Muối 1/2 Con + Xôi Ruốc Heo",
+            "category": "ComBo Gà ",
+            "_originalIndex": 1,
+            "recipe": [
+              {
+                "ingredientId": "NL-GFB4G",
+                "unitMode": "base",
+                "qty": 0.5
+              },
+              {
+                "ingredientId": "SP-Q5GPJ",
+                "unitMode": "base",
+                "qty": 1
+              },
+              {
+                "unitMode": "base",
+                "ingredientId": "SP-GF99H",
+                "name": "Xôi ruốc heo chưa túi",
+                "qty": 1
+              },
+              {
+                "name": "Hộp Giấy",
+                "qty": 1,
+                "unitMode": "base",
+                "ingredientId": "NL-W0G57"
+              },
+              {
+                "qty": 1,
+                "name": "Combo Túi bóng- Thìa-Quất-Rau-ớt",
+                "ingredientId": "SP-79WS5",
+                "unitMode": "base"
+              }
+            ],
+            "id": "CB1",
+            "price": 108900
+          },
+          "itemTotal": 108900
+        }
+      ]
+    },
+    {
+      "isFuzzyRecognized": true,
+      "accountId": "ACC3",
+      "totalAmount": 108900,
+      "channelName": "ShopeeFood",
+      "items": [
+        {
+          "itemTotal": 108900,
+          "quantity": 1,
+          "product": {
+            "recipe": [
+              {
+                "unitMode": "base",
+                "ingredientId": "NL-GFB4G",
+                "qty": 0.5
+              },
+              {
+                "qty": 1,
+                "unitMode": "base",
+                "ingredientId": "SP-Q5GPJ"
+              },
+              {
+                "qty": 1,
+                "name": "Xôi ruốc heo chưa túi",
+                "ingredientId": "SP-GF99H",
+                "unitMode": "base"
+              },
+              {
+                "unitMode": "base",
+                "ingredientId": "NL-W0G57",
+                "name": "Hộp Giấy",
+                "qty": 1
+              },
+              {
+                "qty": 1,
+                "name": "Combo Túi bóng- Thìa-Quất-Rau-ớt",
+                "ingredientId": "SP-79WS5",
+                "unitMode": "base"
+              }
+            ],
+            "id": "CB1",
+            "price": 108900,
+            "_originalIndex": 1,
+            "category": "ComBo Gà ",
+            "name": "Gà Ủ Muối 1/2 Con + Xôi Ruốc Heo",
+            "unit": "Suất",
+            "status": "active"
+          }
+        }
+      ],
+      "paymentStatus": "Paid",
+      "date": "2026-04-03T06:07:54.000Z",
+      "paymentMethod": "Imported",
+      "customerPhone": "",
+      "status": "Success",
+      "customerName": "Khách Shopee",
+      "orderCode": "SF-822499",
+      "netAmount": 77265,
+      "id": "SF-822499"
+    },
+    {
+      "date": "2026-04-03T05:30:37.000Z",
+      "paymentMethod": "Imported",
+      "customerName": "Khách Shopee",
+      "orderCode": "SF-265246",
+      "status": "Success",
+      "customerPhone": "",
+      "netAmount": 56051,
+      "id": "SF-265246",
+      "isFuzzyRecognized": true,
+      "totalAmount": 79000,
+      "accountId": "ACC3",
+      "channelName": "ShopeeFood",
+      "items": [
+        {
+          "quantity": 1,
+          "product": {
+            "_originalIndex": 10,
+            "id": "SP-XUYLE",
+            "price": 79000,
+            "recipe": [
+              {
+                "qty": 1,
+                "unitMode": "base",
+                "ingredientId": "SP-Q5GPJ"
+              },
+              {
+                "qty": 0.5,
+                "ingredientId": "NL-GFB4G",
+                "unitMode": "base"
+              },
+              {
+                "unitMode": "base",
+                "ingredientId": "SP-79WS5",
+                "qty": 1
+              },
+              {
+                "ingredientId": "NL-W0G57",
+                "unitMode": "base",
+                "name": "Hộp Giấy",
+                "qty": 1
+              }
+            ],
+            "unit": "Suất",
+            "status": "active",
+            "name": "Gà Ủ Muối 1/2 Con ",
+            "category": "Gà Đại Tiệc"
+          },
+          "itemTotal": 79000
+        }
+      ],
+      "paymentStatus": "Paid"
+    },
+    {
+      "date": "2026-04-03",
+      "id": "GF-00001",
+      "netAmount": 125599,
+      "liveChannelName": "GrabFood",
+      "discountAmount": 51301,
+      "status": "Success",
+      "customerPhone": "",
+      "orderCode": "GF-00001",
+      "extraFeeNote": "",
+      "customerName": "Khách Grab",
+      "_originalIndex": 0,
+      "totalAmount": 176900,
+      "channelId": "CH3",
+      "extraFee": 0,
+      "type": "Giao hàng - Kênh Bán",
+      "paymentStatus": "Paid",
+      "items": [
+        {
+          "product": {
+            "name": "Tai Heo Ủ Muối",
+            "unit": "Suất",
+            "qty": 2,
+            "_originalIndex": 12,
+            "category": "Gà Đại Tiệc",
+            "status": "active",
+            "id": "SP-5UES8",
+            "recipe": [
+              {
+                "qty": 1,
+                "ingredientId": "SP-Q5GPJ",
+                "unitMode": "base"
+              },
+              {
+                "qty": 1,
+                "unitMode": "base",
+                "ingredientId": "NL-5O73F"
+              },
+              {
+                "qty": 1,
+                "ingredientId": "SP-79WS5",
+                "unitMode": "base"
+              },
+              {
+                "qty": 1,
+                "name": "Hộp xôi trắng",
+                "unitMode": "base",
+                "ingredientId": "NL-HX"
+              }
+            ],
+            "price": 85000
+          },
+          "quantity": 2
+        },
+        {
+          "product": {
+            "recipe": [
+              {
+                "qty": 10,
+                "ingredientId": "NL-9U1QB",
+                "unitMode": "divide"
+              },
+              {
+                "unitMode": "base",
+                "ingredientId": "NL-HNC",
+                "qty": 1
+              }
+            ],
+            "price": 6900,
+            "id": "SP-Q5GPJ",
+            "image": "",
+            "category": "Xôi - Mỳ- Nước Chấm",
+            "status": "active",
+            "qty": 1,
+            "name": "Hộp Sốt Chấm POPPY",
+            "unit": "hộp"
+          },
+          "quantity": 1
+        }
+      ],
+      "channelName": "GrabFood"
+    },
+    {
+      "netAmount": 77265,
+      "id": "SF-482369",
+      "status": "Success",
+      "customerPhone": "",
+      "customerName": "Khách Shopee",
+      "orderCode": "SF-482369",
+      "paymentMethod": "Imported",
+      "date": "2026-04-02T14:17:13.000Z",
+      "channelName": "ShopeeFood",
+      "items": [
+        {
+          "itemTotal": 108900,
+          "product": {
+            "_originalIndex": 1,
+            "recipe": [
+              {
+                "qty": 0.5,
+                "unitMode": "base",
+                "ingredientId": "NL-GFB4G"
+              },
+              {
+                "unitMode": "base",
+                "ingredientId": "SP-Q5GPJ",
+                "qty": 1
+              },
+              {
+                "qty": 1,
+                "name": "Xôi ruốc heo chưa túi",
+                "ingredientId": "SP-GF99H",
+                "unitMode": "base"
+              },
+              {
+                "unitMode": "base",
+                "ingredientId": "NL-W0G57",
+                "qty": 1,
+                "name": "Hộp Giấy"
+              },
+              {
+                "qty": 1,
+                "name": "Combo Túi bóng- Thìa-Quất-Rau-ớt",
+                "unitMode": "base",
+                "ingredientId": "SP-79WS5"
+              }
+            ],
+            "price": 108900,
+            "id": "CB1",
+            "status": "active",
+            "unit": "Suất",
+            "name": "Gà Ủ Muối 1/2 Con + Xôi Ruốc Heo",
+            "category": "ComBo Gà "
+          },
+          "quantity": 1
+        }
+      ],
+      "paymentStatus": "Paid",
+      "accountId": "ACC3",
+      "totalAmount": 108900,
+      "isFuzzyRecognized": true
+    },
+    {
+      "customerName": "Khách Shopee",
+      "orderCode": "SF-714578",
+      "status": "Success",
+      "customerPhone": "",
+      "netAmount": 110682,
+      "id": "SF-714578",
+      "date": "2026-04-02T06:06:54.000Z",
+      "paymentMethod": "Imported",
+      "items": [
+        {
+          "itemTotal": 156000,
+          "product": {
+            "recipe": [
+              {
+                "qty": 1,
+                "unitMode": "base",
+                "ingredientId": "NL-GFB4G"
+              },
+              {
+                "qty": 2,
+                "unitMode": "base",
+                "ingredientId": "SP-Q5GPJ"
+              },
+              {
+                "ingredientId": "SP-79WS5",
+                "unitMode": "base",
+                "qty": 1
+              },
+              {
+                "ingredientId": "NL-W0G57",
+                "unitMode": "base",
+                "qty": 2,
+                "name": "Hộp Giấy"
+              }
+            ],
+            "id": "P2",
+            "price": 156000,
+            "image": "",
+            "_originalIndex": 0,
+            "category": "Gà Đại Tiệc",
+            "name": "Gà Nguyên Con Ủ Muối",
+            "unit": "Suất"
+          },
+          "quantity": 1
+        }
+      ],
+      "channelName": "ShopeeFood",
+      "paymentStatus": "Paid",
+      "isFuzzyRecognized": true,
+      "totalAmount": 156000,
+      "accountId": "ACC3"
+    },
+    {
+      "customerName": "Khách Shopee",
+      "orderCode": "SF-411577",
+      "status": "Success",
+      "customerPhone": "",
+      "netAmount": 175743,
+      "id": "SF-411577",
+      "date": "2026-04-01T12:17:48.000Z",
+      "paymentMethod": "Imported",
+      "channelName": "ShopeeFood",
+      "items": [
+        {
+          "itemTotal": 247700,
+          "quantity": 1,
+          "product": {
+            "recipe": [
+              {
+                "unitMode": "base",
+                "ingredientId": "NL-GFB4G",
+                "qty": 1
+              },
+              {
+                "qty": 1,
+                "ingredientId": "NL-5O73F",
+                "unitMode": "base"
+              },
+              {
+                "qty": 2,
+                "unitMode": "base",
+                "ingredientId": "NL-W0G57"
+              },
+              {
+                "qty": 1,
+                "unitMode": "base",
+                "ingredientId": "NL-HX"
+              },
+              {
+                "ingredientId": "SP-Q5GPJ",
+                "unitMode": "base",
+                "qty": 3
+              },
+              {
+                "unitMode": "base",
+                "ingredientId": "SP-79WS5",
+                "qty": 1
+              }
+            ],
+            "id": "CB4",
+            "price": 240800,
+            "category": "ComBo Tuyệt hảo",
+            "name": "Gà Ủ Muối Nguyên Con + Tai Heo Ủ Muối",
+            "status": "active",
+            "unit": "Suất"
+          }
+        }
+      ],
+      "paymentStatus": "Paid",
+      "isFuzzyRecognized": true,
+      "totalAmount": 247700,
+      "accountId": "ACC3"
+    },
+    {
+      "paymentStatus": "Paid",
+      "channelName": "ShopeeFood",
+      "items": [
+        {
+          "itemTotal": 220900,
+          "quantity": 2,
+          "product": {
+            "category": "ComBo Tuyệt hảo",
+            "unit": "Suất",
+            "status": "active",
+            "name": "Gà Ủ Xi Dầu 1/2 Con + Xôi Ruốc Heo",
+            "_originalIndex": 5,
+            "price": 109000,
+            "recipe": [
+              {
+                "ingredientId": "NL6",
+                "unitMode": "base",
+                "qty": 0.5
+              },
+              {
+                "qty": 1,
+                "ingredientId": "SP-Q5GPJ",
+                "unitMode": "base"
+              },
+              {
+                "unitMode": "base",
+                "ingredientId": "SP-79WS5",
+                "qty": 1
+              },
+              {
+                "unitMode": "base",
+                "ingredientId": "SP-GF99H",
+                "qty": 1
+              },
+              {
+                "ingredientId": "NL-W0G57",
+                "unitMode": "base",
+                "name": "Hộp Giấy",
+                "qty": 1
+              }
+            ],
+            "id": "CB5"
+          }
+        }
+      ],
+      "isFuzzyRecognized": true,
+      "totalAmount": 220900,
+      "accountId": "ACC3",
+      "orderCode": "SF-943965",
+      "customerName": "Khách Shopee",
+      "status": "Success",
+      "customerPhone": "",
+      "id": "SF-943965",
+      "netAmount": 156729,
+      "date": "2026-04-01T11:53:36.000Z",
+      "paymentMethod": "Imported"
+    },
+    {
+      "isFuzzyRecognized": true,
+      "totalAmount": 109000,
+      "accountId": "ACC3",
+      "items": [
+        {
+          "itemTotal": 109000,
+          "quantity": 1,
+          "product": {
+            "category": "ComBo Tuyệt hảo",
+            "status": "active",
+            "unit": "Suất",
+            "name": "Gà Ủ Xi Dầu 1/2 Con + Xôi Ruốc Heo",
+            "_originalIndex": 5,
+            "id": "CB5",
+            "price": 109000,
+            "recipe": [
+              {
+                "qty": 0.5,
+                "unitMode": "base",
+                "ingredientId": "NL6"
+              },
+              {
+                "qty": 1,
+                "unitMode": "base",
+                "ingredientId": "SP-Q5GPJ"
+              },
+              {
+                "qty": 1,
+                "unitMode": "base",
+                "ingredientId": "SP-79WS5"
+              },
+              {
+                "unitMode": "base",
+                "ingredientId": "SP-GF99H",
+                "qty": 1
+              },
+              {
+                "ingredientId": "NL-W0G57",
+                "unitMode": "base",
+                "name": "Hộp Giấy",
+                "qty": 1
+              }
+            ]
+          }
+        }
+      ],
+      "channelName": "ShopeeFood",
+      "paymentStatus": "Paid",
+      "date": "2026-03-31T14:53:43.000Z",
+      "paymentMethod": "Imported",
+      "customerName": "Khách Shopee",
+      "orderCode": "SF-418350",
+      "status": "Success",
+      "customerPhone": "",
+      "netAmount": 77336,
+      "id": "SF-418350"
+    },
+    {
+      "accountId": "ACC3",
+      "totalAmount": 300800,
+      "isFuzzyRecognized": true,
+      "paymentStatus": "Paid",
+      "channelName": "ShopeeFood",
+      "items": [
+        {
+          "product": {
+            "_originalIndex": 0,
+            "image": "",
+            "price": 156000,
+            "recipe": [
+              {
+                "qty": 1,
+                "unitMode": "base",
+                "ingredientId": "NL-GFB4G"
+              },
+              {
+                "qty": 2,
+                "ingredientId": "SP-Q5GPJ",
+                "unitMode": "base"
+              },
+              {
+                "ingredientId": "SP-79WS5",
+                "unitMode": "base",
+                "qty": 1
+              },
+              {
+                "ingredientId": "NL-W0G57",
+                "unitMode": "base",
+                "name": "Hộp Giấy",
+                "qty": 2
+              }
+            ],
+            "id": "P2",
+            "category": "Gà Đại Tiệc",
+            "unit": "Suất",
+            "name": "Gà Nguyên Con Ủ Muối"
+          },
+          "quantity": 2,
+          "itemTotal": 300800
+        }
+      ],
+      "paymentMethod": "Imported",
+      "date": "2026-03-31T14:53:38.000Z",
+      "id": "SF-989801",
+      "netAmount": 213418,
+      "status": "Success",
+      "customerPhone": "",
+      "orderCode": "SF-989801",
+      "customerName": "Khách Shopee"
+    },
+    {
+      "id": "SF-545608",
+      "netAmount": 56051,
+      "orderCode": "SF-545608",
+      "customerName": "Khách Shopee",
+      "status": "Success",
+      "customerPhone": "",
+      "paymentMethod": "Imported",
+      "date": "2026-03-31T13:57:11.000Z",
+      "paymentStatus": "Paid",
+      "items": [
+        {
+          "product": {
+            "status": "active",
+            "unit": "Suất",
+            "name": "Gà Ủ Muối 1/2 Con ",
+            "category": "Gà Đại Tiệc",
+            "_originalIndex": 10,
+            "id": "SP-XUYLE",
+            "recipe": [
+              {
+                "ingredientId": "SP-Q5GPJ",
+                "unitMode": "base",
+                "qty": 1
+              },
+              {
+                "unitMode": "base",
+                "ingredientId": "NL-GFB4G",
+                "qty": 0.5
+              },
+              {
+                "ingredientId": "SP-79WS5",
+                "unitMode": "base",
+                "qty": 1
+              },
+              {
+                "ingredientId": "NL-W0G57",
+                "unitMode": "base",
+                "qty": 1,
+                "name": "Hộp Giấy"
+              }
+            ],
+            "price": 79000
+          },
+          "quantity": 1,
+          "itemTotal": 79000
+        }
+      ],
+      "channelName": "ShopeeFood",
+      "totalAmount": 79000,
+      "accountId": "ACC3",
+      "isFuzzyRecognized": true
+    },
+    {
+      "accountId": "ACC3",
+      "totalAmount": 108900,
+      "isFuzzyRecognized": true,
+      "paymentStatus": "Paid",
+      "items": [
+        {
+          "product": {
+            "category": "ComBo Gà ",
+            "status": "active",
+            "unit": "Suất",
+            "name": "Gà Ủ Muối 1/2 Con + Xôi Ruốc Heo",
+            "_originalIndex": 1,
+            "id": "CB1",
+            "price": 108900,
+            "recipe": [
+              {
+                "qty": 0.5,
+                "unitMode": "base",
+                "ingredientId": "NL-GFB4G"
+              },
+              {
+                "unitMode": "base",
+                "ingredientId": "SP-Q5GPJ",
+                "qty": 1
+              },
+              {
+                "qty": 1,
+                "name": "Xôi ruốc heo chưa túi",
+                "unitMode": "base",
+                "ingredientId": "SP-GF99H"
+              },
+              {
+                "name": "Hộp Giấy",
+                "qty": 1,
+                "ingredientId": "NL-W0G57",
+                "unitMode": "base"
+              },
+              {
+                "unitMode": "base",
+                "ingredientId": "SP-79WS5",
+                "name": "Combo Túi bóng- Thìa-Quất-Rau-ớt",
+                "qty": 1
+              }
+            ]
+          },
+          "quantity": 1,
+          "itemTotal": 108900
+        }
+      ],
+      "channelName": "ShopeeFood",
+      "paymentMethod": "Imported",
+      "date": "2026-03-31T06:50:32.000Z",
+      "id": "SF-459915",
+      "netAmount": 77265,
+      "status": "Success",
+      "customerPhone": "",
+      "orderCode": "SF-459915",
+      "customerName": "Khách Shopee"
+    },
+    {
+      "paymentMethod": "Imported",
+      "date": "2026-03-31T05:44:46.000Z",
+      "id": "SF-037582",
+      "netAmount": 82160,
+      "orderCode": "SF-037582",
+      "customerName": "Khách Shopee",
+      "status": "Success",
+      "customerPhone": "",
+      "totalAmount": 115800,
+      "accountId": "ACC3",
+      "isFuzzyRecognized": true,
+      "paymentStatus": "Paid",
+      "items": [
+        {
+          "product": {
+            "name": "Xôi ruốc heo chưa túi",
+            "unit": "Suất-Hộp",
+            "_originalIndex": 17,
+            "status": "active",
+            "category": "Xôi - Mỳ- Nước Chấm",
+            "price": 30000,
+            "id": "SP-GF99H",
+            "image": "",
+            "recipe": [
+              {
+                "qty": 0.2,
+                "unitMode": "buy",
+                "ingredientId": "NL-LTEOP"
+              },
+              {
+                "ingredientId": "NL-HX",
+                "unitMode": "base",
+                "qty": 1,
+                "name": "Hộp xôi trắng"
+              },
+              {
+                "ingredientId": "ING-BCTVI",
+                "unitMode": "divide",
+                "qty": 40,
+                "name": "Ruốc heo"
+              }
+            ]
+          },
+          "quantity": 4,
+          "itemTotal": 115800
+        }
+      ],
+      "channelName": "ShopeeFood"
+    },
+    {
+      "items": [
+        {
+          "quantity": 1,
+          "product": {
+            "_originalIndex": 1,
+            "price": 108900,
+            "recipe": [
+              {
+                "unitMode": "base",
+                "ingredientId": "NL-GFB4G",
+                "qty": 0.5
+              },
+              {
+                "ingredientId": "SP-Q5GPJ",
+                "unitMode": "base",
+                "qty": 1
+              },
+              {
+                "qty": 1,
+                "name": "Xôi ruốc heo chưa túi",
+                "ingredientId": "SP-GF99H",
+                "unitMode": "base"
+              },
+              {
+                "name": "Hộp Giấy",
+                "qty": 1,
+                "ingredientId": "NL-W0G57",
+                "unitMode": "base"
+              },
+              {
+                "ingredientId": "SP-79WS5",
+                "unitMode": "base",
+                "qty": 1,
+                "name": "Combo Túi bóng- Thìa-Quất-Rau-ớt"
+              }
+            ],
+            "id": "CB1",
+            "status": "active",
+            "unit": "Suất",
+            "name": "Gà Ủ Muối 1/2 Con + Xôi Ruốc Heo",
+            "category": "ComBo Gà "
+          },
+          "itemTotal": 108900
+        }
+      ],
+      "channelName": "ShopeeFood",
+      "paymentStatus": "Paid",
+      "isFuzzyRecognized": true,
+      "totalAmount": 108900,
+      "accountId": "ACC3",
+      "customerName": "Khách Shopee",
+      "orderCode": "SF-145354",
+      "status": "Success",
+      "customerPhone": "",
+      "netAmount": 77265,
+      "id": "SF-145354",
+      "date": "2026-03-30T14:02:19.000Z",
+      "paymentMethod": "Imported"
+    }
+  ],
+  "accounts": [
+    {
+      "id": "ACC1",
+      "_originalIndex": 0,
+      "balance": 2600000,
+      "type": "cash",
+      "name": "Tiền mặt tại quầy",
+      "initialBalance": 5000000
+    },
+    {
+      "type": "e-wallet",
+      "name": "Ví ShopeePay",
+      "initialBalance": 0,
+      "id": "ACC3",
+      "balance": 1892456
+    },
+    {
+      "balance": 125599,
+      "id": "ACC4",
+      "initialBalance": 0,
+      "name": "Ví GrabMerchant",
+      "type": "e-wallet"
+    }
+  ],
+  "financeCategories": [
+    {
+      "id": "FC1",
+      "type": "income",
+      "name": "Doanh thu bán hàng"
+    },
+    {
+      "id": "FC2",
+      "type": "income",
+      "name": "Thu nợ khách hàng"
+    },
+    {
+      "id": "FC3",
+      "type": "income",
+      "name": "Vốn chủ sở hữu"
+    },
+    {
+      "id": "FC4",
+      "type": "expense",
+      "name": "Nhập hàng nguyên liệu"
+    },
+    {
+      "id": "FC5",
+      "type": "expense",
+      "name": "Lương nhân viên"
+    },
+    {
+      "id": "FC6",
+      "type": "expense",
+      "name": "Tiền mặt bằng"
+    },
+    {
+      "id": "FC7",
+      "type": "expense",
+      "name": "Điện nước internet"
+    },
+    {
+      "id": "FC8",
+      "type": "expense",
+      "name": "Phí sàn (Grab/Shopee)"
+    },
+    {
+      "id": "FC9",
+      "type": "expense",
+      "name": "Chi phí khác"
+    },
+    {
+      "id": "FC10",
+      "type": "income",
+      "name": "Điều chỉnh số dư"
+    }
+  ],
+  "transactions": [
+    {
+      "relatedId": "SF-281314",
+      "collector": "System",
+      "amount": 113520,
+      "type": "Thu",
+      "note": "ShopeeFood Order: SF-281314",
+      "voucherCode": "PT-281314",
+      "id": "TX-IMP-1775283346190-281314-0",
+      "categoryId": "FC1",
+      "date": "2026-04-03T16:37:24.000Z",
+      "accountId": "ACC3"
+    },
+    {
+      "date": "2026-04-03T15:53:56.000Z",
+      "categoryId": "FC1",
+      "accountId": "ACC3",
+      "collector": "System",
+      "amount": 136863,
+      "type": "Thu",
+      "relatedId": "SF-571046",
+      "id": "TX-IMP-1775283346190-571046-1",
+      "note": "ShopeeFood Order: SF-571046",
+      "voucherCode": "PT-571046"
+    },
+    {
+      "accountId": "ACC3",
+      "date": "2026-04-03T15:43:16.000Z",
+      "categoryId": "FC1",
+      "id": "TX-IMP-1775283346190-333053-2",
+      "voucherCode": "PT-333053",
+      "note": "ShopeeFood Order: SF-333053",
+      "type": "Thu",
+      "amount": 56051,
+      "collector": "System",
+      "relatedId": "SF-333053"
+    },
+    {
+      "categoryId": "FC1",
+      "date": "2026-04-03T11:31:39.000Z",
+      "accountId": "ACC3",
+      "relatedId": "SF-804481",
+      "collector": "System",
+      "type": "Thu",
+      "amount": 82160,
+      "note": "ShopeeFood Order: SF-804481",
+      "voucherCode": "PT-804481",
+      "id": "TX-IMP-1775283346190-804481-3"
+    },
+    {
+      "id": "TX-IMP-1775283346190-281653-4",
+      "note": "ShopeeFood Order: SF-281653",
+      "voucherCode": "PT-281653",
+      "collector": "System",
+      "type": "Thu",
+      "amount": 56051,
+      "relatedId": "SF-281653",
+      "accountId": "ACC3",
+      "date": "2026-04-03T11:14:43.000Z",
+      "categoryId": "FC1"
+    },
+    {
+      "accountId": "ACC3",
+      "categoryId": "FC1",
+      "date": "2026-04-03T10:54:56.000Z",
+      "voucherCode": "PT-828398",
+      "note": "ShopeeFood Order: SF-828398",
+      "id": "TX-IMP-1775283346190-828398-5",
+      "relatedId": "SF-828398",
+      "amount": 56051,
+      "type": "Thu",
+      "collector": "System"
+    },
+    {
+      "accountId": "ACC3",
+      "date": "2026-04-03T09:56:35.000Z",
+      "categoryId": "FC1",
+      "id": "TX-IMP-1775283346190-542736-6",
+      "voucherCode": "PT-542736",
+      "note": "ShopeeFood Order: SF-542736",
+      "type": "Thu",
+      "amount": 77265,
+      "collector": "System",
+      "relatedId": "SF-542736"
+    },
+    {
+      "categoryId": "FC1",
+      "date": "2026-04-03T09:40:50.000Z",
+      "accountId": "ACC3",
+      "relatedId": "SF-344939",
+      "collector": "System",
+      "amount": 77265,
+      "type": "Thu",
+      "note": "ShopeeFood Order: SF-344939",
+      "voucherCode": "PT-344939",
+      "id": "TX-IMP-1775283346190-344939-7"
+    },
+    {
+      "accountId": "ACC3",
+      "categoryId": "FC1",
+      "date": "2026-04-03T06:07:54.000Z",
+      "voucherCode": "PT-822499",
+      "note": "ShopeeFood Order: SF-822499",
+      "id": "TX-IMP-1775283346190-822499-8",
+      "relatedId": "SF-822499",
+      "amount": 77265,
+      "type": "Thu",
+      "collector": "System"
+    },
+    {
+      "relatedId": "SF-265246",
+      "collector": "System",
+      "type": "Thu",
+      "amount": 56051,
+      "note": "ShopeeFood Order: SF-265246",
+      "voucherCode": "PT-265246",
+      "id": "TX-IMP-1775283346190-265246-9",
+      "categoryId": "FC1",
+      "date": "2026-04-03T05:30:37.000Z",
+      "accountId": "ACC3"
+    },
+    {
+      "amount": 125599,
+      "type": "Thu",
+      "categoryName": "Doanh thu bán hàng",
+      "status": "Completed",
+      "relatedId": "GF-00001",
+      "payer": "Khách Grab",
+      "id": "TX-L73GX",
+      "note": "Doanh thu đơn GF-00001 (GrabFood)",
+      "date": "2026-04-03",
+      "categoryId": "FC1",
+      "accountId": "ACC4"
+    },
+    {
+      "collector": "System",
+      "type": "Thu",
+      "amount": 77265,
+      "note": "ShopeeFood Order: SF-482369",
+      "voucherCode": "PT-482369",
+      "id": "TX-IMP-1775206243137-482369-0",
+      "categoryId": "FC1",
+      "date": "2026-04-02T14:17:13.000Z",
+      "accountId": "ACC3"
+    },
+    {
+      "id": "TX-IMP-1775206243137-714578-1",
+      "note": "ShopeeFood Order: SF-714578",
+      "voucherCode": "PT-714578",
+      "collector": "System",
+      "type": "Thu",
+      "amount": 110682,
+      "accountId": "ACC3",
+      "date": "2026-04-02T06:06:54.000Z",
+      "categoryId": "FC1"
+    },
+    {
+      "id": "TX-IMP-1775206232093-411577-0",
+      "note": "ShopeeFood Order: SF-411577",
+      "voucherCode": "PT-411577",
+      "collector": "System",
+      "amount": 175743,
+      "type": "Thu",
+      "accountId": "ACC3",
+      "date": "2026-04-01T12:17:48.000Z",
+      "categoryId": "FC1"
+    },
+    {
+      "accountId": "ACC3",
+      "date": "2026-04-01T11:53:36.000Z",
+      "categoryId": "FC1",
+      "id": "TX-IMP-1775206232093-943965-1",
+      "voucherCode": "PT-943965",
+      "note": "ShopeeFood Order: SF-943965",
+      "amount": 156729,
+      "type": "Thu",
+      "collector": "System"
+    },
+    {
+      "categoryId": "FC1",
+      "date": "2026-03-31T14:53:43.000Z",
+      "accountId": "ACC3",
+      "amount": 77336,
+      "type": "Thu",
+      "collector": "System",
+      "voucherCode": "PT-418350",
+      "note": "ShopeeFood Order: SF-418350",
+      "id": "TX-IMP-1775206216078-418350-0"
+    },
+    {
+      "id": "TX-IMP-1775206216078-989801-1",
+      "note": "ShopeeFood Order: SF-989801",
+      "voucherCode": "PT-989801",
+      "collector": "System",
+      "type": "Thu",
+      "amount": 213418,
+      "accountId": "ACC3",
+      "date": "2026-03-31T14:53:38.000Z",
+      "categoryId": "FC1"
+    },
+    {
+      "collector": "System",
+      "type": "Thu",
+      "amount": 56051,
+      "id": "TX-IMP-1775206216078-545608-2",
+      "note": "ShopeeFood Order: SF-545608",
+      "voucherCode": "PT-545608",
+      "date": "2026-03-31T13:57:11.000Z",
+      "categoryId": "FC1",
+      "accountId": "ACC3"
+    },
+    {
+      "amount": 77265,
+      "type": "Thu",
+      "collector": "System",
+      "voucherCode": "PT-459915",
+      "note": "ShopeeFood Order: SF-459915",
+      "id": "TX-IMP-1775206216078-459915-3",
+      "categoryId": "FC1",
+      "date": "2026-03-31T06:50:32.000Z",
+      "accountId": "ACC3"
+    },
+    {
+      "date": "2026-03-31T05:44:46.000Z",
+      "categoryId": "FC1",
+      "accountId": "ACC3",
+      "type": "Thu",
+      "amount": 82160,
+      "collector": "System",
+      "id": "TX-IMP-1775206216078-037582-4",
+      "voucherCode": "PT-037582",
+      "note": "ShopeeFood Order: SF-037582"
+    },
+    {
+      "date": "2026-03-30T14:02:19.000Z",
+      "categoryId": "FC1",
+      "accountId": "ACC3",
+      "collector": "System",
+      "amount": 77265,
+      "type": "Thu",
+      "id": "TX-IMP-1775206206725-145354-0",
+      "note": "ShopeeFood Order: SF-145354",
+      "voucherCode": "PT-145354"
+    },
+    {
+      "voucherCode": "PC-539812",
+      "note": "Mở shop bán trên shope và Grab",
+      "id": "GD-NXWTO",
+      "relatedId": "",
+      "payer": "",
+      "amount": 2400000,
+      "type": "Chi",
+      "collector": "Shopee + Grab",
+      "accountId": "ACC1",
+      "categoryId": "FC9",
+      "date": "2025-12-10"
+    },
+    {
+      "date": "2025-12-01",
+      "categoryId": "FC3",
+      "accountId": "ACC1",
+      "collector": "",
+      "amount": 5000000,
+      "type": "Thu",
+      "payer": "Huy",
+      "relatedId": "",
+      "id": "GD-GZ8ON",
+      "note": "Vốn ban đầu bán hàng",
+      "voucherCode": "PT-461464"
+    }
+  ],
+  "settings": {
+    "loginFooter": "Hệ thống quản lý POPPY © 2026",
+    "customBackupTitle1": "Đồng Bộ Cloud API Dự Phòng lên Host",
+    "webhookUrl": "https://hook.eu1.make.com/l4z2qp373iy2446okve92fla54p69pon",
+    "storeName": "Xóm Gà  POPPY",
+    "syncMode": "auto",
+    "customBackupTitle2": "Tự Động Đẩy Dữ Liệu Lên Make->Dropbox",
+    "theme": "light",
+    "address": "",
+    "lastWebhookSync": 1775440302806,
+    "lastWebhookSyncSize": 115143,
+    "branch": "Trụ Sở Chính",
+    "autoCloudSyncInterval": "hourly",
+    "customBackupTitle3": "Tải File Cứng (Dữ Liệu Nội Bộ JSON) về Disk",
+    "developerInfo": "",
+    "lastCloudSyncSize": 39299,
+    "phone": "0868212757",
+    "lastBackupTime": 1775310135465,
+    "lastCloudSyncTime": 1775440306591,
+    "logoUrl": "",
+    "autoBackupInterval": "daily",
+    "backupDvrSlot": 1,
+    "faviconUrl": "",
+    "autoCloudSyncTime": "2h"
+  },
+  "users": [
+    {
+      "id": "U1",
+      "password": "admin",
+      "role": "ADMIN",
+      "username": "admin",
+      "name": "Quản Trị Viên",
+      "status": "active"
+    },
+    {
+      "username": "quanly",
+      "role": "MANAGER",
+      "status": "active",
+      "name": "Quản Lý Cửa Hàng",
+      "password": "123",
+      "id": "U2"
+    },
+    {
+      "password": "123",
+      "id": "U3",
+      "username": "thungan",
+      "role": "CASHIER",
+      "status": "active",
+      "name": "Thu Ngân"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "NOT_1UPU2",
+      "title": "Đồng bộ Đám mây (Webhook)",
+      "message": "Bản sao lưu dự phòng JSON định kỳ đã được kết xuất tĩnh và gửi an toàn qua API vào lúc 08:51:42.",
+      "type": "success",
+      "silent": false,
+      "timestamp": "2026-04-06T01:51:42.811Z",
+      "isRead": false
+    },
+    {
+      "message": "Bản sao lưu dự phòng JSON định kỳ đã được kết xuất tĩnh và gửi an toàn qua API vào lúc 16:42:31.",
+      "isRead": false,
+      "type": "success",
+      "timestamp": "2026-04-02T09:42:31.569Z",
+      "title": "Đồng bộ Đám mây (Webhook)",
+      "silent": false,
+      "id": "NOT_7GD22"
+    },
+    {
+      "message": "Bạn có 4 đơn hàng đang trong trạng thái CHỜ SHIP cần được bàn giao ngay.",
+      "isRead": false,
+      "type": "info",
+      "timestamp": "2026-04-02T09:41:51.068Z",
+      "title": "Dọn Đơn Hàng",
+      "silent": true,
+      "id": "NOT_UGVP2"
+    },
+    {
+      "silent": true,
+      "id": "NOT_QNTOS",
+      "timestamp": "2026-04-02T09:41:51.068Z",
+      "title": "Cảnh Báo Công Nợ",
+      "message": "Trong sổ quỹ: Có 1 nợ trả NCC (210.000đ), và 8 phiếu nợ khách hàng cần thu (1.324.603đ). Hãy trích lập thanh toán xử lý ngay.",
+      "isRead": false,
+      "type": "warning"
+    },
+    {
+      "type": "info",
+      "message": "Bạn có 1 Phiếu Yêu Cầu Nhập Kho (PO) đang chờ được xét duyệt / xử lý.",
+      "isRead": false,
+      "id": "NOT_D6DS8",
+      "silent": true,
+      "title": "Quản Lý Nhập Hàng",
+      "timestamp": "2026-04-02T09:41:51.068Z"
+    },
+    {
+      "timestamp": "2026-04-02T09:41:51.068Z",
+      "title": "Radar Tồn Kho Cảnh Báo",
+      "silent": true,
+      "id": "NOT_5W37U",
+      "message": "Năng lực cung ứng sẽ GIÁN ĐOẠN. Hụt ngầm: Rau thơm, Hũ đựng nước chấm, Túi Bóng và 9 khách khác. Hãy rà soát ngay!",
+      "isRead": false,
+      "type": "warning"
+    },
+    {
+      "id": "NOT_JTDA5",
+      "silent": true,
+      "title": "Kho Cạn Kiệt Nguyên Liệu",
+      "timestamp": "2026-04-02T08:34:23.108Z",
+      "type": "error",
+      "isRead": false,
+      "message": "Đã hết sạch: Tai heo ủ muối. Cần Nhập Hàng Gấp!"
+    },
+    {
+      "message": "Đã hết sạch: Tai heo ủ muối. Cần Nhập Hàng Gấp!",
+      "isRead": false,
+      "type": "error",
+      "timestamp": "2026-04-02T08:07:31.314Z",
+      "title": "Kho Cạn Kiệt Nguyên Liệu",
+      "silent": false,
+      "id": "NOT_HIYOW"
+    }
+  ],
+  "toast": null,
+  "balance": 441520,
+  "orders": [],
+  "_skipSave": true
+}
