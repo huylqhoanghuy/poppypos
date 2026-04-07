@@ -10,6 +10,8 @@ const InventoryUI = ({
   ingredients,
   suppliers,
   purchaseOrders,
+  posOrders = [],
+  products = [],
   categories = [],
   onSaveIngredient,
   onDeleteIngredient,
@@ -360,16 +362,68 @@ const InventoryUI = ({
          const ing = ingredients.find(i => i.id === expandedIngId);
          if (!ing) return null;
          
-         // Lịch sử nhập hàng cho món này (xuyên suốt các purchaseOrders props)
-         const history = (purchaseOrders || []).filter(po => (po.items || []).some(it => it.ingredientId === ing.id));
-         const sorted = [...history].sort((a,b)=> new Date(b.date) - new Date(a.date));
-         const latestPO = sorted.length > 0 ? sorted[0] : null;
-         const latestItem = latestPO ? latestPO.items.find(it => it.ingredientId === ing.id) : null;
-         const supplier = latestPO ? (suppliers || []).find(s => s.id === latestPO.supplierId) : null;
+         // Lịch sử nhập/xuất (Sao kê)
+         const ledgerData = [];
+         
+         // 1. Nhập từ Phiếu Nhập (IN)
+         (purchaseOrders || []).forEach(po => {
+           if (po.status !== 'Cancelled') {
+             const it = (po.items || []).find(i => i.ingredientId === ing.id);
+             if (it) {
+               ledgerData.push({
+                 id: po.id + '-IN',
+                 date: new Date(po.date || po.createdAt),
+                 type: 'IN',
+                 ref: po.id,
+                 qty: it.baseQty,
+                 price: it.cost || 0,
+                 source: (suppliers || []).find(s => s.id === po.supplierId)?.name || 'Nhà Cung Cấp',
+                 status: po.status
+               });
+             }
+           }
+         });
+
+         // 2. Xuất từ Đơn Hàng (OUT)
+         (posOrders || []).forEach(ord => {
+           if (ord.status !== 'Cancelled') {
+             let consumed = 0;
+             (ord.items || []).forEach(cartItem => {
+                // Tuyệt đối chỉ tính toán dựa trên hóa đơn Bán Hàng (Snapshot khi bán), không móc nối ngược với Danh mục hiện tại
+                // vì công thức hiện tại chỉ mang tính Blueprint, còn đơn quá khứ đã được chốt (Lock-in).
+                let latestRecipe = null;
+                if (cartItem.product && cartItem.product.recipe) {
+                   latestRecipe = cartItem.product.recipe;
+                }
+
+                if (latestRecipe) {
+                   const rItem = latestRecipe.find(r => r.ingredientId === ing.id);
+                   if (rItem) {
+                      consumed += (Number(rItem.qty) || 0) * (Number(cartItem.quantity) || 1);
+                   }
+                }
+             });
+             if (consumed > 0) {
+                ledgerData.push({
+                  id: ord.id + '-OUT',
+                  date: new Date(ord.date || ord.createdAt),
+                  type: 'OUT',
+                  ref: ord.orderCode || ord.id,
+                  qty: -consumed,
+                  price: ing.cost || 0, // Using current dynamic cost
+                  source: ord.channelName || 'Bán Lẻ',
+                  status: ord.status
+                });
+             }
+           }
+         });
+
+         // 3. Sắp xếp từ mới đến cũ
+         const sortedLedger = ledgerData.sort((a,b) => b.date - a.date);
 
          return (
            <div className="modal-overlay" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
-             <div className="glass-panel printable-area" style={{ width: '600px', maxWidth: '95vw', padding: '32px', position: 'relative', background: 'var(--bg-color)', WebkitPrintColorAdjust: 'exact', colorAdjust: 'exact' }}>
+             <div className="glass-panel printable-area" style={{ width: '680px', maxWidth: '95vw', padding: '32px', position: 'relative', background: 'var(--bg-color)', WebkitPrintColorAdjust: 'exact', colorAdjust: 'exact', maxHeight: '95vh', overflowY: 'auto' }}>
                 <button className="btn btn-ghost no-print" onClick={() => setExpandedIngId(null)} style={{ position: 'absolute', top: '24px', right: '24px', padding: '8px', zIndex: 10 }}><X size={20}/></button>
                 
                 <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 900, color: 'var(--primary)', borderBottom: '2px solid var(--surface-border)', paddingBottom: '16px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -384,7 +438,7 @@ const InventoryUI = ({
                    <div>
                       <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600 }}>LƯỢNG TỒN HIỆN TẠI</p>
                       <h3 style={{ margin: '4px 0 0 0', fontSize: '20px', fontWeight: 900, color: (ing.stock <= ing.minStock) ? 'var(--danger)' : 'var(--success)' }}>
-                         {ing.stock} <span style={{fontSize:'14px'}}>{ing.buyUnit || ing.unit}</span>
+                         {Number(ing.stock).toLocaleString('vi-VN')} <span style={{fontSize:'14px'}}>{ing.buyUnit || ing.unit}</span>
                       </h3>
                    </div>
                 </div>
@@ -400,49 +454,50 @@ const InventoryUI = ({
                    </div>
                 </div>
 
-                <h4 style={{ margin: '0 0 16px 0', fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase' }}>LỊCH SỬ NHẬP HÀNG (THEO DÕI NGUỒN CỐC)</h4>
-                {sorted.length > 0 ? (
-                  <div style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid var(--surface-border)', borderRadius: '8px' }}>
+                <h4 style={{ margin: '0 0 16px 0', fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase' }}>SAO KÊ XUẤT NHẬP TỒN (LỊCH SỬ THAY ĐỔI)</h4>
+                {sortedLedger.length > 0 ? (
+                  <div style={{ border: '1px solid var(--surface-border)', borderRadius: '8px', overflow: 'hidden' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
-                      <thead style={{ position: 'sticky', top: 0, background: 'var(--surface-color)', zIndex: 1 }}>
+                      <thead style={{ background: 'var(--surface-color)' }}>
                         <tr style={{ borderBottom: '2px solid var(--surface-border)' }}>
-                          <th style={{ padding: '10px', color: 'var(--text-secondary)' }}>Ngày & Giờ (Tự Sinh)</th>
-                          <th style={{ padding: '10px', color: 'var(--text-secondary)' }}>Mã PO</th>
-                          <th style={{ padding: '10px', color: 'var(--text-secondary)' }}>Nhà Cung Cấp</th>
-                          <th style={{ padding: '10px', color: 'var(--text-secondary)', textAlign: 'right' }}>Lô Nhập</th>
-                          <th style={{ padding: '10px', color: 'var(--text-secondary)', textAlign: 'right' }}>Giá/Lô</th>
-                          <th style={{ padding: '10px', color: 'var(--text-secondary)' }}>Trạng Thái</th>
+                          <th style={{ padding: '10px 14px', color: 'var(--text-secondary)' }}>Ngày & Giờ</th>
+                          <th style={{ padding: '10px 14px', color: 'var(--text-secondary)' }}>Mã Phiếu/Đơn</th>
+                          <th style={{ padding: '10px 14px', color: 'var(--text-secondary)' }}>Nguồn / Đối tác</th>
+                          <th style={{ padding: '10px 14px', color: 'var(--text-secondary)', textAlign: 'right' }}>Biến động</th>
+                          <th style={{ padding: '10px 14px', color: 'var(--text-secondary)', textAlign: 'right' }}>Giá trị Lô/Cost</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {sorted.map(po => {
-                           const item = po.items.find(it => it.ingredientId === ing.id);
-                           if (!item) return null;
-                           const sup = (suppliers || []).find(s => s.id === po.supplierId);
-                           return (
-                             <tr key={po.id} style={{ borderBottom: '1px solid #E5E7EB', background: '#FFFFFF' }}>
-                               <td style={{ padding: '10px', fontWeight: 500 }}>
-                                  <div>{new Date(po.date).toLocaleDateString('vi-VN')}</div>
-                                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{new Date(po.date).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}</div>
+                        {sortedLedger.map(row => (
+                             <tr key={row.id} style={{ borderBottom: '1px solid #E5E7EB', background: row.type === 'IN' ? '#F0FDF4' : '#FFF7ED' }}>
+                               <td style={{ padding: '10px 14px', fontWeight: 500 }}>
+                                  <div>{row.date.toLocaleDateString('vi-VN')}</div>
+                                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{row.date.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}</div>
                                </td>
-                               <td style={{ padding: '10px', color: 'var(--primary)', fontWeight: 600 }}>{po.id}</td>
-                               <td style={{ padding: '10px', fontWeight: 500 }}>{sup?.name || '---'}</td>
-                               <td style={{ padding: '10px', textAlign: 'right', fontWeight: 700, color: 'var(--primary)' }}>+ {item.baseQty} <span style={{fontSize:'10px'}}>{ing.buyUnit}</span></td>
-                               <td style={{ padding: '10px', textAlign: 'right', fontWeight: 600, color: 'var(--danger)' }}>{(item.cost || 0).toLocaleString('vi-VN')} đ</td>
-                               <td style={{ padding: '10px' }}>
-                                 {po.status === 'Paid' ? <span style={{ color: 'var(--success)', fontWeight: 600, fontSize: '11px', background: '#DCFCE7', padding: '2px 6px', borderRadius: '4px' }}>Đã chi</span> : 
-                                  po.status === 'Debt' ? <span style={{ color: 'var(--danger)', fontWeight: 600, fontSize: '11px', background: '#FEE2E2', padding: '2px 6px', borderRadius: '4px' }}>Ghi nợ</span> :
-                                  po.status === 'Pending' ? <span style={{ color: 'var(--warning)', fontWeight: 600, fontSize: '11px', background: '#FEF3C7', padding: '2px 6px', borderRadius: '4px' }}>Chờ duyệt</span> :
-                                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Đã Xoá</span>}
+                               <td style={{ padding: '10px 14px', fontWeight: 600, color: row.type === 'IN' ? 'var(--success)' : '#B45309' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                     {row.type === 'IN' ? <span style={{fontSize:'10px', padding:'2px 4px', background:'#DCFCE7', borderRadius:'4px'}}>NHẬP</span> : <span style={{fontSize:'10px', padding:'2px 4px', background:'#FFEDD5', borderRadius:'4px'}}>XUẤT</span>}
+                                     {row.ref}
+                                  </div>
+                               </td>
+                               <td style={{ padding: '10px 14px', fontWeight: 500 }}>{row.source}</td>
+                               <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 800, color: row.type === 'IN' ? 'var(--success)' : 'var(--danger)' }}>
+                                  {row.type === 'IN' ? '+' : ''}{Number(row.qty).toLocaleString('vi-VN', {maximumFractionDigits:3})} 
+                                  <span style={{fontSize:'10px', marginLeft:'4px'}}>{row.type === 'IN' ? ing.buyUnit : ing.unit}</span>
+                               </td>
+                               <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                  <div style={{ fontSize: '13px' }}>
+                                     {row.type === 'OUT' && <span style={{color: 'var(--text-secondary)', fontWeight: 400}}>~ </span>}
+                                     {Math.abs(row.qty * row.price).toLocaleString('vi-VN', {maximumFractionDigits:0})} đ
+                                  </div>
                                </td>
                              </tr>
-                           )
-                        })}
+                        ))}
                       </tbody>
                     </table>
                   </div>
                 ) : (
-                  <p style={{ background: '#FEF2F2', color: 'var(--danger)', padding: '16px', borderRadius: '8px', border: '1px dashed #FECACA', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>Vật tư này chưa từng được nạp qua Phiếu Nhập Hàng hệ thống.</p>
+                  <p style={{ background: '#FEF2F2', color: 'var(--danger)', padding: '16px', borderRadius: '8px', border: '1px dashed #FECACA', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>Vật tư này chưa phát sinh giao dịch nhập xuất nào.</p>
                 )}
 
                 <div className="no-print" style={{ display: 'flex', justifyContent: 'center', marginTop: '32px' }}>

@@ -40,6 +40,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (username, password) => {
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
         const defaultUsers = [
           { id: 'U1', username: 'admin', password: 'admin', name: 'Quản Trị Tối Cao', role: 'ADMIN', status: 'active' },

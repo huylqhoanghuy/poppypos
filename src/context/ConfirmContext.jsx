@@ -1,14 +1,18 @@
+// eslint-disable-next-line no-unused-vars
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { AlertTriangle, ShieldAlert } from 'lucide-react';
 
 const ConfirmContext = createContext();
 
 // Global ref for non-React service usage
+// eslint-disable-next-line react-refresh/only-export-components
 export const GlobalConfirm = { current: null };
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useConfirm = () => useContext(ConfirmContext);
 
+ 
+ 
 export const ConfirmProvider = ({ children }) => {
   const [confirmState, setConfirmState] = useState({
     isOpen: false,

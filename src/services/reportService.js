@@ -110,6 +110,7 @@ export const ReportService = {
                 const dateStr = getDateStr(o.date);
                 const net = Number(o.netAmount) || 0;
                 const gross = Number(o.totalAmount) || net;
+                // eslint-disable-next-line no-unused-vars
                 const isImported = o.paymentMethod === 'Imported';
                 const commissionRate = Number(matchedChannelObj.commission ?? matchedChannelObj.discountRate ?? 0);
                 

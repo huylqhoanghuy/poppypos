@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Search, Plus, Minus, Trash2, CreditCard, Flame, Image as ImageIcon } from 'lucide-react';
 import { useInventoryEngine } from '../hooks/useInventoryEngine';
 import { useProducts } from '../hooks/useProducts';
@@ -11,7 +11,6 @@ import CurrencyInput from '../components/CurrencyInput';
 
 const POS = () => {
   const { dispatch } = useData();
-  const orderCounter = useRef(0);
   const { activeProducts } = useProducts();
   const { activeCategories } = useCategories();
   const { activeSalesChannels } = useSalesChannels();
@@ -125,53 +124,52 @@ const POS = () => {
   const discountAmount = total * (actualCommissionRate / 100);
   const netAmount = total - discountAmount;
 
-  const handleCheckout = (paymentStatus = 'Paid') => {
+  const handleCheckout = async (paymentStatus = 'Paid') => {
     if (cart.length === 0) return;
-    if (paymentStatus === 'Debt' && (!customerName || !customerName.trim())) {
-       dispatch({
-          type: 'ADD_NOTIFICATION',
-          payload: { title: 'Thiếu thông tin', message: 'Khi chọn hình thức Ghi Nợ, bắt buộc phải nhập Tên Khách Hàng.', type: 'error' }
-       });
-       return;
-    }
     const orderItems = cart.map(item => ({ product: item, quantity: item.qty }));
     const prefix = getChannelPrefix(selectedChannel.name);
-    const finalOrderCode = orderCode || `${prefix}-${(++orderCounter.current).toString(36).toUpperCase().padStart(5, '0')}`;
+    // Thay thế logic ID ngẫu nhiên không an toàn bằng logic ID duy nhất toàn cầu
+    const finalOrderCode = orderCode || StorageService.generateId(prefix + '-');
     
-    addOrder({
-       orderCode: finalOrderCode,
-       customerName,
-       customerPhone,
-       extraFee: Number(extraFee) || 0,
-       extraFeeNote,
-       totalAmount: total, discountAmount, netAmount,
-       channelId: selectedChannel.id, channelName: selectedChannel.name,
-       paymentStatus,
-       items: orderItems, type: 'Giao hàng - Kênh Bán' 
-    });
-    
-    const displayTotal = netAmount + (Number(extraFee) || 0);
-    dispatch({
-      type: 'ADD_NOTIFICATION',
-      payload: { 
-        title: `Đơn hàng mới: ${finalOrderCode}`, 
-        message: paymentStatus === 'Debt' ? `Đã ghi nhận công nợ ${displayTotal.toLocaleString('vi-VN')} đ cho khách ${customerName}` : `Thanh toán thành công. Thu về: ${displayTotal.toLocaleString('vi-VN')} đ`, 
-        type: 'success' 
-      }
-    });
-    
-    // Reset form
-    setCart([]);
-    setCustomerName('');
-    setCustomerPhone('');
-    setOrderCode('');
+    try {
+      await addOrder({
+         orderCode: finalOrderCode,
+         customerName,
+         customerPhone,
+         extraFee: Number(extraFee) || 0,
+         extraFeeNote,
+         totalAmount: total, discountAmount, netAmount,
+         channelId: selectedChannel.id, channelName: selectedChannel.name,
+         paymentStatus,
+         items: orderItems, type: 'Giao hàng - Kênh Bán' 
+      });
+      
+      const displayTotal = netAmount + (Number(extraFee) || 0);
+      dispatch({
+        type: 'ADD_NOTIFICATION',
+        payload: { 
+          title: `Đơn hàng mới: ${finalOrderCode}`, 
+          message: `Thanh toán thành công. Thu về: ${displayTotal.toLocaleString('vi-VN')} đ`, 
+          type: 'success' 
+        }
+      });
+      
+      // Reset form
+      setCart([]);
+      setCustomerName('');
+      setCustomerPhone('');
+      setOrderCode('');
+    } catch (e) {
+      console.error(e);
+      alert("HỆ THỐNG GẶP LỖI KHI LƯU ĐƠN: " + (e.stack || e.message));
+    }
     setExtraFee(0);
     setExtraFeeNote('');
   };
 
   const generateOrderCode = () => {
     const prefix = getChannelPrefix(selectedChannel?.name);
-    setOrderCode(`${prefix}-${Date.now().toString().slice(-6)}`);
+    setOrderCode(StorageService.generateId(prefix + '-'));
   };
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -383,20 +381,12 @@ const POS = () => {
           
           <div style={{ display: 'flex', gap: '12px' }}>
             <button 
-              className="btn btn-secondary" 
-              style={{ flex: 1, padding: '16px', fontSize: '14px', borderRadius: '12px', fontWeight: 800, textTransform: 'uppercase', background: '#FFF7ED', color: '#B45309', border: '1px solid #FDE68A', boxShadow: '0 4px 12px rgba(180, 83, 9, 0.1)' }}
-              disabled={cart.length === 0}
-              onClick={() => handleCheckout('Debt')}
-            >
-              Ghi Nợ KH
-            </button>
-            <button 
               className="btn btn-primary" 
-              style={{ flex: 2, padding: '16px', fontSize: '15px', borderRadius: '12px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', boxShadow: '0 4px 12px rgba(247, 83, 0, 0.3)' }}
+              style={{ flex: 1, padding: '16px', fontSize: '15px', borderRadius: '12px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', boxShadow: '0 4px 12px rgba(247, 83, 0, 0.3)' }}
               disabled={cart.length === 0}
               onClick={() => handleCheckout('Paid')}
             >
-              <CreditCard size={18} style={{marginRight: '8px'}} /> Thu Tiền Đơn
+              <CreditCard size={18} style={{marginRight: '8px'}} /> Thu Tiền & Nhận Đơn
             </button>
           </div>
         </div>

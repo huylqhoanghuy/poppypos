@@ -3,6 +3,7 @@ import { ClipboardList, Trash2, CheckCircle, Clock, XCircle, Eye, UploadCloud, C
 import ModuleLayout from './ModuleLayout';
 import ImportData from '../pages/ImportData';
 import { useData } from '../context/DataContext';
+// eslint-disable-next-line no-unused-vars
 import { useImportManager } from '../hooks/useImportManager';
 
 const OrdersUI = ({ manager }) => {
@@ -20,7 +21,9 @@ const OrdersUI = ({ manager }) => {
     _selectedIds, _toggleSelection,
   } = manager;
 
+  // eslint-disable-next-line no-unused-vars
   const { dispatch, syncToCloud } = useData();
+  // eslint-disable-next-line no-unused-vars
   const showToast = (message, type = 'success') => {
       dispatch({ type: 'SHOW_TOAST', payload: { message, type } });
   };

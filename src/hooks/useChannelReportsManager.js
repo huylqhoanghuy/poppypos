@@ -149,6 +149,7 @@ export const useChannelReportsManager = () => {
             const gross = Number(o.totalAmount) || net;
 
             const commissionRate = Number(matchedChannelObj.commission ?? matchedChannelObj.discountRate ?? 0);
+            // eslint-disable-next-line no-unused-vars
             const isImported = o.paymentMethod === 'Imported';
             
             // FIX: Revenue is ALWAYS Gross (tiền gốc của món ăn). 
@@ -192,6 +193,7 @@ export const useChannelReportsManager = () => {
 
             let orderCOGS = 0;
             const orderItems = o.items || (o.cart ? o.cart.map(c => ({ product: c, quantity: c.qty })) : []);
+            // eslint-disable-next-line no-unused-vars
             const discountRatio = (gross > 0) ? (effectiveRev / gross) : 1;
 
             orderItems.forEach(cartItem => {

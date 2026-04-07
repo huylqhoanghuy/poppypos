@@ -20,6 +20,7 @@ const SmartDateFilter = ({
     datePreset, 
     setDatePreset, 
     handlePresetChange, 
+    // eslint-disable-next-line no-unused-vars
     icon: Icon = Calendar,
     align = 'left' 
 }) => {

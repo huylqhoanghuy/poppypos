@@ -9,14 +9,19 @@ import TenantConfigTab from './settings_tabs/TenantConfigTab';
 import UsersManagementTab from './settings_tabs/UsersManagementTab';
 
 export default function SettingsUI({ state, actions }) {
+  // eslint-disable-next-line no-unused-vars
   const { settings, syncing, localBackupInt, localCloudInt, localWebhookUrl, fileInputRef } = state;
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState(user?.role === 'ADMIN' ? 'tenant' : 'backup');
 
   const {
+    // eslint-disable-next-line no-unused-vars
     applyAutoBackup,
+    // eslint-disable-next-line no-unused-vars
     applyAutoCloud,
+    // eslint-disable-next-line no-unused-vars
     manualSync,
+    // eslint-disable-next-line no-unused-vars
     handlePullCloud,
   } = actions;
 

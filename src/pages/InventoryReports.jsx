@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Package, AlertTriangle, TrendingUp, BarChart3, Download, Filter, Calendar, Activity, ChevronDown } from 'lucide-react';
 import { useData } from '../context/DataContext';

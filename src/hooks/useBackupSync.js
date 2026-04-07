@@ -24,6 +24,7 @@ export const useBackupSync = () => {
 
   useEffect(() => {
     if (settings) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocalBackupInt(settings.autoBackupInterval || 'none');
       setLocalCloudInt(settings.autoCloudSyncInterval || 'none');
       setLocalCloudTime(settings.autoCloudSyncTime || '');

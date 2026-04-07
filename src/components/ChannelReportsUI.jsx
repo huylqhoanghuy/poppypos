@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import React, { useState, useRef, useEffect } from 'react';
 import { Calendar, Download, Globe, Filter, ChevronDown } from 'lucide-react';
 import { formatMoney } from '../utils/formatter';

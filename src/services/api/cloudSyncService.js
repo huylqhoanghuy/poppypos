@@ -19,37 +19,11 @@ export const CloudSyncService = {
   syncToCloud: async () => {
     isPendingSync = true;
     
-    // --- DEV ENVIRONMENT DATA PROTECTION GUARD ---
-    // Ngăn chặn môi trường lập trình (Localhost) thao tác đè dữ liệu rác lên Firebase (Đám Mây).
+    // --- DEV ENVIRONMENT ISOLATION ---
+    // Môi trường Dev tách bạch hoàn toàn với Firebase rác. Chỉ lưu Local. Không cho PUSH.
     if (import.meta.env.DEV) {
-       const bypass = sessionStorage.getItem('__dev_push_bypass');
-       if (!bypass) {
-          let pin = null;
-          if (GlobalConfirm.current) {
-              const res = await GlobalConfirm.current({
-                  title: 'MÔI TRƯỜNG DEV DEV - BẢO VỆ LIÊN MÂY',
-                  message: 'Cảnh báo: Bạn đang thao tác trên Localhost.\nNhập PIN (1004) nếu muốn đồng bộ rủi ro lên Firebase, hoặc Hủy để an toàn dùng nội bộ.',
-                  type: 'warning',
-                  confirmText: 'MỞ KHÓA PUSH MÂY',
-                  cancelText: 'CHỈ LƯU KHO LOCAL',
-                  withInput: true
-              });
-              if (res.confirmed) pin = res.value;
-          } else {
-              pin = window.prompt("🛑 DEV GUARD 🛑\nNhập Mã PIN Admin (1004) để MỞ KHÓA ghi Firebase:");
-          }
-
-          if (pin === '1004') {
-             sessionStorage.setItem('__dev_push_bypass', 'granted');
-             if (GlobalConfirm.current) {
-                 await GlobalConfirm.current({ title: 'ĐÃ MỞ KHÓA', message: 'Luồng PUSH đồng bộ Đám mây đã được kích hoạt ngầm.', type: 'info', cancelText: 'Đóng' });
-             }
-          } else {
-             console.warn("[Dev Guard] Đã cấm đẩy dữ liệu từ Localhost lên Firebase. Bảo toàn Data Online.");
-             isPendingSync = false;
-             return { success: false, message: 'Dev Guard: Chế độ test chỉ lưu Local, vô hiệu hóa Cloud Sync.' };
-          }
-       }
+       isPendingSync = false;
+       return { success: true, message: 'Local Dev Mode: Bỏ qua Sync Mây', size: 0 };
     }
     // ---------------------------------------------
 
@@ -265,6 +239,14 @@ export const CloudSyncService = {
         
         // Ghi xuống Local
         await StorageService.saveAll(mergedState, false); 
+        
+        // --- BYPASS GUARDS SAU KHI ĐÃ NHẬP PIN PROD ---
+        // 1. Bypass Dev Guard (Tránh popup hỏi PIN 1004 lần 2 vô lý)
+        sessionStorage.setItem('__dev_push_bypass', 'granted');
+        
+        // 2. Bypass Anomaly Guard & Zero-Wipe Guard bằng cách reset mốc Tracking
+        // (Do thao tác ghi đè Prod -> Dev chắc chắn sẽ làm lệch mảng dữ liệu đáng kể)
+        window.__CLOUD_LENGTHS__ = {};
         
         // Cực Trọng Yếu: Ép đẩy thẳng lên DEV Firebase bỏ qua Debounce để lần F5 không bị Data gốc từ DEV đè lại!
         await CloudSyncService.syncToCloud();

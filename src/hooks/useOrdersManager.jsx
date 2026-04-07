@@ -5,6 +5,7 @@ import { useData } from '../context/DataContext';
 import { OrderApi } from '../services/api/orderService';
 
 export const useOrdersManager = () => {
+  // eslint-disable-next-line no-unused-vars
   const { state, dispatch, syncToCloud } = useData();
   const { posOrders } = state;
 

@@ -1,4 +1,5 @@
 import { StorageService } from './storage';
+import { processUpdateOrderStatus, adjustInventoryQuantity } from '../coreServices';
 
 export const OrderApi = {
   getAll: async () => {
@@ -6,9 +7,15 @@ export const OrderApi = {
   },
   
   add: async (order) => {
-    const list = await OrderApi.getAll();
+    const state = await StorageService.getAll();
+    const posOrders = state.posOrders || [];
+    const products = state.products || [];
+    const ingredients = state.ingredients || [];
+    const transactions = state.transactions || [];
+    const accounts = state.accounts || [];
+
     const newDoc = { 
-      id: order.orderCode || StorageService.generateId('ORD-'),
+      id: StorageService.generateId('ORD-'),
       customerName: order.customerName || '',
       customerPhone: order.customerPhone || '',
       extraFee: order.extraFee || 0,
@@ -18,56 +25,27 @@ export const OrderApi = {
       date: order.date || new Date().toISOString(),
       ...order
     };
-    list.unshift(newDoc);
-    await StorageService.saveCollection('posOrders', list);
+    posOrders.unshift(newDoc);
 
     // ===================================
     // 1. TỰ ĐỘNG TRỪ KHO NGUYÊN LIỆU (ĐỆ QUY)
     // ===================================
+    let inventoryChanged = false;
     if (order.status !== 'Cancelled') {
-      const products = await StorageService.getCollection('products');
-      const ingredients = await StorageService.getCollection('ingredients');
-      let inventoryChanged = false;
-
-      const adjustInventory = (recipe, quantityMultiplier) => {
-        if (!recipe) return;
-        recipe.forEach(recItem => {
-          const subProduct = products.find(p => p.id === recItem.ingredientId);
-          if (subProduct) {
-            const subQty = recItem.unitMode === 'divide' ? (1 / recItem.qty) : recItem.qty;
-            adjustInventory(subProduct.recipe, quantityMultiplier * subQty);
-          } else {
-            const ingIndex = ingredients.findIndex(i => i.id === recItem.ingredientId);
-            if (ingIndex !== -1) {
-              const ing = ingredients[ingIndex];
-              let baseQty = recItem.qty;
-              if (recItem.unitMode === 'buy') baseQty = recItem.qty * (ing.conversionRate || 1);
-              if (recItem.unitMode === 'divide') baseQty = 1 / recItem.qty;
-
-              const consumedBuyUnits = (baseQty * quantityMultiplier) / (ing.conversionRate || 1);
-              ingredients[ingIndex] = { ...ing, stock: ing.stock - consumedBuyUnits }; // FIX: Allow negative stock for tracking oversell
+          const adjustInventory = (recipe, quantityMultiplier) => {
+              const updatedIngredients = adjustInventoryQuantity(ingredients, products, recipe, quantityMultiplier, true); // true = deduct
+              updatedIngredients.forEach((ing, idx) => { ingredients[idx] = ing; });
               inventoryChanged = true;
-            }
-          }
-        });
-      };
-
-      order.items?.forEach(cartItem => {
+          };
+          order.items?.forEach(cartItem => {
         adjustInventory(cartItem.product?.recipe, cartItem.quantity);
       });
-
-      if (inventoryChanged) {
-        await StorageService.saveCollection('ingredients', ingredients);
-      }
     }
 
     // ===================================
     // 2. GHI NHẬN DOANH THU & CỘNG TIỀN VÍ
     // ===================================
     if (order.status !== 'Cancelled') {
-      const txList = await StorageService.getCollection('transactions');
-      const accounts = await StorageService.getCollection('accounts');
-      
       // Map paymentMethodId or channelId to target account (Fallback: ACC1 = Tiền mặt)
       let targetAccountId = order.paymentMethodId || 'ACC1';
       let targetAccountName = 'Tiền mặt tại quầy';
@@ -83,7 +61,7 @@ export const OrderApi = {
           accIdx = accounts.length - 1;
       }
 
-      txList.unshift({
+      transactions.unshift({
           id: StorageService.generateId('TX-'),
           voucherCode: StorageService.generateId('PT-'),
           type: 'Thu',
@@ -96,14 +74,18 @@ export const OrderApi = {
           relatedId: newDoc.id,
           status: 'Completed'
       });
-      await StorageService.saveCollection('transactions', txList);
 
       if (accIdx !== -1) {
           accounts[accIdx].balance = (Number(accounts[accIdx].balance) || 0) + Number(order.netAmount || 0) + (Number(order.extraFee) || 0);
-          await StorageService.saveCollection('accounts', accounts);
       }
     }
 
+    state.posOrders = posOrders;
+    if (inventoryChanged) state.ingredients = ingredients;
+    state.transactions = transactions;
+    state.accounts = accounts;
+
+    await StorageService.saveAll(state);
     return newDoc;
   },
 
@@ -158,83 +140,13 @@ export const OrderApi = {
     }
   },
 
-  cancel: async (id) => {
-    const list = await OrderApi.getAll();
-    const i = list.findIndex(o => o.id === id);
-    if (i !== -1 && list[i].status !== 'Cancelled') {
-      list[i] = { ...list[i], status: 'Cancelled' };
-      await StorageService.saveCollection('posOrders', list);
-
-      // ===================================
-      // 1. TỰ ĐỘNG HOÀN KHO NGUYÊN LIỆU (ĐỆ QUY)
-      // ===================================
-      const products = await StorageService.getCollection('products');
-      const ingredients = await StorageService.getCollection('ingredients');
-      let inventoryChanged = false;
-
-      const adjustInventory = (recipe, quantityMultiplier) => {
-        if (!recipe) return;
-        recipe.forEach(recItem => {
-          const subProduct = products.find(p => p.id === recItem.ingredientId);
-          if (subProduct) {
-            const subQty = recItem.unitMode === 'divide' ? (1 / recItem.qty) : recItem.qty;
-            adjustInventory(subProduct.recipe, quantityMultiplier * subQty);
-          } else {
-            const ingIndex = ingredients.findIndex(j => j.id === recItem.ingredientId);
-            if (ingIndex !== -1) {
-              const ing = ingredients[ingIndex];
-              let baseQty = recItem.qty;
-              if (recItem.unitMode === 'buy') baseQty = recItem.qty * (ing.conversionRate || 1);
-              if (recItem.unitMode === 'divide') baseQty = 1 / recItem.qty;
-
-              const returnBuyUnits = (baseQty * quantityMultiplier) / (ing.conversionRate || 1);
-              ingredients[ingIndex] = { ...ing, stock: ing.stock + returnBuyUnits };
-              inventoryChanged = true;
-            }
-          }
-        });
-      };
-
-      list[i].items?.forEach(cartItem => {
-        adjustInventory(cartItem.product?.recipe, cartItem.quantity);
-      });
-
-      if (inventoryChanged) {
-        await StorageService.saveCollection('ingredients', ingredients);
-      }
-
-      // Sinh phiếu CHI hoàn tiền
-      const txList = await StorageService.getCollection('transactions');
-      const accounts = await StorageService.getCollection('accounts');
-      
-      const originalTx = txList.find(t => t.relatedId === id && t.type === 'Thu');
-
-      if (originalTx) {
-          txList.unshift({
-              id: StorageService.generateId('TX-'),
-              voucherCode: StorageService.generateId('PC-'),
-              type: 'Chi',
-              amount: Number(list[i].netAmount || 0),
-              accountId: originalTx.accountId,
-              categoryId: 'FC10',
-              categoryName: 'Điều chỉnh số dư',
-              date: new Date().toISOString(),
-              note: `Hoàn tiền khách hủy đơn ${id}`,
-              relatedId: id,
-              status: 'Completed'
-          });
-          await StorageService.saveCollection('transactions', txList);
-
-          const accIdx = accounts.findIndex(a => a.id === originalTx.accountId);
-          if (accIdx !== -1) {
-              accounts[accIdx].balance = (Number(accounts[accIdx].balance) || 0) - Number(list[i].netAmount || 0);
-              await StorageService.saveCollection('accounts', accounts);
-          }
-      }
-    }
+  cancel: async (id, options = {}) => {
+    let state = await StorageService.getAll();
+    state = processUpdateOrderStatus(state, { payload: { orderId: id, status: 'Cancelled', skipTransaction: options.skipTransaction } });
+    await StorageService.saveAll(state);
   },
 
-  delete: async (id) => {
+  delete: async (id, options = {}) => {
     const list = await OrderApi.getAll();
     const i = list.findIndex(o => o.id === id);
     if (i !== -1 && !list[i].deleted) {
@@ -249,59 +161,45 @@ export const OrderApi = {
          let inventoryChanged = false;
 
          const adjustInventory = (recipe, quantityMultiplier) => {
-           if (!recipe) return;
-           recipe.forEach(recItem => {
-             const subProduct = products.find(p => p.id === recItem.ingredientId);
-             if (subProduct) {
-               const subQty = recItem.unitMode === 'divide' ? (1 / recItem.qty) : recItem.qty;
-               adjustInventory(subProduct.recipe, quantityMultiplier * subQty);
-             } else {
-               const ingIndex = ingredients.findIndex(j => j.id === recItem.ingredientId);
-               if (ingIndex !== -1) {
-                 const ing = ingredients[ingIndex];
-                 let baseQty = recItem.qty;
-                 if (recItem.unitMode === 'buy') baseQty = recItem.qty * (ing.conversionRate || 1);
-                 if (recItem.unitMode === 'divide') baseQty = 1 / recItem.qty;
-                 const returnBuyUnits = (baseQty * quantityMultiplier) / (ing.conversionRate || 1);
-                 ingredients[ingIndex] = { ...ing, stock: ing.stock + returnBuyUnits };
-                 inventoryChanged = true;
-               }
-             }
-           });
+             const updatedIngredients = adjustInventoryQuantity(ingredients, products, recipe, quantityMultiplier, false); // false = return to stock
+             updatedIngredients.forEach((ing, idx) => { ingredients[idx] = ing; });
+             inventoryChanged = true;
          };
 
          list[i].items?.forEach(cartItem => adjustInventory(cartItem.product?.recipe, cartItem.quantity));
          if (inventoryChanged) await StorageService.saveCollection('ingredients', ingredients);
 
          // Reverse transaction
-         const txList = await StorageService.getCollection('transactions');
-         const accounts = await StorageService.getCollection('accounts');
-         const originalTx = txList.find(t => 
-             (t.relatedId === id || t.voucherCode === `PT-${id.slice(-6)}`) 
-             && t.type === 'Thu'
-         );
+         if (!options.skipTransaction) {
+           const txList = await StorageService.getCollection('transactions');
+           const accounts = await StorageService.getCollection('accounts');
+           const originalTx = txList.find(t => 
+               (t.relatedId === id || t.voucherCode === `PT-${id.slice(-6)}`) 
+               && t.type === 'Thu'
+           );
 
-         if (originalTx) {
-             txList.unshift({
-                 id: StorageService.generateId('TX-'),
-                 voucherCode: StorageService.generateId('PC-'),
-                 type: 'Chi',
-                 amount: Number(list[i].netAmount || 0) + (Number(list[i].extraFee) || 0),
-                 accountId: originalTx.accountId,
-                 categoryId: 'FC10',
-                 categoryName: 'Điều chỉnh số dư',
-                 date: new Date().toISOString(),
-                 note: `Hoàn tiền xóa đơn hàng ${id}`,
-                 relatedId: id,
-                 status: 'Completed'
-             });
-             await StorageService.saveCollection('transactions', txList);
+           if (originalTx) {
+               txList.unshift({
+                   id: StorageService.generateId('TX-'),
+                   voucherCode: StorageService.generateId('PC-'),
+                   type: 'Chi',
+                   amount: Number(list[i].netAmount || 0) + (Number(list[i].extraFee) || 0),
+                   accountId: originalTx.accountId,
+                   categoryId: 'FC10',
+                   categoryName: 'Điều chỉnh số dư',
+                   date: new Date().toISOString(),
+                   note: `Hoàn tiền xóa đơn hàng ${id}`,
+                   relatedId: id,
+                   status: 'Completed'
+               });
+               await StorageService.saveCollection('transactions', txList);
 
-             const accIdx = accounts.findIndex(a => a.id === originalTx.accountId);
-             if (accIdx !== -1) {
-                 accounts[accIdx].balance = (Number(accounts[accIdx].balance) || 0) - (Number(list[i].netAmount || 0) + (Number(list[i].extraFee) || 0));
-                 await StorageService.saveCollection('accounts', accounts);
-             }
+               const accIdx = accounts.findIndex(a => a.id === originalTx.accountId);
+               if (accIdx !== -1) {
+                   accounts[accIdx].balance = (Number(accounts[accIdx].balance) || 0) - (Number(list[i].netAmount || 0) + (Number(list[i].extraFee) || 0));
+                   await StorageService.saveCollection('accounts', accounts);
+               }
+           }
          }
       }
     }
@@ -322,25 +220,9 @@ export const OrderApi = {
          let inventoryChanged = false;
 
          const adjustInventory = (recipe, quantityMultiplier) => {
-           if (!recipe) return;
-           recipe.forEach(recItem => {
-             const subProduct = products.find(p => p.id === recItem.ingredientId);
-             if (subProduct) {
-               const subQty = recItem.unitMode === 'divide' ? (1 / recItem.qty) : recItem.qty;
-               adjustInventory(subProduct.recipe, quantityMultiplier * subQty);
-             } else {
-               const ingIndex = ingredients.findIndex(j => j.id === recItem.ingredientId);
-               if (ingIndex !== -1) {
-                 const ing = ingredients[ingIndex];
-                 let baseQty = recItem.qty;
-                 if (recItem.unitMode === 'buy') baseQty = recItem.qty * (ing.conversionRate || 1);
-                 if (recItem.unitMode === 'divide') baseQty = 1 / recItem.qty;
-                 const consumedBuyUnits = (baseQty * quantityMultiplier) / (ing.conversionRate || 1);
-                 ingredients[ingIndex] = { ...ing, stock: ing.stock - consumedBuyUnits }; // Allow negative
-                 inventoryChanged = true;
-               }
-             }
-           });
+             const updatedIngredients = adjustInventoryQuantity(ingredients, products, recipe, quantityMultiplier, true); // true = deduct again
+             updatedIngredients.forEach((ing, idx) => { ingredients[idx] = ing; });
+             inventoryChanged = true;
          };
 
          list[i].items?.forEach(cartItem => adjustInventory(cartItem.product?.recipe, cartItem.quantity));

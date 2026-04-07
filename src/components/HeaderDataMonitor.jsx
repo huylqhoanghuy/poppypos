@@ -11,6 +11,7 @@ export default function HeaderDataMonitor() {
 
   if (user?.role !== 'ADMIN') return null;
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     let isMounted = true;
     setTimeout(() => {

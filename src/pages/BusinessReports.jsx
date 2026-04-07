@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import React, { useState, useRef, useEffect } from 'react';
 import { FileText, TrendingUp, TrendingDown, DollarSign, PieChart as PieIcon, BarChart3, Calendar, Download, Globe, Info, Filter, Layers, FileSpreadsheet, ChevronDown } from 'lucide-react';
 import { useData } from '../context/DataContext';
@@ -134,6 +135,7 @@ const BusinessReports = () => {
              <span style={{fontWeight: 700}}>{formatMoney(v)} đ</span><br/>
              <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>100% Tổng Nhóm</span>
           </div>
+      // eslint-disable-next-line no-unused-vars
       ), render: (v, o) => (
           <div style={{color:'var(--primary)'}}>
             <span style={{fontWeight: 700}}>{formatMoney(v)} đ</span><br/>
@@ -260,6 +262,7 @@ const BusinessReports = () => {
 
   const categoryCols = [
       { key: 'name', label: 'Nhóm Nguyên Liệu', sortable: true, render: (v) => <div style={{fontWeight: 800, color: 'var(--primary)'}}>{v}</div> },
+      // eslint-disable-next-line no-unused-vars
       { key: 'totalCost', label: 'Tổng Tiêu Hao Vốn', sortable: true, align: 'right', sum: true, sumSuffix: ' đ', render: (v, o) => (
           <div style={{color:'var(--danger)', fontWeight:800}}>
              {formatMoney(v)} đ<br/>

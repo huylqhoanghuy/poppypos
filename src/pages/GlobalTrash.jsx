@@ -26,9 +26,11 @@ export default function GlobalTrash({ embedded = false }) {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAllData();
-    const unsubscribe = StorageService.subscribe((col) => {
-       fetchAllData();
+    const unsubscribe = StorageService.subscribe(() => {
+        
+    fetchAllData();
     });
     return () => unsubscribe();
   }, [fetchAllData]);

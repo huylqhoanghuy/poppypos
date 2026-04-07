@@ -17,6 +17,7 @@ export const useListController = ({
 }) => {
   const { confirm } = useConfirm();
   const { user } = useAuth();
+  // eslint-disable-next-line no-unused-vars
   const { dispatch } = useData();
 
   const entityKeyMap = {

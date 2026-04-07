@@ -48,6 +48,7 @@ const Purchases = () => {
   };
 
   const handlePayDebt = async (poId, amount, supplierName, accountId) => {
+    // eslint-disable-next-line no-unused-vars
     const safeAmount = Number(amount) || 0;
     try {
       await updatePurchaseStatus(poId, 'Paid', accountId);

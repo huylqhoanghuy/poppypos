@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Store, MapPin, Phone, MessageSquare, Image as ImageIcon, Save, CheckCircle2 } from 'lucide-react';
+import { Store, MapPin, Phone, MessageSquare, Image as ImageIcon, Save, CheckCircle2, Wrench } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import logoPoppy from '../../assets/logo-poppy.png';
 
@@ -33,10 +33,75 @@ export default function TenantConfigTab() {
     dispatch({ type: 'UPDATE_SETTINGS', payload: formData });
     try {
        await syncToCloud();
-    } catch(e) {}
+    } catch { /* ignore */ }
     setSaving(false);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 3000);
+  };
+
+  const handleHealData = async () => {
+     if (!window.confirm('Hệ thống sẽ quét toàn bộ Đơn hàng và Sổ quỹ cũ để tìm các lỗi lệch dữ liệu (Ví dụ: Các phiếu thu "Ma" không có đơn gốc) và tự động xóa để phục hồi kho. Bạn có chắc chắn muốn chạy công cụ này?')) return;
+     
+     const { StorageService } = await import('../../services/api/storage');
+     const { TransactionApi } = await import('../../services/api/transactionService');
+     const data = await StorageService.getAll();
+     const { posOrders = [], transactions = [] } = data;
+     
+     let fixedCount = 0;
+     
+     // 1. Tìm các Phiếu Thu "Ma" (Phiếu thu gắn với Đơn hàng nhưng Đơn hàng không tồn tại)
+     for (let i = 0; i < transactions.length; i++) {
+        const tx = transactions[i];
+        if (tx.type === 'Thu' && tx.relatedId && tx.categoryName === 'Doanh thu bán hàng' && !tx.deleted) {
+            const orderExists = posOrders.find(o => o.id === tx.relatedId);
+            if (!orderExists) {
+                 // Giao cho hệ thống Core System xử lý toàn bộ cơ chế Dịch Ngược + Hoàn Kho
+                 await TransactionApi.delete(tx.id); 
+                 fixedCount++;
+            }
+        }
+     }
+
+     // 2. Tìm các Đơn hàng đã Hủy / Xóa nhưng chưa có Phiếu Chi bồi hoàn tiền
+     for (let i = 0; i < posOrders.length; i++) {
+        const order = posOrders[i];
+        if (order.status === 'Cancelled' || order.deleted) {
+            const hasThu = transactions.find(t => t.relatedId === order.id && t.type === 'Thu');
+            const hasChi = transactions.find(t => t.relatedId === order.id && t.type === 'Chi');
+            
+            if (hasThu && !hasChi) {
+                 // Đơn hàng đã hủy tĩnh nhưng phiếu Thu gốc chưa kèm phiếu chi hoàn tiền
+                 const targetAccountId = hasThu.accountId;
+                 let accounts = await StorageService.getCollection('accounts');
+                 let accIdx = accounts.findIndex(a => a.id === targetAccountId);
+                 if (accIdx !== -1) {
+                     accounts[accIdx].balance = (Number(accounts[accIdx].balance) || 0) - Number(order.netAmount || 0);
+                     await StorageService.saveCollection('accounts', accounts);
+                 }
+                 
+                 let txList = await StorageService.getCollection('transactions');
+                 txList.unshift({
+                     id: StorageService.generateId('TX-'),
+                     voucherCode: StorageService.generateId('PC-'),
+                     type: 'Chi',
+                     amount: Number(order.netAmount || 0),
+                     accountId: targetAccountId,
+                     categoryId: 'FC10',
+                     categoryName: 'Điều chỉnh số dư',
+                     date: new Date().toISOString(),
+                     note: `Healer: Hoàn tiền đơn lỗi cũ ${order.id}`,
+                     relatedId: order.id,
+                     status: 'Completed'
+                 });
+                 await StorageService.saveCollection('transactions', txList);
+                 fixedCount++;
+            }
+        }
+     }
+     
+     const message = `Hoàn tất Dò Lỗi tự động!\nĐã xử lý phục hồi ${fixedCount} bản ghi bất đồng bộ thông qua Lõi Hệ Thống.`;
+     alert(message);
+     window.location.reload();
   };
 
   return (
@@ -189,6 +254,23 @@ export default function TenantConfigTab() {
                 />
             </div>
         </div>
+      </div>
+
+      {/* Database Doctor Tool */}
+      <div style={{ padding: 'clamp(16px, 3vw, 24px)', border: '1px solid #FECACA', borderRadius: '16px', background: '#FEF2F2' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 10px 0', color: '#DC2626', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Wrench size={20} color="#DC2626" /> Công Cụ Chữa Lỗi Cơ Sở Dữ Liệu (Data Healer)
+        </h3>
+        <p style={{ fontSize: '14px', color: '#991B1B', marginBottom: '16px', lineHeight: 1.5 }}>
+          Sử dụng công cụ này nếu dữ liệu của bạn trong quá khứ bị kẹt (Ví dụ: Xóa phiếu thu nhưng đơn vị vẫn còn, hoặc hủy đơn nhưng tiền chưa về do mạng rớt). Hệ thống sẽ quét qua toàn bộ sổ quỹ và đơn hàng để vá lỗi đồng bộ tự động.
+        </p>
+        <button 
+           onClick={handleHealData}
+           className="btn"
+           style={{ background: '#DC2626', color: 'white', fontWeight: 700, padding: '10px 20px', borderRadius: '8px' }}
+        >
+           🛠️ Chạy Quét & Sửa Lỗi Ngay
+        </button>
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '12px' }}>

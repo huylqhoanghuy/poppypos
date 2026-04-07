@@ -99,6 +99,42 @@ export const StorageService = {
             }
             // -------------------------------------------------------------
             
+            // --- HỆ THỐNG GỠ LỖI NẠP SỐ LIỆU RÁC (GLOBAL NUMERIC SANITIZER) ---
+            let hasDirtyCommas = false;
+            
+            const numericFields = new Set([
+              'stock', 'minStock', 'cost', 'buyPrice', 'conversionRate', 'qty', 'price', 
+              'amount', 'totalAmount', 'netAmount', 'discount', 'extraFee', 
+              'balance', 'initialBalance', 'commission', 'discountRate', 'actual'
+            ]);
+
+            const sanitizeNumericFields = (obj) => {
+              if (Array.isArray(obj)) {
+                obj.forEach(item => sanitizeNumericFields(item));
+              } else if (obj !== null && typeof obj === 'object') {
+                Object.keys(obj).forEach(key => {
+                  if (numericFields.has(key)) {
+                    if (typeof obj[key] === 'string' && obj[key].includes(',')) {
+                       const cleanVal = Number(obj[key].replace(/,/g, '.'));
+                       obj[key] = isNaN(cleanVal) ? 0 : cleanVal;
+                       hasDirtyCommas = true;
+                    }
+                  }
+                  if (typeof obj[key] === 'object') {
+                    sanitizeNumericFields(obj[key]);
+                  }
+                });
+              }
+            };
+
+            sanitizeNumericFields(data);
+            
+            if (hasDirtyCommas) {
+               localStorage.setItem(DB_KEY, JSON.stringify(data));
+               console.warn('[Auto-Heal] Toàn Hệ Thống: Đã quyét và thay thế TẤT CẢ rác dữ liệu dấu phẩy (,) thành dấu chấm chuẩn quốc tế (.).');
+            }
+            // -------------------------------------------------------------
+            
             resolve(data);
           } catch {
             resolve(getInitialState());
@@ -141,5 +177,14 @@ export const StorageService = {
 
   notifyAll: () => notifyListeners('*'),
 
-  generateId: (prefix) => prefix + Math.random().toString(36).substr(2, 5).toUpperCase()
+  generateId: (prefix) => {
+    if (typeof window !== 'undefined') {
+      window._idCounter = ((window._idCounter || 0) + 1) % 1296; 
+      const dt = Date.now().toString(36).toUpperCase().slice(-4); 
+      const rnd = Math.random().toString(36).substring(2, 4).toUpperCase(); 
+      const cnt = window._idCounter.toString(36).toUpperCase().padStart(2, '0'); 
+      return prefix + dt + rnd + cnt;
+    }
+    return prefix + Date.now().toString(36).toUpperCase().slice(-4) + Math.random().toString(36).substring(2, 6).toUpperCase();
+  }
 };

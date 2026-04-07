@@ -464,6 +464,19 @@ const AppContent = () => {
                 <div className="hide-on-mobile">
                   <LiveClock />
                 </div>
+
+                {import.meta.env.DEV && (
+                   <div style={{
+                       display: 'flex', alignItems: 'center', gap: '4px',
+                       padding: '6px 10px', borderRadius: '8px',
+                       background: 'var(--primary)',
+                       color: 'white',
+                       fontSize: '12px', fontWeight: 800,
+                       boxShadow: '0 4px 12px rgba(255,100,0,0.3)'
+                   }} title="Môi trường Sandbox - Đã tắt Firebase Push hoàn toàn">
+                       🛠 DEV SANDBOX
+                   </div>
+                )}
                 
                 {/* Network Status Indicator */}
                 <div 

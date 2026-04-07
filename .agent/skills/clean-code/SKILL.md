@@ -60,6 +60,20 @@ priority: CRITICAL
 
 ---
 
+## 🔢 Data Integrity Standards (Global Mandate)
+
+| Vulnerability | Strict Requirement |
+|--------------|--------------------|
+| **NaN & Float Parsing** | ANY mathematical user input or data retrieval MUST use `parseSafeNumber(val)` to handle localization (e.g., `,` to `.`). |
+| **Float Rendering** | Never render standard floats in UI inputs without explicit `type="text" inputMode="decimal"`. DO NOT override input values natively with `.toLocaleString()` or custom comma regexes on generic controlled inputs, as this poisons the state. |
+| **Global Heal** | The `StorageService.js` Global Numeric Sanitizer recursively sanitizes the DB on boot. Do not bypass this API when fetching core state. |
+| **Primary Key ID Isolation** | NEVER inherit `payload.id` or `payload.orderCode` for primary keys on newly created entities. ALWAYS blindly force `id: StorageService.generateId('PREFIX-')` inside API and reducer layers. The 4-Layer Hash (Prefix+Timestamp+Random+Counter) guarantees 100% collision-proof. |
+
+> **Rule:** `parseFloat` and `Number` are explicitly FORBIDDEN for raw Vietnamese user inputs. Import `parseSafeNumber` from `src/utils/numberFormat.js`.
+> **Rule:** Internal IDs must be Auto-Generated. Custom/Imported IDs should only be stored in auxiliary fields like `orderCode`, `voucherCode`, or `relatedId` for display or tracing.
+
+---
+
 ## AI Coding Style
 
 | Situation | Action |

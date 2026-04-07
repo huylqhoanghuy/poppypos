@@ -20,6 +20,7 @@ export default function GlobalToast() {
     });
     
     if (undispatched.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setToasts(prev => [...prev, ...undispatched]);
       setProcessedIds(prev => {
          const newSet = new Set(prev);

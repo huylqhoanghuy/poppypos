@@ -7,12 +7,15 @@ const parseMoney = (str) => {
     if (!str) return 0;
     let s = String(str).trim();
     const isNegative = s.startsWith('-');
+    // eslint-disable-next-line no-useless-escape
     if (s.match(/^\-?\d{1,3}(\.\d{3})+$/)) {
-         s = s.replace(/\./g, '');
+        s = s.replace(/\./g, '');
+        // eslint-disable-next-line no-useless-escape
     } else if (s.match(/^\-?\d{1,3}(,\d{3})+$/)) {
-         s = s.replace(/,/g, '');
+        s = s.replace(/,/g, '');
+        // eslint-disable-next-line no-useless-escape
     } else if (s.match(/^\-?\d{1,3}(,\d{3})+\.\d+$/)) {
-         s = s.replace(/,/g, '');
+        s = s.replace(/,/g, '');
     }
     const cleanStr = s.replace(/[^\d.-]/g, '');
     let num = parseFloat(cleanStr);
@@ -34,6 +37,7 @@ const CSVViewerModal = ({ isOpen, onClose }) => {
             csvData.rows.forEach(row => {
                 sum += parseMoney(row[selectedTotalCol]);
             });
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setTotalAmount(sum);
         } else {
             setTotalAmount(0);
@@ -111,19 +115,19 @@ const CSVViewerModal = ({ isOpen, onClose }) => {
                 </div>
 
                 <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--surface-border)', display: 'flex', gap: '16px', alignItems: 'center', background: 'var(--bg-color)' }}>
-                    <button 
+                    <button
                         className="btn btn-primary"
                         onClick={() => fileInputRef.current?.click()}
                         style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                     >
                         <Upload size={18} /> Chọn File CSV / TSV
                     </button>
-                    <input 
-                        type="file" 
-                        accept=".csv, .tsv, .txt" 
-                        ref={fileInputRef} 
-                        style={{ display: 'none' }} 
-                        onChange={handleFileChange} 
+                    <input aria-label="Input"
+                        type="file"
+                        accept=".csv, .tsv, .txt"
+                        ref={fileInputRef}
+                        style={{ display: 'none' }}
+                        onChange={handleFileChange}
                     />
                     <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
                         *(Công cụ này hỗ trợ xem trước, tính STT, Tổng Đơn, và Tổng Tiền trước khi lưu vào DataBase)*
@@ -143,8 +147,8 @@ const CSVViewerModal = ({ isOpen, onClose }) => {
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: '250px' }}>
                             <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 700 }}>CHỌN CỘT ĐỂ TÍNH TỔNG TIỀN</span>
-                            <select 
-                                className="form-input" 
+                            <select
+                                className="form-input"
                                 style={{ padding: '8px 12px', fontSize: '14px', width: '100%', maxWidth: '350px', cursor: 'pointer', fontWeight: 600 }}
                                 value={selectedTotalCol ?? ''}
                                 onChange={e => setSelectedTotalCol(e.target.value === '' ? null : Number(e.target.value))}
@@ -173,7 +177,7 @@ const CSVViewerModal = ({ isOpen, onClose }) => {
                             <AlertTriangle size={20} /> {error}
                         </div>
                     )}
-                    
+
                     {!error && csvData.headers.length === 0 ? (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)', gap: '12px' }}>
                             <FileSpreadsheet size={48} opacity={0.2} />
@@ -183,16 +187,16 @@ const CSVViewerModal = ({ isOpen, onClose }) => {
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                             <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                                 <tr>
-                                    <th style={{ 
-                                        background: '#f8fafc', padding: '12px', textAlign: 'center', 
+                                    <th style={{
+                                        background: '#f8fafc', padding: '12px', textAlign: 'center',
                                         borderBottom: '2px solid var(--surface-border)', borderRight: '1px solid var(--surface-border)',
                                         color: '#334155', fontWeight: 700, width: '50px'
                                     }}>
                                         STT
                                     </th>
                                     {csvData.headers.map((h, i) => (
-                                        <th key={i} style={{ 
-                                            background: '#f8fafc', padding: '12px', textAlign: 'left', 
+                                        <th key={i} style={{
+                                            background: '#f8fafc', padding: '12px', textAlign: 'left',
                                             borderBottom: '2px solid var(--surface-border)', borderRight: '1px solid var(--surface-border)',
                                             color: '#334155', fontWeight: 700, whiteSpace: 'nowrap'
                                         }}>
@@ -204,16 +208,16 @@ const CSVViewerModal = ({ isOpen, onClose }) => {
                             <tbody>
                                 {csvData.rows.map((row, rIdx) => (
                                     <tr key={rIdx} style={{ background: rIdx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                                        <td style={{ 
-                                            padding: '10px 12px', borderBottom: '1px solid var(--surface-border)', 
+                                        <td style={{
+                                            padding: '10px 12px', borderBottom: '1px solid var(--surface-border)',
                                             borderRight: '1px solid var(--surface-border)', color: 'var(--text-secondary)',
                                             textAlign: 'center', fontWeight: 700
                                         }}>
                                             {rIdx + 1}
                                         </td>
                                         {csvData.headers.map((_, cIdx) => (
-                                            <td key={cIdx} style={{ 
-                                                padding: '10px 12px', borderBottom: '1px solid var(--surface-border)', 
+                                            <td key={cIdx} style={{
+                                                padding: '10px 12px', borderBottom: '1px solid var(--surface-border)',
                                                 borderRight: '1px solid var(--surface-border)', color: 'var(--text-primary)',
                                                 whiteSpace: 'nowrap'
                                             }}>

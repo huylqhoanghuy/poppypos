@@ -5,6 +5,8 @@ import { useInventory } from '../hooks/useInventory';
 import { useSuppliers } from '../hooks/useSuppliers';
 import { usePurchases } from '../hooks/usePurchases';
 import { useCategories } from '../hooks/useCategories';
+import { useOrders } from '../hooks/useOrders';
+import { useProducts } from '../hooks/useProducts';
 
 const Inventory = () => {
   const { 
@@ -25,8 +27,10 @@ const Inventory = () => {
 
   const { purchases, loading: purLoading } = usePurchases();
   const { categories, loading: catLoading } = useCategories();
+  const { orders: activeOrders, loading: orderLoading } = useOrders();
+  const { activeProducts, loading: prodLoading } = useProducts();
 
-  const loading = ingLoading || supLoading || purLoading || catLoading;
+  const loading = ingLoading || supLoading || purLoading || catLoading || orderLoading || prodLoading;
 
   const handleSaveIngredient = async (ingData) => {
     if (ingData.id) {
@@ -51,6 +55,8 @@ const Inventory = () => {
       ingredients={inventory}
       suppliers={activeSuppliers}
       purchaseOrders={purchases}
+      posOrders={activeOrders}
+      products={activeProducts}
       categories={(categories || []).filter(c => !c.deleted && c.type !== 'menu')}
       onSaveIngredient={handleSaveIngredient}
       onDeleteIngredient={deleteIngredient}

@@ -1,4 +1,5 @@
 import { StorageService } from './storage';
+import { OrderApi } from './orderService';
 
 export const TransactionApi = {
   getAll: async () => {
@@ -76,5 +77,14 @@ export const TransactionApi = {
 
     const updated = list.filter(t => t.id !== id);
     await StorageService.saveCollection('transactions', updated);
+
+    // Kích hoạt xóa đơn hàng liên đới (Multi-directional sync)
+    if (tx.relatedId) {
+       const posOrders = await StorageService.getCollection('posOrders');
+       const relatedOrder = posOrders.find(o => o.id === tx.relatedId);
+       if (relatedOrder && relatedOrder.status !== 'Cancelled' && !relatedOrder.deleted) {
+           await OrderApi.cancel(tx.relatedId, { skipTransaction: true });
+       }
+    }
   }
 };

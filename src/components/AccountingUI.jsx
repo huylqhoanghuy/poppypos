@@ -71,6 +71,7 @@ export default function AccountingUI({ manager }) {
       handlers
   } = listCtrl || {};
 
+  // eslint-disable-next-line no-unused-vars
   const [showDatePicker, setShowDatePicker] = React.useState(false);
   const datePickerRef = React.useRef(null);
 
@@ -117,6 +118,7 @@ export default function AccountingUI({ manager }) {
      });
   };
 
+  // eslint-disable-next-line no-unused-vars
   const currentPresetFilterLabel = (() => {
     if (filters.dateFilterPreset !== 'custom' && filters.dateFilterPreset && datePresetsDict[filters.dateFilterPreset]) {
         return datePresetsDict[filters.dateFilterPreset];

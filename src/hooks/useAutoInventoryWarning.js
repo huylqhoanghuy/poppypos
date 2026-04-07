@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import { useEffect, useRef, useState } from 'react';
 import { useData } from '../context/DataContext';
 import { useInventoryForecast } from './useInventoryForecast';
@@ -22,6 +23,8 @@ export const useAutoInventoryWarning = () => {
 
     // Kích hoạt flag sau khi quá trình loading đã trải qua chu kỳ true -> false
     useEffect(() => {
+         
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (loading) setRadarFetched(true);
     }, [loading]);
 

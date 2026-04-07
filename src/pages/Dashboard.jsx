@@ -32,6 +32,7 @@ const KpiCard = ({ title, value, icon, accent, trend, trendLabel, statusText }) 
   };
   const a = accentMap[accent] || accentMap.orange;
   const isUp = trend === 'up';
+  // eslint-disable-next-line no-unused-vars
   const isDown = trend === 'down';
 
   return (

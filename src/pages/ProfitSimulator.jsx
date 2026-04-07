@@ -60,6 +60,7 @@ const ProfitSimulator = () => {
 
   const removeItem = (id) => setCart(prev => prev.filter(item => item.id !== id));
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const selectedChannel = activeSalesChannels?.find(c => c.id === selectedChannelId) || { commission: 0, name: 'Trực tiếp' };
   
   // Lợi nhuận calculations
@@ -289,6 +290,7 @@ const ProfitSimulator = () => {
 
           {/* HIỂN THỊ MARGIN THEO MÀU */}
           {(() => {
+            // eslint-disable-next-line no-unused-vars
             const isProfit = analysis.netProfit > 0;
             const margin = analysis.marginPercent;
             let themeColor = '#16a34a'; // Green

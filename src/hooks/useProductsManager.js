@@ -79,7 +79,8 @@ export const useProductsManager = () => {
       alert("Vui lòng điền đầy đủ: Tên hiển thị, Nhóm danh mục, Đơn vị tính và Giá bán.");
       return;
     }
-    const payload = { ...form, price: Number(form.price) };
+    const safeRecipe = form.recipe.map(r => ({ ...r, qty: parseFloat(String(r.qty).replace(/,/g, '.')) || 0 }));
+    const payload = { ...form, price: Number(form.price), recipe: safeRecipe };
     if (form.id) updateProduct(payload);
     else addProduct(payload);
     showToast(`Đã lưu "${form.name}" thành công!`);
@@ -100,12 +101,15 @@ export const useProductsManager = () => {
     const exist = form.recipe.find(r => r.ingredientId === recipeItem.ingredientId);
     if (exist) return alert('Thành phần này đã có! Vui lòng sửa lượng ở bảng bên dưới.');
     const node = getEntityDisplayDetails(recipeItem.ingredientId);
-    setForm(prev => ({ ...prev, recipe: [...prev.recipe, { ...recipeItem, qty: Number(recipeItem.qty), name: node?.name }] }));
+    const safeQtyStr = String(recipeItem.qty).replace(/,/g, '.');
+    const parsedQty = parseFloat(safeQtyStr);
+    if (isNaN(parsedQty)) return alert('Số lượng không hợp lệ');
+    setForm(prev => ({ ...prev, recipe: [...prev.recipe, { ...recipeItem, qty: parsedQty, name: node?.name }] }));
     setRecipeItem({ ingredientId: '', qty: '', unitMode: 'base' });
   };
 
   const removeRecipeItem = (index) => setForm(prev => ({ ...prev, recipe: prev.recipe.filter((_, i) => i !== index) }));
-  const updateRecipeQty = (index, newQty) => setForm(prev => { const updated = [...prev.recipe]; updated[index].qty = Number(newQty); return { ...prev, recipe: updated }; });
+  const updateRecipeQty = (index, newQty) => setForm(prev => { const updated = [...prev.recipe]; updated[index].qty = String(newQty); return { ...prev, recipe: updated }; });
   const updateRecipeUnitMode = (index, newMode) => setForm(prev => { const updated = [...prev.recipe]; updated[index].unitMode = newMode; return { ...prev, recipe: updated }; });
 
   const finalFilteredItems = filteredActiveItems.filter(p => filterCategory === 'all' || p.category === filterCategory);

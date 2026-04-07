@@ -1,21 +1,21 @@
 import React, { createContext, useContext, useReducer, useEffect, useState, useRef } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { db } from '../firebase';
 import logoPoppy from '../assets/logo-poppy.png';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 import { StorageService } from '../services/api/storage';
 import { CloudSyncService } from '../services/api/cloudSyncService';
-import { inferItemsFromPrice } from '../utils/csvParser';
 import { 
   generateId, 
-  processTransferFunds, 
+  processTransferFunds,
   processAddPurchaseOrder, 
   processUpdatePurchaseOrderStatus, 
   processDeletePurchaseOrder, 
-  processAddPosOrder, 
+  processAddPosOrder,
   processUpdateOrderStatus, 
   processHardDeletePosOrder, 
-  processConfirmImportOrders 
+  processConfirmImportOrders,
+  processDeleteTransaction
 } from '../services/coreServices';
 
 const DataContext = createContext();
@@ -158,60 +158,7 @@ const baseReducer = (state, action) => {
         return newState;
     }
 
-    case 'MIGRATE_LEGACY_ORDERS': {
-        let hasChanges = false;
-        const migratedOrders = [];
-        
-        state.posOrders?.forEach(order => {
-             const isGrab = order.channelName?.toLowerCase().includes('grab');
-             const isShopee = order.channelName?.toLowerCase().includes('shopee');
-             let newCustomerName = order.customerName;
-             
-             if (isGrab && newCustomerName !== 'Khách Grab') newCustomerName = 'Khách Grab';
-             else if (isShopee && newCustomerName !== 'Khách Shopee') newCustomerName = 'Khách Shopee';
-             
-             let updatedItems = [];
-             let itemsChanged = false;
-             
-             order.items?.forEach(item => {
-                 const n = item.product?.name?.toLowerCase() || '';
-                 if (n.includes('xóm gà ủ muối') || n === 'đơn hàng shopeefood' || n.includes('tổng cộng') || n.includes('thành tiền') || n.includes('tổng đơn')) {
-                     itemsChanged = true;
-                     return;
-                 }
-
-                 if (item.product?.name?.startsWith('Đơn hàng') || item.product?.name?.startsWith('Món giá')) {
-                      const basePrice = item.quantity > 0 ? (item.itemTotal / item.quantity) : item.itemTotal;
-                      const inferred = inferItemsFromPrice(basePrice, state.products);
-                      if (inferred && inferred.length > 0) {
-                          updatedItems.push(...inferred.map(i => ({...i, quantity: i.quantity * item.quantity, itemTotal: i.itemTotal * item.quantity})));
-                          itemsChanged = true;
-                      } else {
-                          updatedItems.push(item);
-                      }
-                 } else {
-                      updatedItems.push(item);
-                 }
-             });
-             
-             if (itemsChanged || newCustomerName !== order.customerName || order.customerPhone) {
-                 hasChanges = true;
-                 if (updatedItems.length > 0) {
-                     migratedOrders.push({ ...order, customerName: newCustomerName, customerPhone: '', items: updatedItems });
-                 }
-             } else {
-                 if (order.items && order.items.length > 0) {
-                     migratedOrders.push(order);
-                 }
-             }
-        });
-        
-        if (hasChanges) {
-             console.log("[Migration] CSDL cũ đã được dọn rác và nội suy món ăn thành công!");
-             return { ...state, posOrders: migratedOrders };
-        }
-        return state;
-    }
+    // MIGRATE_LEGACY_ORDERS has been completely removed to prevent data loss.
     case 'HYDRATE_STATE': {
       const incoming = action.payload;
       return { ...state, ...incoming, _skipSave: true };
@@ -284,51 +231,7 @@ const baseReducer = (state, action) => {
     // Money Transfer (NEW V8)
     case 'TRANSFER_FUNDS': return processTransferFunds(state, action);
 
-    case 'DELETE_TRANSACTION': {
-      const transaction = state.transactions.find(t => t.id === action.payload);
-      if (!transaction || transaction.deleted) return state;
-
-      let updatedPOs = [...state.purchaseOrders];
-      let updatedSuppliers = [...state.suppliers];
-      let updatedPosOrders = [...state.posOrders];
-
-      if (transaction.relatedId) {
-          if (transaction.relatedId.startsWith('PO-') || transaction.relatedId.startsWith('NK-')) {
-              const poIdx = updatedPOs.findIndex(p => p.id === transaction.relatedId);
-              if (poIdx !== -1 && updatedPOs[poIdx].status === 'Paid') {
-                  updatedPOs[poIdx] = { ...updatedPOs[poIdx], status: 'Pending' }; // Revert to Debt
-                  const supplierId = updatedPOs[poIdx].supplierId;
-                  if (supplierId) {
-                     const sIdx = updatedSuppliers.findIndex(s => s.id === supplierId);
-                     if (sIdx !== -1) {
-                        updatedSuppliers[sIdx] = { ...updatedSuppliers[sIdx], debt: (updatedSuppliers[sIdx].debt || 0) + transaction.amount };
-                     }
-                  }
-              }
-          } else if (transaction.relatedId.startsWith('ORD-') || transaction.relatedId.startsWith('POS-') || transaction.relatedId.startsWith('DH-')) {
-              const oIdx = updatedPosOrders.findIndex(o => o.id === transaction.relatedId);
-              if (oIdx !== -1 && updatedPosOrders[oIdx].paymentStatus === 'Paid') {
-                  updatedPosOrders[oIdx] = { ...updatedPosOrders[oIdx], paymentStatus: 'Debt' };
-              }
-          }
-      }
-
-      return {
-        ...state,
-        purchaseOrders: updatedPOs,
-        suppliers: updatedSuppliers,
-        posOrders: updatedPosOrders,
-        transactions: state.transactions.map(t => t.id === action.payload ? { ...t, deleted: true, deletedAt: new Date().toISOString() } : t),
-        accounts: state.accounts.map(acc => {
-          if (acc.id === transaction.accountId) {
-             // Reversed: Thu -> Trừ tiền, Chi -> Cộng lại tiền
-            const adjustment = transaction.type === 'Thu' ? -transaction.amount : transaction.amount;
-            return { ...acc, balance: acc.balance + adjustment };
-          }
-          return acc;
-        })
-      };
-    }
+    case 'DELETE_TRANSACTION': return processDeleteTransaction(state, action);
 
     case 'RESTORE_TRANSACTION': {
       const transaction = state.transactions.find(t => t.id === action.payload);
@@ -779,6 +682,13 @@ export const DataProvider = ({ children }) => {
       });
     }
 
+    if (import.meta.env.DEV) {
+       console.log("[DEV SANDBOX] Đã ngắt kết nối Cloud tự động. Trạng thái thuần Local.");
+       setLoading(false);
+       return;
+    }
+
+    // --- CHỈ CHẠY TRÊN PROD ONLINE ---
     // 2. Chặn đứng giao diện, ép kéo Data mới nhất từ Mây đè xuống Local trước khi làm việc! (Đồng bộ đầu ca)
     CloudSyncService.pullFromCloud().then(res => {
         if (res.success && res.newState) {
@@ -813,7 +723,7 @@ export const DataProvider = ({ children }) => {
 
   // Sync DataContext state when StorageService (CHS) modifies localStorage directly
   useEffect(() => {
-    const unsubscribe = StorageService.subscribe((col) => {
+    const unsubscribe = StorageService.subscribe(() => {
        StorageService.getAll().then(data => {
           rawDispatch({ type: 'HYDRATE_STATE', payload: data });
        });
@@ -834,25 +744,7 @@ export const DataProvider = ({ children }) => {
     legacyCleanAttempted.current = true;
   }, [loading, state.transactions, state.posOrders]);
 
-  // Clean ghost items (Store names parsed as products) from legacy imports
-  const ghostCleanAttempted = useRef(false);
-  useEffect(() => {
-    if (loading || ghostCleanAttempted.current) return;
-    const needsMigration = state.posOrders.some(order => {
-        if (order.channelName?.toLowerCase().includes('grab') && order.customerName !== 'Khách Grab') return true;
-        if (order.channelName?.toLowerCase().includes('shopee') && order.customerName !== 'Khách Shopee') return true;
-        return order.items?.some(i => {
-           const n = i.product?.name?.toLowerCase() || '';
-           return n.includes('xóm gà ủ muối') || n === 'đơn hàng shopeefood' || n.includes('tổng cộng') || n.includes('thành tiền') || n.includes('tổng đơn') || n.startsWith('đơn hàng') || n.startsWith('món giá');
-        });
-    });
-    
-    if (needsMigration) {
-       console.log("[Migration] CSDL có chứa rác dư thừa từ các nhóm Header Report Grab/Shopee. Đang khởi chạy quy trình tự khắc phục...");
-       dispatch({ type: 'MIGRATE_LEGACY_ORDERS' });
-    }
-    ghostCleanAttempted.current = true;
-  }, [loading, state.posOrders]);
+    // Clean ghost items - REMOVED: This legacy script was too destructive and was deleting valid Grab/Shopee orders and normal items containing specific words.
 
   // Function to manually trigger Firebase sync
   const syncToCloud = async () => {
@@ -904,7 +796,9 @@ export const DataProvider = ({ children }) => {
     StorageService.notifyAll(); // FIX: Trigger CHS hooks whenever DataContext updates directly
     
     // Auto-sync realtime!
-    CloudSyncService.debouncedSyncToCloud();
+    if (!import.meta.env.DEV) {
+        CloudSyncService.debouncedSyncToCloud();
+    }
   }, [state]);
 
   if (loading) {
@@ -915,7 +809,8 @@ export const DataProvider = ({ children }) => {
             const parsed = JSON.parse(rawLocalStr);
             if (parsed?.settings?.logoUrl) logoToUse = parsed.settings.logoUrl;
         }
-    } catch (e) {}
+    // eslint-disable-next-line no-empty
+    } catch {}
 
     return (
       <div style={{ padding: '60px', textAlign: 'center', fontFamily: 'system-ui, sans-serif', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-color)' }}>
