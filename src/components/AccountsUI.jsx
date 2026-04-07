@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CreditCard, Edit, Trash2, CheckSquare, Square, RefreshCcw, Landmark, Wallet, FileText, X } from 'lucide-react';
 import CurrencyInput from './CurrencyInput';
 import SmartTable from './SmartTable';
+import SmartDateFilter from './SmartDateFilter';
 
 class ErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { hasError: false, error: null }; }
@@ -26,6 +27,11 @@ export default function AccountsUI({
   const [statementAccount, setStatementAccount] = useState(null);
   const [statementTxs, setStatementTxs] = useState([]);
   const [statementLoading, setStatementLoading] = useState(false);
+
+  const [statementFilterType, setStatementFilterType] = useState('ALL'); // ALL, Thu, Chi
+  const [statementDateFrom, setStatementDateFrom] = useState('');
+  const [statementDateTo, setStatementDateTo] = useState('');
+  const [statementDatePreset, setStatementDatePreset] = useState('all');
 
   useEffect(() => {
     const handleEsc = (e) => {
@@ -279,15 +285,51 @@ export default function AccountsUI({
       }
     ];
 
+    let filteredTxs = statementTxs;
+    if (statementFilterType !== 'ALL') {
+       filteredTxs = filteredTxs.filter(t => t.type === statementFilterType);
+    }
+    if (statementDateFrom) {
+       filteredTxs = filteredTxs.filter(t => new Date(t.date) >= new Date(statementDateFrom));
+    }
+    if (statementDateTo) {
+       filteredTxs = filteredTxs.filter(t => new Date(t.date) <= new Date(statementDateTo + 'T23:59:59.999Z'));
+    }
+
+    const sumThu = filteredTxs.filter(t => t.type === 'Thu').reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+    const sumChi = filteredTxs.filter(t => t.type === 'Chi').reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+
     return (
-      <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1100, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
+      <div className="modal-overlay" style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
         <div className="glass-panel" style={{ width: '100%', maxWidth: '900px', maxHeight: '90vh', overflowY: 'auto', background: 'var(--bg-color)', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '20px', borderBottom: '1px solid var(--surface-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: 'var(--bg-color)', zIndex: 10 }}>
-            <div>
-               <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Sao Kê Biến Động Số Dư</h3>
-               <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '13px' }}>Ví: <strong style={{ color: 'var(--primary)' }}>{statementAccount.name}</strong></p>
-            </div>
-            <button className="btn btn-ghost" onClick={() => setStatementAccount(null)} style={{ padding: '8px' }}><X size={20}/></button>
+          <div style={{ padding: '20px', borderBottom: '1px solid var(--surface-border)', position: 'sticky', top: 0, background: 'var(--bg-color)', zIndex: 10 }}>
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
+                   <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Sao Kê Biến Động Số Dư</h3>
+                   <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '13px' }}>Ví: <strong style={{ color: 'var(--primary)' }}>{statementAccount.name}</strong></p>
+                </div>
+                <div style={{ display: 'flex', gap: '16px', fontWeight: 700, fontSize: '15px', padding: '6px 16px', background: 'var(--surface-color)', borderRadius: '8px', border: '1px solid var(--surface-border)' }}>
+                     <span style={{ color: 'var(--success)' }}>+ THU: {formatVND(sumThu)}</span>
+                     <span style={{ color: 'var(--danger)' }}>- CHI: {formatVND(sumChi)}</span>
+                </div>
+                <button className="btn btn-ghost no-print" onClick={() => setStatementAccount(null)} style={{ padding: '8px' }}><X size={20}/></button>
+             </div>
+
+             <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '4px', background: 'var(--surface-color)', padding: '4px', borderRadius: '8px', border: '1px solid var(--surface-border)' }}>
+                     <button className="btn no-print" onClick={() => setStatementFilterType('ALL')} style={{ padding: '6px 16px', fontSize: '13px', borderRadius: '6px', fontWeight: 600, background: statementFilterType === 'ALL' ? 'var(--primary)' : 'transparent', color: statementFilterType === 'ALL' ? 'white' : 'var(--text-secondary)', border: 'none' }}>Tất cả</button>
+                     <button className="btn no-print" onClick={() => setStatementFilterType('Thu')} style={{ padding: '6px 16px', fontSize: '13px', borderRadius: '6px', fontWeight: 600, background: statementFilterType === 'Thu' ? 'var(--success)' : 'transparent', color: statementFilterType === 'Thu' ? 'white' : 'var(--success)', border: statementFilterType === 'Thu' ? 'none' : '1px solid currentColor' }}>+ THU</button>
+                     <button className="btn no-print" onClick={() => setStatementFilterType('Chi')} style={{ padding: '6px 16px', fontSize: '13px', borderRadius: '6px', fontWeight: 600, background: statementFilterType === 'Chi' ? 'var(--danger)' : 'transparent', color: statementFilterType === 'Chi' ? 'white' : 'var(--danger)', border: statementFilterType === 'Chi' ? 'none' : '1px solid currentColor' }}>- CHI</button>
+                </div>
+                <div className="no-print" style={{ zIndex: 100 }}>
+                     <SmartDateFilter 
+                        filterDate={{ start: statementDateFrom, end: statementDateTo }}
+                        setFilterDate={(f) => { setStatementDateFrom(f?.start || ''); setStatementDateTo(f?.end || ''); }}
+                        datePreset={statementDatePreset}
+                        setDatePreset={setStatementDatePreset}
+                     />
+                </div>
+             </div>
           </div>
           <div style={{ padding: '20px', flex: 1, overflowY: 'auto' }}>
              {statementLoading ? (
@@ -295,7 +337,7 @@ export default function AccountsUI({
              ) : (
                  <ErrorBoundary>
                     <SmartTable 
-                      data={statementTxs}
+                      data={filteredTxs}
                       columns={statementColumns}
                       tableMinWidth="100%"
                       emptyMessage="Chưa có giao dịch lịch sử nào trong tài khoản này."
