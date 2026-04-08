@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ProductApi } from '../services/api/productService';
 import { StorageService } from '../services/api/storage';
+import { useActivityLogger } from './useActivityLogger';
 
 export const useProducts = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { logAction } = useActivityLogger();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -21,9 +23,11 @@ export const useProducts = () => {
     return () => unsubscribe();
   }, [fetchData]);
 
-  const add = async (payload) => { await ProductApi.add(payload); };
-  const update = async (payload) => { await ProductApi.update(payload); };
-  const remove = async (id) => { await ProductApi.delete(id); };
+  const add = async (payload) => { await ProductApi.add(payload); logAction('CREATE_PRODUCT', `Tạo món mới: ${payload.name}`); };
+  const update = async (payload) => { await ProductApi.update(payload); logAction('UPDATE_PRODUCT', `Cập nhật thông tin món: ${payload.name}`); };
+  const remove = async (id) => { await ProductApi.delete(id); logAction('DELETE_PRODUCT', `Đưa vào thùng rác món ID: ${id}`); };
+  const hardDelete = async (id) => { await ProductApi.hardDelete(id); logAction('DELETE_PRODUCT', `Xóa vĩnh viễn món ID: ${id}`); };
+  const restore = async (id) => { await ProductApi.restore(id); };
 
   return {
     products: data,
@@ -31,6 +35,8 @@ export const useProducts = () => {
     loading,
     addProduct: add,
     updateProduct: update,
-    deleteProduct: remove
+    deleteProduct: remove,
+    hardDeleteProduct: hardDelete,
+    restoreProduct: restore
   };
 };

@@ -6,13 +6,12 @@ import { useAuth } from '../context/AuthContext';
 
 // Tabs Components
 import TenantConfigTab from './settings_tabs/TenantConfigTab';
-import UsersManagementTab from './settings_tabs/UsersManagementTab';
 
 export default function SettingsUI({ state, actions }) {
   // eslint-disable-next-line no-unused-vars
   const { settings, syncing, localBackupInt, localCloudInt, localWebhookUrl, fileInputRef } = state;
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState(user?.role === 'ADMIN' ? 'tenant' : 'backup');
+  const [activeTab, setActiveTab] = useState(user?.role === 'ADMIN' ? 'tenant' : 'tenant');
 
   const {
     // eslint-disable-next-line no-unused-vars
@@ -54,26 +53,11 @@ export default function SettingsUI({ state, actions }) {
                  <Store size={18} /> Hồ Sơ Cửa Hàng
                </button>
             )}
-            {user?.role === 'ADMIN' && (
-               <button 
-                 onClick={() => setActiveTab('users')}
-                 style={{ 
-                   display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', 
-                   background: activeTab === 'users' ? 'var(--primary)' : 'transparent',
-                   color: activeTab === 'users' ? 'white' : 'var(--text-secondary)',
-                   border: 'none', borderRadius: '12px', fontWeight: 600, fontSize: '15px', cursor: 'pointer',
-                   transition: 'all 0.2s', whiteSpace: 'nowrap'
-                 }}
-               >
-                 <Users size={18} /> Quản Lý Nhân Sự
-               </button>
-            )}
         </div>
 
         {/* Tab Content */}
         <div style={{ minHeight: '400px' }}>
             {activeTab === 'tenant' && <TenantConfigTab settings={settings} />}
-            {activeTab === 'users' && <UsersManagementTab />}
         </div>
       </div>
     </div>

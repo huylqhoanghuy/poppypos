@@ -18,7 +18,7 @@ const hashPassword = async (password) => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { state } = useData();
+  const { state, dispatch } = useData();
 
   useEffect(() => {
     const savedSession = localStorage.getItem(SESSION_KEY);
@@ -58,12 +58,7 @@ export const AuthProvider = ({ children }) => {
         for (const u of SYSTEM_DEFAULT_USERS) {
           if (u.username.trim().toLowerCase() !== safeUsername || u.deleted) continue;
           
-          // Admin account always uses hardcoded password
-          if (u.username === 'admin') {
-            if (safePassword === 'admin') { foundUser = u; break; }
-            continue;
-          }
-          
+          // Account password validation
           // Check hashed password first, then plaintext fallback
           if (u.passwordHash) {
             const inputHash = await hashPassword(safePassword);
@@ -83,6 +78,7 @@ export const AuthProvider = ({ children }) => {
           const session = { user: uData, expiresAt: Date.now() + SESSION_TTL_MS };
           localStorage.setItem(SESSION_KEY, JSON.stringify(session));
           setUser(uData);
+          dispatch({ type: 'LOG_ACTIVITY', payload: { userId: uData.id, userName: uData.name, action: 'LOGIN', details: 'Đăng nhập vào hệ thống POS' } });
           resolve(uData);
         } else {
           reject('Sai tên đăng nhập hoặc mật khẩu!');
@@ -91,6 +87,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    if (user) dispatch({ type: 'LOG_ACTIVITY', payload: { userId: user.id, userName: user.name, action: 'LOGOUT', details: 'Đăng xuất khỏi hệ thống' } });
     localStorage.removeItem(SESSION_KEY);
     setUser(null);
   };

@@ -1,22 +1,61 @@
 import React, { useState, useMemo } from 'react';
-import { BarChart3, PieChart as PieIcon, TrendingUp, Info, Globe, Percent, DollarSign, Settings } from 'lucide-react';
+import { BarChart3, PieChart as PieIcon, TrendingUp, Info, Globe, Percent, DollarSign, Settings, Copy, CheckCircle } from 'lucide-react';
+import { useData } from '../context/DataContext';
 import { useProducts } from '../hooks/useProducts';
 import { useInventory } from '../hooks/useInventory';
 import { useSalesChannels } from '../hooks/useSalesChannels';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut, Pie } from 'react-chartjs-2';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import { toBlob, toPng } from 'html-to-image';
 import { formatMoney } from '../utils/formatter';
 
 ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels);
 
 const PriceStructure = () => {
+  const { dispatch } = useData();
   const { activeProducts } = useProducts();
   const { activeIngredients } = useInventory();
   const { activeSalesChannels } = useSalesChannels();
   const [opexPerDish, setOpexPerDish] = useState(5000);
   const [selectedChannelId, setSelectedChannelId] = useState('');
   const [viewMode, setViewMode] = useState('chart'); // 'chart' or 'list'
+  const [copyingId, setCopyingId] = useState(null);
+
+  const handleCopyImage = async (id, pName) => {
+      setCopyingId(id);
+      const element = document.getElementById("product-chart-" + id);
+      if (!element) return;
+      
+      const filterFn = (node) => {
+          // Bỏ qua thẻ HTML của nút copy để nó không lọt vào trong ảnh chụp
+          return node.id !== `copy-btn-${id}`;
+      };
+
+      try {
+         const blob = await toBlob(element, { filter: filterFn, backgroundColor: '#ffffff', style: { transform: 'scale(1)', margin: '0' }});
+         if (blob) {
+            const item = new ClipboardItem({ 'image/png': blob });
+            await navigator.clipboard.write([item]);
+            dispatch({ type: 'SHOW_TOAST', payload: { message: `Đã copy ảnh món [${pName}], dán (Ctrl+V) vào Zalo/Mesenger!`, type: 'success' } });
+         }
+      } catch (e) {
+         console.error(e);
+         // Fallback download if clipboard fails
+         try {
+             const dataUrl = await toPng(element, { filter: filterFn, backgroundColor: '#ffffff', style: { transform: 'scale(1)', margin: '0' }});
+             const link = document.createElement('a');
+             link.download = `Cau-Truc-Gia-${pName}.png`;
+             link.href = dataUrl;
+             link.click();
+             dispatch({ type: 'SHOW_TOAST', payload: { message: `Do không copy được trực tiếp. Đã tự động đổi sang TẢI VỀ ẢNH!`, type: 'info' } });
+         } catch (err2) {
+             alert('Lỗi tạo ảnh: ' + err2.message);
+         }
+      } finally {
+         setCopyingId(null);
+      }
+  };
 
   React.useEffect(() => {
     if (activeSalesChannels?.length > 0 && !selectedChannelId) {
@@ -222,8 +261,21 @@ const PriceStructure = () => {
                     const hasProfit = cm.netProfit > 0;
 
                     return (
-                        <div key={p.id} style={{ background: 'var(--surface-color)', padding: '20px', borderRadius: '16px', border: '1px solid var(--surface-border)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-                           <h5 style={{ margin: '0 0 16px 0', fontSize: '15px', textAlign: 'center', color: 'var(--text-primary)' }}>{p.name}</h5>
+                        <div id={`product-chart-${p.id}`} key={p.id} style={{ background: 'var(--surface-color)', padding: '20px', borderRadius: '16px', border: '1px solid var(--surface-border)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', position: 'relative' }}>
+                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', gap: '12px' }}>
+                               <h5 style={{ margin: 0, fontSize: '15px', color: 'var(--text-primary)', lineHeight: '1.4' }}>{p.name}</h5>
+                               <button 
+                                  id={`copy-btn-${p.id}`}
+                                  onClick={() => handleCopyImage(p.id, p.name)}
+                                  disabled={copyingId === p.id}
+                                  style={{ flexShrink: 0, background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontWeight: 600, boxShadow: '0 2px 4px rgba(59,130,246,0.3)', transition: '0.2s', opacity: copyingId === p.id ? 0.7 : 1 }}
+                                  title="Copy ảnh này để gửi"
+                               >
+                                  {copyingId === p.id ? <CheckCircle size={14} /> : <Copy size={14} />} 
+                                  {copyingId === p.id ? 'Đang Xử Lý...' : 'Copy Ảnh'}
+                               </button>
+                           </div>
+                           
                            <div style={{ position: 'relative', height: '280px', marginBottom: '20px' }}>
                               <Doughnut 
                                  data={chartData} 

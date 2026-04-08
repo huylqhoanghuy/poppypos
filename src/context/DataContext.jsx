@@ -71,6 +71,7 @@ const initialState = {
     { id: 'U3', username: 'thungan', password: '123', name: 'Thu Ngân', role: 'CASHIER', status: 'active' }
   ],
   notifications: [],
+  activityLogs: [],
   toast: null
 };
 
@@ -111,6 +112,28 @@ const baseReducer = (state, action) => {
       return newState;
     }
     
+    case 'LOG_ACTIVITY': {
+      const newLog = {
+        id: generateId('LOG_'),
+        userId: action.payload.userId || 'SYSTEM',
+        userName: action.payload.userName || 'Hệ Thống',
+        action: action.payload.action || 'UNKNOWN',
+        details: action.payload.details || '',
+        timestamp: new Date().toISOString()
+      };
+      const currentLogs = state.activityLogs || [];
+      const newList = [newLog, ...currentLogs].slice(0, 2000); 
+      const newState = { ...state, activityLogs: newList };
+      StorageService.saveCollection('activityLogs', newList);
+      return newState;
+    }
+
+    case 'CLEAR_ACTIVITY_LOGS': {
+      const newState = { ...state, activityLogs: [] };
+      StorageService.saveCollection('activityLogs', []);
+      return newState;
+    }
+
     case 'DELETE_NOTIFICATION': {
       const currentList = state.notifications || [];
       const newList = currentList.map(n => n.id === action.payload ? { ...n, deleted: true, deletedAt: new Date().toISOString() } : n);
@@ -203,7 +226,7 @@ const baseReducer = (state, action) => {
 
     // Users (Auth V2)
     case 'ADD_USER': return { ...state, users: [...(state.users || []), { ...action.payload, id: generateId('USR-') }] };
-    case 'UPDATE_USER': return { ...state, users: (state.users || []).map(u => u.id === action.payload.id ? action.payload : u) };
+    case 'UPDATE_USER': return { ...state, users: (state.users || []).map(u => u.id === action.payload.id ? { ...u, ...action.payload } : u) };
     case 'DELETE_USER': return { ...state, users: (state.users || []).map(u => u.id === action.payload ? { ...u, deleted: true, deletedAt: new Date().toISOString() } : u) };
     case 'RESTORE_USER': return { ...state, users: (state.users || []).map(u => u.id === action.payload ? { ...u, deleted: false, deletedAt: null, hiddenFromStaff: false } : u) };
     case 'HARD_DELETE_USER': return { ...state, users: (state.users || []).filter(u => u.id !== action.payload) };

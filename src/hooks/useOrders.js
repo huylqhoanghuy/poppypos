@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { OrderApi } from '../services/api/orderService';
 import { StorageService } from '../services/api/storage';
+import { useActivityLogger } from './useActivityLogger';
 
 export const useOrders = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { logAction } = useActivityLogger();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -21,10 +23,10 @@ export const useOrders = () => {
     return () => unsubscribe();
   }, [fetchData]);
 
-  const add = async (payload) => { await OrderApi.add(payload); };
-  const update = async (payload) => { await OrderApi.update(payload); };
-  const cancel = async (id) => { await OrderApi.cancel(id); };
-  const remove = async (id) => { await OrderApi.delete(id); };
+  const add = async (payload) => { await OrderApi.add(payload); logAction('CREATE_ORDER', `Tạo đơn hàng POS cho khách: ${payload?.customerName || 'Vãng Lai'}`); };
+  const update = async (payload) => { await OrderApi.update(payload); logAction('UPDATE_ORDER', `Cập nhật thông tin đơn hàng POS`); };
+  const cancel = async (id) => { await OrderApi.cancel(id); logAction('DELETE_ORDER', `Hủy bỏ đơn hàng ${id}`); };
+  const remove = async (id) => { await OrderApi.delete(id); logAction('DELETE_ORDER', `Thùng rác: Chuyển đơn ${id}`); };
   const restore = async (id) => { await OrderApi.restore(id); };
   const hardDelete = async (id) => { await OrderApi.hardDelete(id); };
   const bulkDelete = async (ids) => { await OrderApi.bulkDelete(ids); };

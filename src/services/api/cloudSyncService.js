@@ -80,7 +80,8 @@ export const CloudSyncService = {
                                    pinValue = window.prompt(`🔒 [KHÓA BẢO MẬT ADMIN] - QUYỀN TỐI CAO\n\nPhát hiện lệnh XÓA TRẮNG (0 phần tử) đâm vào vùng [${key}] trên Mây.\nKhởi chạy quy trình Dọn Dẹp Reset toàn bộ cơ sở dữ liệu.\n\nVui lòng nhập Mã PIN Bảo Mật để xác nhận xóa sạch:`);
                                }
                                
-                               if (pinValue === '1004') {
+                               const systemPin = (typeof window !== 'undefined') ? (JSON.parse(localStorage.getItem('omnipos_gaumuoi_v3') || '{}').settings?.securityPin || '1004') : '1004';
+                               if (pinValue === systemPin) {
                                    pinAlreadyVerified = true;
                                } else {
                                    if (GlobalConfirm.current) {

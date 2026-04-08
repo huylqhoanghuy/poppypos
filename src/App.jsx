@@ -53,6 +53,8 @@ const Purchases = React.lazy(() => import('./pages/Purchases'));
 const InventoryWarning = React.lazy(() => import('./pages/InventoryWarning'));
 const FinancialStatements = React.lazy(() => import('./pages/FinancialStatements'));
 const ImportData = React.lazy(() => import('./pages/ImportData'));
+const Users = React.lazy(() => import('./pages/Users'));
+const ActivityLogs = React.lazy(() => import('./pages/ActivityLogs'));
 import Login from './pages/Login';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -182,6 +184,8 @@ const SidebarMenu = ({ onNavItemClick }) => {
       icon: <SettingsIcon size={20} />,
       children: [
         { path: '/settings', name: 'Cài Đặt Chung' },
+        { path: '/users', name: 'Nhân Sự & Phân Quyền' },
+        { path: '/activity', name: 'Lịch Sử Hoạt Động' },
         { path: '/backup-sync', name: 'Sao Lưu & Đồng Bộ' },
         { path: '/import', name: 'Đọc Dữ Liệu Sàn' },
         { path: '/global-trash', name: 'Thùng Rác Tổng' },
@@ -633,6 +637,8 @@ const AppContent = () => {
                 <Route path="/reports/inventory" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><InventoryReports /></ProtectedRoute>} />
                 
                 <Route path="/settings" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><Settings /></ProtectedRoute>} />
+                <Route path="/users" element={<ProtectedRoute allowedRoles={['ADMIN']}><Users /></ProtectedRoute>} />
+                <Route path="/activity" element={<ProtectedRoute allowedRoles={['ADMIN']}><ActivityLogs /></ProtectedRoute>} />
                 <Route path="/system-architecture" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><SystemArchitecture /></ProtectedRoute>} />
                 <Route path="/backup-sync" element={<ProtectedRoute allowedRoles={['ADMIN']}><BackupSync /></ProtectedRoute>} />
                 <Route path="/import" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><ImportData /></ProtectedRoute>} />
