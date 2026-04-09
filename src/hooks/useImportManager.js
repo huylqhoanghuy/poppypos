@@ -2,6 +2,7 @@
 import { useState, useMemo } from 'react';
 import { useData } from '../context/DataContext';
 import { parseCSVToOrders } from '../utils/csvParser';
+import * as XLSX from 'xlsx';
 
 export const useImportManager = () => {
     const { state, dispatch } = useData();
@@ -63,11 +64,30 @@ export const useImportManager = () => {
         const file = e.target.files[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          setImportConfig({ ...importConfig, content: event.target.result, fileName: file.name });
-        };
-        reader.readAsText(file);
+        const fileName = file.name.toLowerCase();
+        if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    // Chuyển đối tượng sheet thành chuỗi CSV nguyên bản (giữ được dấu cách, UTF8)
+                    const csvStr = XLSX.utils.sheet_to_csv(worksheet);
+                    setImportConfig({ ...importConfig, content: csvStr, fileName: file.name });
+                } catch (error) {
+                    console.error("XLSX Parser Error:", error);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              setImportConfig({ ...importConfig, content: event.target.result, fileName: file.name });
+            };
+            reader.readAsText(file);
+        }
     };
 
     return {

@@ -85,7 +85,7 @@ const ImportData = () => {
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px dashed', borderColor: importConfig.fileName ? 'var(--success)' : 'var(--surface-border)', borderRadius: '16px', padding: '36px 20px', background: importConfig.fileName ? 'rgba(16, 185, 129, 0.05)' : '#F8FAFC', cursor: 'pointer', transition: 'all 0.2s', position: 'relative', marginBottom: '24px', flexShrink: 0 }}
                                    onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary)'}
                                    onMouseLeave={e => e.currentTarget.style.borderColor = importConfig.fileName ? 'var(--success)' : 'var(--surface-border)'}>
-                                 <input type="file" accept=".csv, .txt, .tsv" onChange={handleFileUpload} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }} />
+                                 <input type="file" accept=".csv, .txt, .tsv, .xlsx, .xls" onChange={handleFileUpload} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }} />
                                  <UploadCloud size={48} color={importConfig.fileName ? 'var(--success)' : 'var(--primary)'} style={{ margin: '0 auto 16px', opacity: importConfig.fileName ? 1 : 0.8 }} />
                                  <strong style={{ display: 'block', fontSize: '15px', color: importConfig.fileName ? 'var(--success)' : 'var(--text-primary)', textAlign: 'center' }}>
                                     {importConfig.fileName ? `Sàng Lọc Thành Công: ${importConfig.fileName}` : 'Thả file CSV/TXT vào đây hoặc Bấm tải lên'}
