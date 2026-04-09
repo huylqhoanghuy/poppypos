@@ -91,6 +91,11 @@ Quá trình "Nuốt" dữ liệu báo cáo từ file Excel tải về của Grab
 ### 5.3 Quy Tắc Gom Món và Nội Suy Đơn Giá (Item Aggregation & Dynamic Pricing)
 1. **Gom Món Đồng Loại (Item Aggregation):** Nếu trong một file CSV của một đơn hàng (`orderId`) xuất hiện nhiều dòng tính tiền lẻ tẻ cho cùng một sản phẩm (VD: 5 dòng nhập Chân Gà Rút Xương, mỗi dòng 1 cái). BẮT BUỘC phải sử dụng thuật toán gom nhóm toàn bộ các dòng có cùng `product.id` lại với nhau trước khi đẩy mảng vào `order.items`. Hệ thống phải cộng dồn `quantity` và `itemTotal`. Tuyệt đối cấm render 5 dòng trùng lặp y hệt nhau làm phình Database và gây rác giao diện.
 2. **Nội Suy Đơn Giá Bán Thực Tế (Dynamic Unit Pricing):** Tuyệt đối KHÔNG sử dụng Cứng "Giá Gốc Của Menu (Ví dụ: 82.000đ)" để in ra giao diện Hóa Đơn/Dashboard nếu báo cáo CSV truyền sang một Tổng Gross sai lệch (do nền tảng cộng thêm phụ phí, vỏ hộp hoặc làm tròn). Đơn giá cuối cùng trên hệ thống phải luôn luôn phục hồi bằng Thuật toán Đảo: `Đơn Giá Tính Toán (item.product.price) = Tổng Gross của Món / Số Lượng`. Việc này là rào chắn toán học bảo vệ tuyệt đối Mệnh Đề Giao Diện: `Đơn giá x Số Lượng = Tổng Gross` không bao giờ bị lệch một đồng.
+
+### 5.4 Quy Tắc Cấu Trúc Đơn Hàng Đa Món (Multi-item Order Composition)
+Bản chất khách hàng mua nhiều món trong 1 lần thanh toán. Tuy nhiên khi xuất báo cáo CSV, các nền tảng (Grab/Shopee) thường có xu hướng "Bẻ gãy" 1 Đơn Hàng thành N dòng riêng biệt (mỗi dòng 1 món nhưng lặp lại chung mã Đơn).
+- **Quy tắc Gom Đơn Phễu:** Bắt buộc bộ thuật toán phân tích (Parser) phải định tuyến gom nhóm bằng Khóa chính `orderId` (hoặc chuỗi khớp mã ngắn). Tất cả các dòng trùng mã `orderId` phải được đẩy chung vào **Một mảng `items` của một Object Đơn hàng duy nhất!**. Đồng thời phải cộng dồn Tổng Toán Học `totalAmount` của toàn bộ các dòng này.
+- **Cấm Tuyệt Đối:** Chữ CẤM tuyết đối việc phân rã 1 đơn mã số `GF-1234` thành 3 Document Đơn Hàng khác nhau vào trong Database chỉ vì khách mua 3 Món. Sự lặp lặp này phá vỡ tính ACID và gây thổi phồng (Blow-up) Tổng phí đơn!
 ---
 
 ## 6. 🎛 QUY TẮC TOÁN HỌC KHI LẬP TRÌNH BẢN ĐỊA (VIETNAMESE CURRENCY LOCALE)
