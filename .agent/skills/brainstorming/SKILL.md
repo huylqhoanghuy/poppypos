@@ -144,7 +144,9 @@ allowed-tools: Read, Glob, Grep
 
 Bất kể khi nào AI vừa tư vấn, giải quyết xong một lỗi logic nghiệp vụ, đưa ra một giải pháp cấu trúc mới, hoặc tạo ra một quy chuẩn UI/UX mới mà cấu trúc đó **chưa hề có sẵn** trong các file `SKILL.md` gốc, AI **BẮT BUỘC PHẢI** luôn luôn nối thêm một câu hỏi sau vào cuối đoạn chat của mình:
 
-> 💡 **Nhắc nhở tự động:** Bạn có muốn tôi lưu ghi chú/nghiệp vụ này vào Skill dùng chung không? (Khởi chạy bằng cách gõ lệnh **/save-skill** vào khung chat để tôi lưu tự động nhé).
+> 💡 **Nhắc nhở tự động:** Bạn có muốn tôi lưu ghi chú/nghiệp vụ này vào Skill dùng chung không? (Hãy bấm vào nút **@[/save-skill]** bên dưới để kích hoạt lệnh lưu ngay lập tức).
+> 
+> @[/save-skill]
 
 Điều này giúp Người Dùng nắm quyền chủ động quyết định việc có nên biến thuật toán vừa rồi thành Luật Lệ (Rule) vĩnh viễn cho máy móc hay không.
 
