@@ -200,13 +200,17 @@ export const parseCSVToOrders = (rawData, channelObj, productsList, targetAccoun
                 parsedItems.push({
                     product: { ...matchedProductByName, price: quantity > 0 ? (grossValue / quantity) : grossValue },
                     quantity: quantity,
-                    itemTotal: grossValue
+                    itemTotal: grossValue,
+                    netTotal: netIdx !== -1 ? currentItemNet : grossValue
                 });
             } else {
                 // Tên (Grab/Shopee) là mớ hỗn độn (Combo A, Trà Chanh) KHÔNG khớp menu HOẶC ẩn tên => Nội suy từ Giá Vốn
                 const guessedItems = inferItemsFromPrice(grossValue, productsList);
                 if (guessedItems) {
-                    parsedItems = guessedItems;
+                    parsedItems = guessedItems.map(item => ({
+                        ...item,
+                        netTotal: netIdx !== -1 ? currentItemNet : item.itemTotal
+                    }));
                     isFuzzy = true; // Flage this to warn the user 
                 } else {
                     // Hết đường cứu, đành ném tên rác
@@ -214,7 +218,8 @@ export const parseCSVToOrders = (rawData, channelObj, productsList, targetAccoun
                     parsedItems.push({
                         product: { name: finalName, price: grossValue, recipe: [] },
                         quantity: quantity || 1,
-                        itemTotal: grossValue
+                        itemTotal: grossValue,
+                        netTotal: netIdx !== -1 ? currentItemNet : grossValue
                     });
                     isFuzzy = true;
                 }
@@ -260,12 +265,22 @@ export const parseCSVToOrders = (rawData, channelObj, productsList, targetAccoun
               if (order._duplicatedOrderFees > 0) {
                   // Lấy Tổng Gross trừ đi Tổng Fees của nguyên đơn đó (ko bị nhân bội lần theo dòng)
                   order.netAmount = order.totalAmount - order._duplicatedOrderFees;
+                  // Tỷ lệ hóa chi phí xuống từng item (Chặt chẽ kế toán theo món)
+                  order.items.forEach(item => {
+                      const ratio = order.totalAmount > 0 ? (item.itemTotal / order.totalAmount) : 0;
+                      const itemFee = order._duplicatedOrderFees * ratio;
+                      item.netTotal = item.itemTotal - itemFee;
+                  });
               } else if (channelObj && (channelObj.commission || channelObj.discountRate)) {
                   // Cứu cánh cuối cùng: Tự tính % tỷ lệ CK 
                   const rate = parseFloat(channelObj.commission || channelObj.discountRate || 0);
                   order.netAmount = order.totalAmount * (100 - rate) / 100;
+                  order.items.forEach(item => {
+                      item.netTotal = item.itemTotal * (100 - rate) / 100;
+                  });
               } else {
                   order.netAmount = order.totalAmount;
+                  order.items.forEach(item => { item.netTotal = item.itemTotal; });
               }
           }
       });
