@@ -105,6 +105,7 @@ Quá trình "Nuốt" dữ liệu báo cáo từ file Excel tải về của Grab
    - **Render Thời gian:** Đồng nhất hiển thị dạng `DD/MM/YYYY HH:mm`.
    - **Giao diện dòng (Row):** Có mảng màu xen kẽ lịch sự (zebra stripes) hoặc thẻ Box shadow viền bo cong. Cấm làm bảng thô kệch.
 3. **Quy Tắc Kế Thừa (Inheritance Rule):** Trước khi tạo mới 1 Component UI (Nút, Bảng, Thanh tìm kiếm), Agent BẮT BUỘC phải tham chiếu (grep) xem các màn hình lớn khác (như `FinancialReports.jsx`, `InventoryManagement.jsx`) đang dùng cấu trúc HTML/CSS nào để lấy sang dùng chung. Không "sáng chế lại bánh xe".
+4. **Hiển Thị Dữ Liệu Toán Học (Mathematical Transparency):** Trong lưới danh sách món mua (Đơn hàng, Báo cáo Import), **BẮT BUỘC** trình bày rõ thuật toán bóc tách công khai: `(Đơn giá x Số lượng = Tổng giá trị Gross | Thực thu Net)` ngay phía dưới tên món ăn bằng định dạng text phụ, có đóng khung/viền mờ (`border: dashed`) phân cách rõ ràng. Tuyệt đối không gộp số liệu hoặc chỉ in mỗi tên món ẩn dòng tiền khiến Kế toán không nhẩm lại được.
 
 ---
 
