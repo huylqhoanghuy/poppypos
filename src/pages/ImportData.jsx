@@ -181,11 +181,18 @@ const ImportData = () => {
                                     </td>
                                     <td style={{ padding: '16px 20px' }}>
                                        {order.items.map((item, idx) => (
-                                          <div key={idx} style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '6px', fontSize: '13.5px' }}>
-                                             <span style={{ color: 'var(--primary)', fontWeight: 800, background: 'rgba(59,130,246,0.1)', padding: '2px 8px', borderRadius: '6px' }}>x{item.quantity}</span>
-                                             <span style={{ flex: 1, color: order.isFuzzyRecognized ? '#B45309' : 'var(--text-primary)', fontWeight: 600 }}>
-                                                 {item.product?.name} 
-                                             </span>
+                                          <div key={idx} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '10px', fontSize: '13.5px' }}>
+                                             <span style={{ color: 'var(--primary)', fontWeight: 800, background: 'rgba(59,130,246,0.1)', padding: '2px 8px', borderRadius: '6px', marginTop: '2px' }}>x{item.quantity}</span>
+                                             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                                <span style={{ color: order.isFuzzyRecognized ? '#B45309' : 'var(--text-primary)', fontWeight: 700, lineHeight: 1.4 }}>
+                                                    {item.product?.name} 
+                                                </span>
+                                                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', background: '#F8FAFC', padding: '6px 10px', borderRadius: '6px', border: '1px dashed var(--surface-border)', display: 'inline-block', width: 'fit-content' }}>
+                                                    {item.product?.price?.toLocaleString('vi-VN')} đ × {item.quantity} = <strong style={{ color: 'var(--text-primary)' }}>{item.itemTotal?.toLocaleString('vi-VN')} đ</strong>
+                                                    <span style={{ margin: '0 8px', color: '#CBD5E1' }}>|</span>
+                                                    Thực nhận (Net): <strong style={{ color: 'var(--success)' }}>{item.netTotal?.toLocaleString('vi-VN')} đ</strong>
+                                                </div>
+                                             </div>
                                           </div>
                                        ))}
                                        {order.isFuzzyRecognized && (
