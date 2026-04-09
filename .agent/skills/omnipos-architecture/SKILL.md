@@ -97,5 +97,16 @@ Quá trình "Nuốt" dữ liệu báo cáo từ file Excel tải về của Grab
 
 ---
 
-## 6. SỔ TAY RA LỆNH VÀ UY QUYỀN
-Bất kể khi nào bạn (AI) nhận yêu cầu "Sửa Đơn Hàng", "Sửa Quản lý Kho", "Chống trùng lặp" - bạn BẮT BUỘC PHẢI LUÔN chiếu theo Luật lệ ở file này. Hệ thống ACID Orchestration này là Chén Thánh của Ứng dụng.
+## 7. 🎨 QUY TẮC ĐỒNG NHẤT GIAO DIỆN & COMPONENT (UI/UX UNIFORMITY)
+Để đảm bảo trải nghiệm nguyên khối (monolithic experience) cho Poppy POS, mọi Agent khi xây dựng hoặc tùy biến màn hình phải CHỐT CỨNG các tiêu chuẩn sau. Cấm tự ý sáng tạo giao diện rác hoặc xé lẻ quy chuẩn:
+1. **Bộ Lọc Thời Gian (Time Filters):** Mọi module có báo cáo (Doanh thu, Sổ quỹ, Nhập hàng...) MẶC ĐỊNH phải dùng chung UI Bộ lọc thời gian (Ví dụ: DateRangePicker hoặc các Nút chọn nhanh Hôm nay/Hôm qua/Tháng này). Tuyệt đối không mỗi trang code một logic ngày tháng khác nhau.
+2. **Cấu Trúc Cột & Bảng Dữ Liệu (Data Tables):**
+   - **Render Số Tiền:** Phải Căn lề phải (Right-align), format chuẩn `toLocaleString('vi-VN')` + `đ`. Tiền vô (Gross/Thực thu) dùng chữ Màu Xanh Lá, Tiền ra/Khấu trừ/Lỗ dùng chữ Màu Đỏ tươi kèm dấu âm (`-`).
+   - **Render Thời gian:** Đồng nhất hiển thị dạng `DD/MM/YYYY HH:mm`.
+   - **Giao diện dòng (Row):** Có mảng màu xen kẽ lịch sự (zebra stripes) hoặc thẻ Box shadow viền bo cong. Cấm làm bảng thô kệch.
+3. **Quy Tắc Kế Thừa (Inheritance Rule):** Trước khi tạo mới 1 Component UI (Nút, Bảng, Thanh tìm kiếm), Agent BẮT BUỘC phải tham chiếu (grep) xem các màn hình lớn khác (như `FinancialReports.jsx`, `InventoryManagement.jsx`) đang dùng cấu trúc HTML/CSS nào để lấy sang dùng chung. Không "sáng chế lại bánh xe".
+
+---
+
+## 8. SỔ TAY RA LỆNH VÀ UY QUYỀN
+Bất kể khi nào bạn (AI) nhận yêu cầu "Sửa Đơn Hàng", "Sửa Tính Toán", "Chống trùng lặp" hay "Sửa Giao Diện Bảng", "Sửa Bộ Lọc" - bạn BẮT BUỘC PHẢI LUÔN chiếu theo Luật lệ ở file này. Hệ thống Đồng nhất Giao Diện và ACID Business Logic này là Chén Thánh của Ứng dụng.
