@@ -102,14 +102,14 @@ export const parseCSVToOrders = (rawData, channelObj, productsList, targetAccoun
          
          const findIdx = (keywords) => headers.findIndex(h => keywords.some(k => h.includes(k)));
 
-         let orderIdIdx = findIdx(['mã đơn hàng ngắn']); // Ưu tiên tuyệt đối mã ngắn của Grab
-         if (orderIdIdx === -1) orderIdIdx = findIdx(['mã đơn', 'order id', 'mã tham chiếu', 'id đơn', 'shopee']);
+         let orderIdIdx = findIdx(['mã đơn hàng ngắn', 'm __n hng']); // Ưu tiên tuyệt đối mã ngắn của Grab
+         if (orderIdIdx === -1) orderIdIdx = findIdx(['mã đơn', 'order id', 'mã tham chiếu', 'id đơn', 'shopee', 'm __n']);
          
-         let nameIdx = findIdx(['tên món', 'sản phẩm', 'product', 'tên hàng', 'hàng hóa', 'món']);
-         let qtyIdx = findIdx(['số lượng', 'qty']);
-         let grossIdx = findIdx(['giá trị', 'doanh thu ròng', 'số tiền', 'doanh thu', 'tổng tiền', 'gross', 'doanh số', 'tiền món', 'đơn giá']);
+         let nameIdx = findIdx(['tên món', 'sản phẩm', 'product', 'tên hàng', 'hàng hóa', 'món', 'tn s_n ph_m', 'tn']);
+         let qtyIdx = findIdx(['số lượng', 'qty', 's_ l__ng', 'số lg']);
+         let grossIdx = findIdx(['giá trị', 'doanh thu ròng', 'số tiền', 'doanh thu', 'tổng tiền', 'gross', 'doanh số', 'tiền món', 'đơn giá', 'thnh ti_n doanh thu']);
          let netIdx = findIdx(['tổng cộng', 'thực thu', 'net', 'thu về', 'tiền nhận về', 'tiền thu', 'phải thu']);
-         let dateIdx = findIdx(['thời gian hoàn thành', 'ngày tạo', 'ngày', 'thời gian', 'date', 'hoàn thành']);
+         let dateIdx = findIdx(['thời gian hoàn thành', 'ngày tạo', 'ngày', 'thời gian', 'date', 'hoàn thành', 'ngy hon t_t', 'ngy __t']);
 
          if (orderIdIdx === -1) orderIdIdx = 0;
 
@@ -133,7 +133,7 @@ export const parseCSVToOrders = (rawData, channelObj, productsList, targetAccoun
             const rawName = nameIdx !== -1 && parts[nameIdx] ? parts[nameIdx].trim() : '';
 
             const nLower = rawName.toLowerCase();
-            if (nLower.includes('xóm gà ủ muối') || nLower === 'đơn hàng shopeefood' || nLower.includes('tổng cộng') || nLower.includes('thành tiền') || nLower.includes('tổng đơn')) {
+            if (nLower.includes('xóm gà ủ muối') || nLower.includes('xm g') || nLower === 'đơn hàng shopeefood' || nLower.includes('tổng cộng') || nLower.includes('thành tiền') || nLower.includes('tổng đơn') || nLower.includes('thnh ti_n')) {
                 continue; 
             }
             
