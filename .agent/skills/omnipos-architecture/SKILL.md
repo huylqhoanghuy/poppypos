@@ -88,6 +88,9 @@ Quá trình "Nuốt" dữ liệu báo cáo từ file Excel tải về của Grab
 3. **Đối Chiếu Chéo Tỷ Lệ CK (Cross-check):** Phải làm phép so sánh các khoản trừ với Tỉ lệ phần trăm Chiết Khấu Kênh Bán (Commission Rate) được ấn định tại danh mục Kênh để cân đối tính toàn vẹn của chi phí (Vd đối soát xem Sàn có cắn quá 29% phí hay không). Dùng tỷ lệ này nội suy chi phí nếu file báo cáo của sàn vắng mặt thông số.
 4. **Định Tuyến Dòng Tiền Thực Nhận (Net Routing):** Tổng Gross sau trừ Phí Sàn và Thuế chính là Tiền Thực Nhận (Net Sales). CHỈ ĐƯỢC PHÉP hạch toán Số tiền Thực nhận này đẩy vào số dư Tài khoản ngân hàng, hoặc Ví nền tảng.
 
+### 5.3 Quy Tắc Gom Món và Nội Suy Đơn Giá (Item Aggregation & Dynamic Pricing)
+1. **Gom Món Đồng Loại (Item Aggregation):** Nếu trong một file CSV của một đơn hàng (`orderId`) xuất hiện nhiều dòng tính tiền lẻ tẻ cho cùng một sản phẩm (VD: 5 dòng nhập Chân Gà Rút Xương, mỗi dòng 1 cái). BẮT BUỘC phải sử dụng thuật toán gom nhóm toàn bộ các dòng có cùng `product.id` lại với nhau trước khi đẩy mảng vào `order.items`. Hệ thống phải cộng dồn `quantity` và `itemTotal`. Tuyệt đối cấm render 5 dòng trùng lặp y hệt nhau làm phình Database và gây rác giao diện.
+2. **Nội Suy Đơn Giá Bán Thực Tế (Dynamic Unit Pricing):** Tuyệt đối KHÔNG sử dụng Cứng "Giá Gốc Của Menu (Ví dụ: 82.000đ)" để in ra giao diện Hóa Đơn/Dashboard nếu báo cáo CSV truyền sang một Tổng Gross sai lệch (do nền tảng cộng thêm phụ phí, vỏ hộp hoặc làm tròn). Đơn giá cuối cùng trên hệ thống phải luôn luôn phục hồi bằng Thuật toán Đảo: `Đơn Giá Tính Toán (item.product.price) = Tổng Gross của Món / Số Lượng`. Việc này là rào chắn toán học bảo vệ tuyệt đối Mệnh Đề Giao Diện: `Đơn giá x Số Lượng = Tổng Gross` không bao giờ bị lệch một đồng.
 ---
 
 ## 6. 🎛 QUY TẮC TOÁN HỌC KHI LẬP TRÌNH BẢN ĐỊA (VIETNAMESE CURRENCY LOCALE)
