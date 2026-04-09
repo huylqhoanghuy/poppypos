@@ -14,6 +14,10 @@ version: 1.0.0
 
 ## How It Works
 
+### 0. BƯỚC SỐ 0 BẮT BUỘC: ĐỒNG BỘ TRI THỨC (KNOWLEDGE SYNC)
+> **LUẬT TỐI THƯỢNG:** Mọi thao tác khi bắt đầu suy nghĩ, phân tích bug, hay chuẩn bị code/sửa code, AI **BẮT BUỘC PHẢI DÙNG TOOL (`view_file`) ĐỂ ĐỌC SKILL LIÊN QUAN TRƯỚC TIÊN** (ví dụ: `omnipos-architecture`, `frontend-design`, `clean-code`...).
+- **Mục đích:** Để xem những gì hệ thống đã tối ưu trước đó, kiến trúc nào đã được chốt dùng chung. AI phải ghi nhớ cấu trúc đó rồi mới được giải quyết bài toán để đảm bảo sự đồng bộ nguyên khối tuyệt đối. Cấm chỉ định "lao vào code luôn" khi chưa đọc Skill.
+
 ### 1. Request Analysis
 
 Before responding to ANY user request, perform automatic analysis:
